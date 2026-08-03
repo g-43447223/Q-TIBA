@@ -46,53 +46,59 @@
       </div>
     </div>
 
-    <!-- Top KPI Cards -->
+    <!-- 2. TOP KPI CARDS (Dinamik dengan ID) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Card 1: Sasaran -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-800 transition">
         <div class="flex justify-between items-start">
           <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Sasaran (T)</p>
           <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-users-viewfinder text-sm"></i></div>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 code-font">72</h3>
+        <h3 id="kpi-sasaran" class="text-2xl sm:text-3xl font-extrabold text-white mt-1 code-font">72</h3>
         <p class="text-[10px] text-slate-500 mt-1">Murid tegar dipantau</p>
       </div>
 
+      <!-- Card 2: Imbasan Lewat Hari Ini -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-amber-800 transition">
         <div class="flex justify-between items-start">
           <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Imbasan (Q)</p>
           <div class="p-1.5 bg-amber-500/10 rounded text-amber-400 border border-amber-500/20"><i class="fa-solid fa-qrcode text-sm animate-pulse"></i></div>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-400 mt-1 code-font">14</h3>
-        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-arrow-down mr-0.5"></i> -3 hari ini</p>
+        <h3 id="kpi-hari-ini" class="text-2xl sm:text-3xl font-extrabold text-amber-400 mt-1 code-font">0</h3>
+        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-clock-rotate-left mr-0.5"></i> Imbasan Hari Ini</p>
       </div>
 
+      <!-- Card 3: Intervensi -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-emerald-800 transition">
         <div class="flex justify-between items-start">
           <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Intervensi (I)</p>
           <div class="p-1.5 bg-emerald-500/10 rounded text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-chart-line text-sm"></i></div>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 code-font">-34.2%</h3>
+        <h3 id="kpi-intervensi" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 code-font">-34.2%</h3>
         <p class="text-[10px] text-slate-400 mt-1">Kadar Penurunan Kes</p>
       </div>
 
+      <!-- Card 4: Anugerah -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-800 transition">
         <div class="flex justify-between items-start">
           <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Anugerah (A)</p>
           <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-award text-sm text-cyan-300"></i></div>
         </div>
-        <h3 class="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-1 code-font">18</h3>
+        <h3 id="kpi-anugerah" class="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-1 code-font">18</h3>
         <p class="text-[10px] text-slate-400 mt-1">Ikon Berubah (0 Lewat)</p>
       </div>
     </div>
 
-    <!-- Charts Section -->
+    <!-- 3. CHARTS SECTION -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <!-- Line Chart -->
       <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-3.5">
         <h2 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center">
           <i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i>Trend Penjejakan Kelewatan Mingguan
         </h2>
         <div class="h-44"><canvas id="trendChart"></canvas></div>
       </div>
+      <!-- Bar Chart -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
         <h2 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center">
           <i class="fa-solid fa-hourglass-start text-amber-400 mr-2"></i>Taburan Masa Imbasan QR
@@ -101,7 +107,7 @@
       </div>
     </div>
 
-    <!-- Leaderboard -->
+    <!-- 4. LEADERBOARD / RANKING -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
       <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
         <h2 class="text-xs sm:text-sm font-bold text-white flex items-center">
@@ -139,6 +145,15 @@
               <td class="py-2 text-center text-slate-400">15</td>
               <td class="py-2 text-center text-emerald-400 font-semibold">3</td>
               <td class="py-2 text-center"><span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">-80.0%</span></td>
+              <td class="py-2 text-right"><span class="text-[10px] bg-cyan-900/40 text-cyan-300 border border-cyan-700/50 px-2 py-0.5 rounded-full">Sangat Baik</span></td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 code-font text-slate-400 pl-1">3</td>
+              <td class="py-2 font-semibold text-white">Siti Nur Aishah Binti Bakar</td>
+              <td class="py-2 text-slate-400 code-font">3 Smart</td>
+              <td class="py-2 text-center text-slate-400">12</td>
+              <td class="py-2 text-center text-emerald-400 font-semibold">3</td>
+              <td class="py-2 text-center"><span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">-75.0%</span></td>
               <td class="py-2 text-right"><span class="text-[10px] bg-cyan-900/40 text-cyan-300 border border-cyan-700/50 px-2 py-0.5 rounded-full">Sangat Baik</span></td>
             </tr>
           </tbody>
@@ -189,19 +204,42 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="text-center text-[10px] text-slate-600 code-font pt-2">
+    <!-- FOOTER -->
+    <div class="text-center text-[10px] text-slate-600 code-font pt-2 pb-4">
       Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH. ALL RIGHTS RESERVED.
     </div>
 
   </div>
 
+  <!-- 6. JAVASCRIPT LOGIC & LIVE SYNC -->
   <script>
+    // -------------------------------------------------------------
+    // MASUKKAN LINK WEB APP APPS SCRIPT KORANG DI SINI:
+    // -------------------------------------------------------------
+    const API_URL = "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec";
+
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
     Chart.defaults.font.size = 10;
 
-    new Chart(document.getElementById('trendChart').getContext('2d'), {
+    // A. Bar Chart: Taburan Masa
+    const ctxTime = document.getElementById('timeChart').getContext('2d');
+    const timeChart = new Chart(ctxTime, {
+      type: 'bar',
+      data: {
+        labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
+        datasets: [{
+          data: [42, 18, 8, 4], // Data awal
+          backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
+          borderRadius: 4
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    // B. Line Chart: Trend Mingguan
+    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctxTrend, {
       type: 'line',
       data: {
         labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
@@ -215,17 +253,37 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
-    new Chart(document.getElementById('timeChart').getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
-        datasets: [{
-          data: [42, 18, 8, 4],
-          backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'], borderRadius: 4
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    // C. Fungsi Ambil Data Live Dari Google Sheets
+    async function fetchLiveData() {
+      if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec") {
+        console.log("Q-TIBA: Web App URL belum dimasukkan. Menunjukkan data asas.");
+        return;
+      }
+
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        if (data.status === "Success") {
+          // Kemaskini Kad KPI
+          if (data.totalSasaran) document.getElementById('kpi-sasaran').innerText = data.totalSasaran;
+          if (data.lewatHariIni !== undefined) document.getElementById('kpi-hari-ini').innerText = data.lewatHariIni;
+
+          // Kemaskini Graf Masa
+          if (data.slotWaktu && data.slotWaktu.length === 4) {
+            timeChart.data.datasets[0].data = data.slotWaktu;
+            timeChart.update();
+          }
+
+          console.log("Q-TIBA: Data Live Google Sheets Berjaya Dikemaskini!");
+        }
+      } catch (error) {
+        console.error("Q-TIBA: Ralat mengambil data dari Google Sheets:", error);
+      }
+    }
+
+    // Jalankan imbasan data secara automatik
+    fetchLiveData();
   </script>
 </body>
 </html>
