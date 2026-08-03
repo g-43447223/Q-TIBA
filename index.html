@@ -216,7 +216,7 @@
     // -------------------------------------------------------------
     // MASUKKAN LINK WEB APP APPS SCRIPT KORANG DI SINI:
     // -------------------------------------------------------------
-    const API_URL = "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec";
 
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -255,7 +255,7 @@
 
     // C. Fungsi Ambil Data Live Dari Google Sheets
     async function fetchLiveData() {
-      if (!API_URL || API_URL === "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI") {
+      if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec") {
         console.log("Q-TIBA: Web App URL belum dimasukkan. Menunjukkan data asas.");
         return;
       }
