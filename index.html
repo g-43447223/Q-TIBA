@@ -4,13 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Q-TIBA | SK Pulau Indah</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .code-font { font-family: 'JetBrains Mono', monospace; }
+    /* Sembunyikan scrollbar untuk paparan kemas di Google Sites iframe */
     ::-webkit-scrollbar { display: none; }
     html { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -19,7 +23,7 @@
 
   <div class="max-w-7xl mx-auto space-y-4">
 
-    <!-- Header Section (SK Pulau Indah + Logo) -->
+    <!-- 1. HEADER SECTION (SK PULAU INDAH + LOGO) -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
       <div class="flex items-center gap-3">
         <!-- PENTING: Gantikan URL gambar di di bawah dengan link Logo SK Pulau Indah sebenar -->
@@ -45,7 +49,7 @@
         <i class="fa-regular fa-calendar-check text-cyan-400 mr-2"></i>Status: <span class="text-emerald-400 font-bold ml-1">Live Analytics</span>
       </div>
     </div>
-
+    
     <!-- 2. TOP KPI CARDS (Dinamik dengan ID) -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <!-- Card 1: Sasaran -->
@@ -161,7 +165,7 @@
       </div>
     </div>
 
-    <!-- SEKSYEN GURU INOVATOR Q-TIBA (3 ORANG GURU) -->
+    <!-- 5. SEKSYEN GURU INOVATOR Q-TIBA (3 GURU) -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 mt-6">
       <div class="text-center max-w-xl mx-auto mb-4">
         <span class="text-[10px] font-bold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 rounded-full code-font uppercase">Team Inovasi SK Pulau Indah</span>
@@ -170,7 +174,6 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        
         <!-- Guru 1 -->
         <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
           <img src="321.png" alt="Cikgu 1" class="w-16 h-16 rounded-full border-2 border-cyan-500/40 object-cover mb-2">
@@ -200,10 +203,7 @@
             "Imbasan QR pantas 1-saat menjimatkan masa guru bertugas dan merekod trend secara langsung (real-time)."
           </p>
         </div>
-
-      </div>
-    </div>
-
+        
     <!-- FOOTER -->
     <div class="text-center text-[10px] text-slate-600 code-font pt-2 pb-4">
       Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH. ALL RIGHTS RESERVED.
@@ -216,7 +216,7 @@
     // -------------------------------------------------------------
     // MASUKKAN LINK WEB APP APPS SCRIPT KORANG DI SINI:
     // -------------------------------------------------------------
-    const API_URL = "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec";
+    const API_URL = "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
 
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -255,7 +255,7 @@
 
     // C. Fungsi Ambil Data Live Dari Google Sheets
     async function fetchLiveData() {
-      if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec") {
+      if (!API_URL || API_URL === "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI") {
         console.log("Q-TIBA: Web App URL belum dimasukkan. Menunjukkan data asas.");
         return;
       }
