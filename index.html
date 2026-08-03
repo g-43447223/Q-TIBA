@@ -211,12 +211,12 @@
 
   </div>
 
-  <!-- 6. JAVASCRIPT LOGIC & LIVE SYNC -->
+  <!-- JAVASCRIPT LOGIC DENGAN DATA DINAMIK -->
   <script>
     // -------------------------------------------------------------
     // MASUKKAN LINK WEB APP APPS SCRIPT KORANG DI SINI:
     // -------------------------------------------------------------
-    const API_URL = "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyf0P5TUCjd0RwalYv-ZWmut2Wh7P79bF0m69BAGGmB8vfuHuM7uZx54rjgMhldW5VkUQ/exec";
 
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -229,7 +229,7 @@
       data: {
         labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
         datasets: [{
-          data: [42, 18, 8, 4], // Data awal
+          data: [0, 0, 0, 0], // Mula dengan 0
           backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
           borderRadius: 4
         }]
@@ -244,7 +244,7 @@
       data: {
         labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
         datasets: [{
-          data: [280, 245, 190, 160, 125, 98],
+          data: [0, 0, 0, 0, 0, 0],
           borderColor: '#22d3ee',
           backgroundColor: 'rgba(34, 211, 238, 0.1)',
           fill: true, tension: 0.35, borderWidth: 2, pointRadius: 2
@@ -255,8 +255,8 @@
 
     // C. Fungsi Ambil Data Live Dari Google Sheets
     async function fetchLiveData() {
-      if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbwa2mThnyF_rdSm2qFYzUy-vJ_YzG3-SlrXl1HW6SbkC5VDRsBMVhBSWZXmNiF_rWsyuQ/exec") {
-        console.log("Q-TIBA: Web App URL belum dimasukkan. Menunjukkan data asas.");
+      if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbyf0P5TUCjd0RwalYv-ZWmut2Wh7P79bF0m69BAGGmB8vfuHuM7uZx54rjgMhldW5VkUQ/exec") {
+        console.log("Q-TIBA: Sila masukkan Web App URL yang sah.");
         return;
       }
 
@@ -265,25 +265,46 @@
         const data = await response.json();
 
         if (data.status === "Success") {
-          // Kemaskini Kad KPI
-          if (data.totalSasaran) document.getElementById('kpi-sasaran').innerText = data.totalSasaran;
-          if (data.lewatHariIni !== undefined) document.getElementById('kpi-hari-ini').innerText = data.lewatHariIni;
+          // 1. Kemaskini Kad KPI
+          document.getElementById('kpi-sasaran').innerText = data.totalSasaran;
+          document.getElementById('kpi-hari-ini').innerText = data.lewatHariIni;
 
-          // Kemaskini Graf Masa
-          if (data.slotWaktu && data.slotWaktu.length === 4) {
+          // 2. Kemaskini Graf Masa Imbasan
+          if (data.slotWaktu) {
             timeChart.data.datasets[0].data = data.slotWaktu;
             timeChart.update();
           }
 
-          console.log("Q-TIBA: Data Live Google Sheets Berjaya Dikemaskini!");
+          // 3. Kemaskini Jadual Murid (Leaderboard) Mengikut Data Sebenar Google Sheet
+          const tbody = document.querySelector('tbody');
+          if (data.muridList && data.muridList.length > 0) {
+            tbody.innerHTML = ''; // Kosongkan jadual dummy asal
+
+            data.muridList.forEach((m, index) => {
+              const row = `
+                <tr class="hover:bg-slate-800/30">
+                  <td class="py-2 code-font"><span class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full inline-flex items-center justify-center font-bold text-[10px]">${index + 1}</span></td>
+                  <td class="py-2 font-semibold text-white">${m.nama}</td>
+                  <td class="py-2 text-slate-400 code-font">${m.kelas}</td>
+                  <td class="py-2 text-center text-slate-400">-</td>
+                  <td class="py-2 text-center text-emerald-400 font-semibold">${m.kiraan}</td>
+                  <td class="py-2 text-center"><span class="bg-cyan-500/10 text-cyan-400 text-[10px] px-1.5 py-0.5 rounded border border-cyan-500/20 font-bold">Aktif</span></td>
+                  <td class="py-2 text-right"><span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">${m.id}</span></td>
+                </tr>
+              `;
+              tbody.innerHTML += row;
+            });
+          } else {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-500">Tiada data murid sasaran lagi. Sila isi tab Senarai_Sasaran dalam Google Sheets.</td></tr>`;
+          }
+
+          console.log("Q-TIBA: Data Live Berjaya Dikemaskini!");
         }
       } catch (error) {
-        console.error("Q-TIBA: Ralat mengambil data dari Google Sheets:", error);
+        console.error("Q-TIBA: Ralat mengambil data:", error);
       }
     }
 
-    // Jalankan imbasan data secara automatik
+    // Jalankan fungsi
     fetchLiveData();
   </script>
-</body>
-</html>
