@@ -3,305 +3,228 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Q-TIBA: Dashboard Analisis Berfokus</title>
-  <!-- Tailwind CSS CDN for modern styling -->
+  <title>Q-TIBA | SK Pulau Indah</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js CDN for data visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- FontAwesome Icons for modern icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .code-font {
-      font-family: 'JetBrains Mono', monospace;
-    }
-    /* Sembunyikan scrollbar untuk paparan lebih kemas di Google Sites iframe */
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .code-font { font-family: 'JetBrains Mono', monospace; }
     ::-webkit-scrollbar { display: none; }
-    html { -ms-overflow-style: none; scrollbar-width: none; overflow: hidden; }
-    body { overflow-x: hidden; }
+    html { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 p-2 sm:p-3 w-full">
+<body class="bg-slate-950 text-slate-100 p-2 sm:p-4 w-full min-h-screen">
 
-  <div class="w-full space-y-3">
+  <div class="max-w-7xl mx-auto space-y-4">
 
-    <!-- Header Section (Q-TIBA Branding) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 code-font tracking-tight">
-            <i class="fa-solid fa-qrcode mr-1"></i>SYSTEM_DEPLOYED
-          </span>
-          <span class="text-[10px] text-slate-500 code-font">// INSTANCE: SMKM_Q-TIBA_01</span>
+    <!-- Header Section (SK Pulau Indah + Logo) -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div class="flex items-center gap-3">
+        <!-- PENTING: Gantikan URL gambar di di bawah dengan link Logo SK Pulau Indah sebenar -->
+        <div class="w-14 h-14 bg-slate-900 border border-slate-700 rounded-xl p-1 flex items-center justify-center shrink-0">
+          <img src="https://via.placeholder.com/150?text=SKPI" alt="Logo SK Pulau Indah" id="school-logo" class="max-h-full max-w-full object-contain">
         </div>
-        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tighter mt-1 text-white flex items-center">
-          <i class="fa-solid fa-bullseye text-cyan-400 mr-2.5"></i>Projek Inovasi Q-TIBA
-        </h1>
-        <p class="text-xs text-slate-400 mt-0.5">
-          <span class="font-bold text-cyan-300">Q</span>R-Code <span class="font-bold text-cyan-300">T</span>racking & <span class="font-bold text-cyan-300">I</span>ntervensi <span class="font-bold text-cyan-300">B</span>erfokus <span class="font-bold text-cyan-300">A</span>wal
-        </p>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 code-font">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5 animate-pulse"></span>SK PULAU INDAH
+            </span>
+            <span class="text-[10px] text-slate-500 code-font">// INNOVATION_2026</span>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight mt-0.5 text-white flex items-center">
+            Dashboard Inovasi Q-TIBA
+          </h1>
+          <p class="text-xs text-slate-400">
+            <span class="font-bold text-cyan-400">Q</span>R-Code <span class="font-bold text-cyan-400">T</span>racking & <span class="font-bold text-cyan-400">I</span>ntervensi <span class="font-bold text-cyan-400">B</span>erfokus <span class="font-bold text-cyan-400">A</span>wal (70 Murid Sasaran)
+          </p>
+        </div>
       </div>
-      <div class="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg code-font text-xs text-slate-300 self-start sm:self-auto flex items-center">
-        <i class="fa-regular fa-calendar-check text-cyan-400 mr-2"></i>Status: <span class="text-emerald-400 font-bold ml-1">Minggu 24 (Live)</span>
+      <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg code-font text-xs text-slate-300 self-start md:self-auto flex items-center">
+        <i class="fa-regular fa-calendar-check text-cyan-400 mr-2"></i>Status: <span class="text-emerald-400 font-bold ml-1">Live Analytics</span>
       </div>
     </div>
 
-    <!-- Top KPI Cards (Analisis Berfokus) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-      <!-- Card 1 -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 hover:border-cyan-800 transition group">
+    <!-- Top KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-800 transition">
         <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Kumpulan Sasaran (T)</p>
-          <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20">
-            <i class="fa-solid fa-users-viewfinder text-sm"></i>
-          </div>
+          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Sasaran (T)</p>
+          <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-users-viewfinder text-sm"></i></div>
         </div>
-        <h3 class="text-3xl font-extrabold text-white mt-1 code-font tracking-tight">72</h3>
-        <p class="text-[10px] text-slate-500 mt-1">Murid tegar dipantau (Tracking)</p>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 code-font">72</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Murid tegar dipantau</p>
       </div>
 
-      <!-- Card 2 -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 hover:border-amber-800 transition">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-amber-800 transition">
         <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Laporan Imbasan (Q)</p>
-          <div class="p-1.5 bg-amber-500/10 rounded text-amber-400 border border-amber-500/20">
-            <i class="fa-solid fa-qrcode text-sm animate-pulse"></i>
-          </div>
+          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Imbasan (Q)</p>
+          <div class="p-1.5 bg-amber-500/10 rounded text-amber-400 border border-amber-500/20"><i class="fa-solid fa-qrcode text-sm animate-pulse"></i></div>
         </div>
-        <h3 class="text-3xl font-extrabold text-amber-400 mt-1 code-font tracking-tight">14</h3>
-        <p class="text-[10px] text-emerald-400 mt-1 flex items-center">
-          <i class="fa-solid fa-arrow-down mr-0.5"></i> -3 hari ini (vs Semalam)
-        </p>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-400 mt-1 code-font">14</h3>
+        <p class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-arrow-down mr-0.5"></i> -3 hari ini</p>
       </div>
 
-      <!-- Card 3 -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 hover:border-emerald-800 transition">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-emerald-800 transition">
         <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Kadar Intervensi (I)</p>
-          <div class="p-1.5 bg-emerald-500/10 rounded text-emerald-400 border border-emerald-500/20">
-            <i class="fa-solid fa-arrows-to-eye text-sm">
-          </i></div>
+          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Intervensi (I)</p>
+          <div class="p-1.5 bg-emerald-500/10 rounded text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-chart-line text-sm"></i></div>
         </div>
-        <h3 class="text-3xl font-extrabold text-emerald-400 mt-1 code-font tracking-tight">-34.2%</h3>
-        <p class="text-[10px] text-slate-400 mt-1 underline decoration-emerald-800">Trend Penurunan Kelewatan</p>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 code-font">-34.2%</h3>
+        <p class="text-[10px] text-slate-400 mt-1">Kadar Penurunan Kes</p>
       </div>
 
-      <!-- Card 4 -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 hover:border-cyan-800 transition">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-800 transition">
         <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Ikon Berubah (A)</p>
-          <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20">
-            <i class="fa-solid fa-award text-sm text-cyan-300"></i>
-          </div>
+          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Anugerah (A)</p>
+          <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-award text-sm text-cyan-300"></i></div>
         </div>
-        <h3 class="text-3xl font-extrabold text-cyan-400 mt-1 code-font tracking-tight">18</h3>
-        <p class="text-[10px] text-slate-400 mt-1">Anugerah Awal (0 Lewat)</p>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-1 code-font">18</h3>
+        <p class="text-[10px] text-slate-400 mt-1">Ikon Berubah (0 Lewat)</p>
       </div>
     </div>
 
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      
-      <!-- Chart: Tracking Trend -->
       <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-        <div class="flex justify-between items-center mb-2">
-          <h2 class="text-sm font-bold text-white flex items-center">
-            <i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i>Trend Penjejakan (Tracking) Mingguan
-          </h2>
-          <span class="text-[9px] code-font text-cyan-400 bg-cyan-950 px-1.5 py-0.5 rounded border border-cyan-800/50">LIVE_FEED</span>
-        </div>
-        <div class="h-44 mt-1">
-          <canvas id="trendChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Chart: Time Focus -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-        <h2 class="text-sm font-bold text-white flex items-center mb-2">
-          <i class="fa-solid fa-hourglass-start text-amber-400 mr-2"></i>Waktu Imbasan QR (Window Fokus)
+        <h2 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center">
+          <i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i>Trend Penjejakan Kelewatan Mingguan
         </h2>
-        <div class="h-44 mt-1">
-          <canvas id="timeChart"></canvas>
-        </div>
+        <div class="h-44"><canvas id="trendChart"></canvas></div>
       </div>
-
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+        <h2 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center">
+          <i class="fa-solid fa-hourglass-start text-amber-400 mr-2"></i>Taburan Masa Imbasan QR
+        </h2>
+        <div class="h-44"><canvas id="timeChart"></canvas></div>
+      </div>
     </div>
 
-    <!-- Leaderboard / Ranking (Intervensi Berfokus) -->
+    <!-- Leaderboard -->
     <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 pb-2 border-b border-slate-800/50">
-        <div class="flex items-center gap-2.5">
-          <div class="p-2 bg-amber-500/10 rounded-lg text-amber-400 border border-amber-500/20">
-            <i class="fa-solid fa-medal text-sm"></i>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-white">Anugerah Ikon Perubahan Q-TIBA (Bulan Ini)</h2>
-            <p class="text-[10px] text-slate-500 mt-0.5 code-font">TOP_PERFORMERS: Highest Percentage Reduction</p>
-          </div>
-        </div>
-        <span class="text-[10px] bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1 rounded-full code-font">REF: JUL/OGOS</span>
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <h2 class="text-xs sm:text-sm font-bold text-white flex items-center">
+          <i class="fa-solid fa-trophy text-amber-400 mr-2"></i>Ranking Penurunan Kes Kelewatan (Ikon Perubahan)
+        </h2>
+        <span class="text-[10px] code-font text-slate-400 bg-slate-800 px-2 py-0.5 rounded">SK PULAU INDAH</span>
       </div>
-
-      <!-- Table (Ranking Penurunan) -->
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead>
             <tr class="border-b border-slate-800 text-slate-500 code-font uppercase text-[9px]">
-              <th class="pb-2">Kedudukan</th>
-              <th class="pb-2">Nama Murid (Kumpulan Sasaran)</th>
-              <th class="pb-2 text-center">Bulan Lepas</th>
-              <th class="pb-2 text-center">Bulan Ini</th>
-              <th class="pb-2 text-center">Intervensi (A)</th>
-              <th class="pb-2 text-right">Anugerah</th>
+              <th class="pb-2">#</th>
+              <th class="pb-2">Nama Murid</th>
+              <th class="pb-2">Kelas</th>
+              <th class="pb-2 text-center">B. Lepas</th>
+              <th class="pb-2 text-center">B. Ini</th>
+              <th class="pb-2 text-center">Penurunan</th>
+              <th class="pb-2 text-right">Status</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800/50">
-            <!-- Rank 1 -->
-            <tr class="hover:bg-cyan-950/20 transition group">
-              <td class="py-2.5 code-font">
-                <span class="w-6 h-6 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full inline-flex items-center justify-center font-bold text-xs">1</span>
-              </td>
-              <td class="py-2.5">
-                <p class="font-semibold text-white">Muhammad Farhan Bin Rosli</p>
-                <p class="text-[10px] text-slate-500 code-font">CLASS_5STEM1 // 88.8%_REDUCTION</p>
-              </td>
-              <td class="py-2.5 text-center text-slate-400 code-font">18 kali</td>
-              <td class="py-2.5 text-center text-emerald-400 font-semibold code-font">2 kali</td>
-              <td class="py-2.5 text-center">
-                <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold code-font">SUCCESS</span>
-              </td>
-              <td class="py-2.5 text-right">
-                <span class="text-[10px] bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-full"><i class="fa-solid fa-crown mr-1"></i>Ikon Perubahan</span>
-              </td>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 code-font"><span class="w-5 h-5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full inline-flex items-center justify-center font-bold text-[10px]">1</span></td>
+              <td class="py-2 font-semibold text-white">Muhammad Farhan Bin Rosli</td>
+              <td class="py-2 text-slate-400 code-font">5 Cemerlang</td>
+              <td class="py-2 text-center text-slate-400">18</td>
+              <td class="py-2 text-center text-emerald-400 font-semibold">2</td>
+              <td class="py-2 text-center"><span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">-88.8%</span></td>
+              <td class="py-2 text-right"><span class="text-[10px] bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-full"><i class="fa-solid fa-crown mr-1"></i>Ikon Perubahan</span></td>
             </tr>
-
-            <!-- Rank 2 -->
-            <tr class="hover:bg-cyan-950/20 transition">
-              <td class="py-2.5 code-font text-slate-400 pl-1">2</td>
-              <td class="py-2.5">
-                <p class="font-semibold text-white">Adam Danial Bin Ahmad</p>
-                <p class="text-[10px] text-slate-500 code-font">CLASS_4AKAUN // 80.0%_REDUCTION</p>
-              </td>
-              <td class="py-2.5 text-center text-slate-400 code-font">15 kali</td>
-              <td class="py-2.5 text-center text-emerald-400 font-semibold code-font">3 kali</td>
-              <td class="py-2.5 text-center">
-                <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold code-font">SUCCESS</span>
-              </td>
-              <td class="py-2.5 text-right">
-                <span class="text-[10px] bg-cyan-700/50 text-cyan-200 border border-cyan-600 px-2 py-0.5 rounded-full"><i class="fa-solid fa-star text-cyan-300 mr-1"></i>Tinggi</span>
-              </td>
-            </tr>
-
-            <!-- Rank 3 -->
-            <tr class="hover:bg-cyan-950/20 transition">
-              <td class="py-2.5 code-font text-slate-400 pl-1">3</td>
-              <td class="py-2.5">
-                <p class="font-semibold text-white">Siti Nur Aishah Binti Bakar</p>
-                <p class="text-[10px] text-slate-500 code-font">CLASS_3UTARID // 75.0%_REDUCTION</p>
-              </td>
-              <td class="py-2.5 text-center text-slate-400 code-font">12 kali</td>
-              <td class="py-2.5 text-center text-emerald-400 font-semibold code-font">3 kali</td>
-              <td class="py-2.5 text-center">
-                <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold code-font">SUCCESS</span>
-              </td>
-              <td class="py-2.5 text-right">
-                <span class="text-[10px] bg-cyan-700/50 text-cyan-200 border border-cyan-600 px-2 py-0.5 rounded-full"><i class="fa-solid fa-star text-cyan-300 mr-1"></i>Tinggi</span>
-              </td>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 code-font text-slate-400 pl-1">2</td>
+              <td class="py-2 font-semibold text-white">Adam Danial Bin Ahmad</td>
+              <td class="py-2 text-slate-400 code-font">4 Bijak</td>
+              <td class="py-2 text-center text-slate-400">15</td>
+              <td class="py-2 text-center text-emerald-400 font-semibold">3</td>
+              <td class="py-2 text-center"><span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">-80.0%</span></td>
+              <td class="py-2 text-right"><span class="text-[10px] bg-cyan-900/40 text-cyan-300 border border-cyan-700/50 px-2 py-0.5 rounded-full">Sangat Baik</span></td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
+    <!-- SEKSYEN GURU INOVATOR Q-TIBA (3 ORANG GURU) -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 mt-6">
+      <div class="text-center max-w-xl mx-auto mb-4">
+        <span class="text-[10px] font-bold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 rounded-full code-font uppercase">Team Inovasi SK Pulau Indah</span>
+        <h2 class="text-base font-bold text-white mt-1">Sidang Inovator Projek Q-TIBA</h2>
+        <p class="text-xs text-slate-400">Pasukan pendidik yang mengemudi sistem intervensi berfokus kelewatan murid.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        
+        <!-- Guru 1 -->
+        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
+          <img src="https://via.placeholder.com/100?text=Guru+1" alt="Cikgu 1" class="w-16 h-16 rounded-full border-2 border-cyan-500/40 object-cover mb-2">
+          <h3 class="text-xs font-bold text-white">Cikgu Nama Guru 1</h3>
+          <p class="text-[10px] text-cyan-400 font-medium code-font">Ketua Penyelaras Inovasi</p>
+          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
+            "Sistem Q-TIBA mengubah cara kita mengurus disiplin—daripada menghukum kepada membimbing dengan data."
+          </p>
+        </div>
+
+        <!-- Guru 2 -->
+        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
+          <img src="https://via.placeholder.com/100?text=Guru+2" alt="Cikgu 2" class="w-16 h-16 rounded-full border-2 border-amber-500/40 object-cover mb-2">
+          <h3 class="text-xs font-bold text-white">Cikgu Nama Guru 2</h3>
+          <p class="text-[10px] text-amber-400 font-medium code-font">Guru Disiplin & Intervensi</p>
+          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
+            "Fokus pada 70 murid tegar membolehkan intervensi psikologi dijalankan secara lebih teratur dan efektif."
+          </p>
+        </div>
+
+        <!-- Guru 3 -->
+        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
+          <img src="https://via.placeholder.com/100?text=Guru+3" alt="Cikgu 3" class="w-16 h-16 rounded-full border-2 border-emerald-500/40 object-cover mb-2">
+          <h3 class="text-xs font-bold text-white">Cikgu Nama Guru 3</h3>
+          <p class="text-[10px] text-emerald-400 font-medium code-font">Pembangun Sistem & Data</p>
+          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
+            "Imbasan QR pantas 1-saat menjimatkan masa guru bertugas dan merekod trend secara langsung (real-time)."
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-[10px] text-slate-600 code-font pt-2">
+      Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH. ALL RIGHTS RESERVED.
+    </div>
+
   </div>
 
-  <!-- Scripts for Chart.js Visualization (Data Q-TIBA) -->
   <script>
-    // Setup Chart Defaults for Q-TIBA Theme
-    Chart.defaults.color = '#94a3b8'; // text-slate-400
+    Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
     Chart.defaults.font.size = 10;
 
-    // 1. Line Chart - Trend Tracking Mingguan
-    const ctxTrend = document.getElementById('trendChart').getContext('2d');
-    new Chart(ctxTrend, {
+    new Chart(document.getElementById('trendChart').getContext('2d'), {
       type: 'line',
       data: {
-        labels: ['M13', 'M14', 'M15', 'M16', 'M17', 'M18'],
+        labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
         datasets: [{
-          label: 'Jumlah Lewat (Tracking)',
           data: [280, 245, 190, 160, 125, 98],
-          borderColor: '#22d3ee', // cyan-400
+          borderColor: '#22d3ee',
           backgroundColor: 'rgba(34, 211, 238, 0.1)',
-          fill: true,
-          tension: 0.35,
-          borderWidth: 2,
-          pointBackgroundColor: '#22d3ee',
-          pointRadius: 2,
-          pointHoverRadius: 4
+          fill: true, tension: 0.35, borderWidth: 2, pointRadius: 2
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#0f172a', // slate-900
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            borderColor: '#334155',
-            borderWidth: 1,
-            cornerRadius: 4,
-            titleFont: { size: 11 }
-          }
-        },
-        scales: {
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.03)' },
-            beginAtZero: true,
-            ticks: { stepSize: 50 }
-          },
-          x: { grid: { display: false } }
-        }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
-    // 2. Bar Chart - Waktu Focus
-    const ctxTime = document.getElementById('timeChart').getContext('2d');
-    new Chart(ctxTime, {
+    new Chart(document.getElementById('timeChart').getContext('2d'), {
       type: 'bar',
       data: {
         labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
         datasets: [{
-          label: 'Scan Counts',
           data: [42, 18, 8, 4],
-          backgroundColor: [
-            'rgba(251, 191, 36, 0.8)', // amber-400
-            'rgba(249, 115, 22, 0.8)', // orange-500
-            'rgba(239, 68, 68, 0.8)',  // red-500
-            'rgba(153, 27, 27, 0.9)'   // red-900
-          ],
-          borderColor: 'rgba(15, 23, 42, 1)',
-          borderWidth: 1,
-          borderRadius: 4
+          backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'], borderRadius: 4
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.03)' },
-            beginAtZero: true
-          },
-          x: { grid: { display: false } }
-        }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
   </script>
 </body>
