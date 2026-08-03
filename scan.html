@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q-TIBA | Direct QR Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    #reader video { border-radius: 12px; object-fit: cover; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center p-3">
+
+  <div class="w-full max-w-md space-y-4">
+    <!-- Header -->
+    <div class="text-center pt-2">
+      <span class="text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">SK PULAU INDAH</span>
+      <h1 class="text-lg font-bold text-white mt-1"><i class="fa-solid fa-qrcode text-cyan-400 mr-2"></i>Pengimbas QR Q-TIBA</h1>
+      <p class="text-xs text-slate-400">Halakan kamera pada QR Code murid</p>
+    </div>
+
+    <!-- Tetingkap Kamera Web Scanner -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-xl relative overflow-hidden">
+      <div id="reader" class="w-full"></div>
+    </div>
+
+    <!-- Kotak Keputusan Imbasan Live -->
+    <div id="result-card" class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center transition-all duration-300">
+      <i id="status-icon" class="fa-solid fa-camera text-3xl text-slate-600 mb-2"></i>
+      <h2 id="status-title" class="text-sm font-bold text-slate-300">Bersedia Untuk Mengimbas</h2>
+      <p id="status-sub" class="text-xs text-slate-500 mt-1">Sistem akan merekod secara automatik</p>
+    </div>
+
+    <!-- Butang Kembali ke Dashboard -->
+    <div class="text-center">
+      <a href="index.html" class="inline-flex items-center text-xs text-cyan-400 hover:underline">
+        <i class="fa-solid fa-arrow-left mr-1.5"></i> Kembali ke Dashboard Utama
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // =============================================================
+    // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG KAT SINI:
+    // =============================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycby3ayriGAKjXb82KI9Z5luaDVqO55p1RvhyhM7J8Cqe2n7wMcTS_Xo0T0Z-U7TrouDZ9Q/exec";
+
+    let isProcessing = false;
+
+    // Bunyi Beep Audio (Auto generate guna Web Audio API)
+    function playBeep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880; // Nada BEEP 880Hz
+      gain.gain.value = 0.1;
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    }
+
+    async function onScanSuccess(decodedText, decodedResult) {
+      if (isProcessing) return; // Elak imbas berturut-turut dalam 1 saat
+      isProcessing = true;
+
+      playBeep();
+
+      const resultCard = document.getElementById('result-card');
+      const statusIcon = document.getElementById('status-icon');
+      const statusTitle = document.getElementById('status-title');
+      const statusSub = document.getElementById('status-sub');
+
+      // Tunjuk status memproses
+      resultCard.className = "bg-amber-950/40 border border-amber-500/50 rounded-xl p-4 text-center animate-pulse";
+      statusIcon.className = "fa-solid fa-spinner fa-spin text-3xl text-amber-400 mb-2";
+      statusTitle.innerText = "Merekod Kelewatan...";
+      statusSub.innerText = "ID: " + decodedText;
+
+      try {
+        // Hantar data terus ke Google Sheets di sebalik tabir
+        const sendUrl = `${API_URL}?action=scan&id=${encodeURIComponent(decodedText)}`;
+        const response = await fetch(sendUrl);
+        const data = await response.json();
+
+        if (data.status === "Success") {
+          // Tunjuk status BERJAYA
+          resultCard.className = "bg-emerald-950/50 border border-emerald-500/50 rounded-xl p-4 text-center";
+          statusIcon.className = "fa-solid fa-circle-check text-3xl text-emerald-400 mb-2";
+          statusTitle.innerText = data.nama + " (" + data.kelas + ")";
+          statusSub.innerText = "✅ Rekod Kelewatan Berjaya Dihantar!";
+        } else {
+          throw new Error("Gagal");
+        }
+      } catch (err) {
+        resultCard.className = "bg-rose-950/50 border border-rose-500/50 rounded-xl p-4 text-center";
+        statusIcon.className = "fa-solid fa-circle-xmark text-3xl text-rose-400 mb-2";
+        statusTitle.innerText = "Ralat Sambungan";
+        statusSub.innerText = "Gagal menyimpan ke Google Sheets";
+      }
+
+      // Re-enable scanner selepas 2 saat untuk murid seterusnya
+      setTimeout(() => {
+        isProcessing = false;
+        resultCard.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 text-center";
+        statusIcon.className = "fa-solid fa-camera text-3xl text-slate-600 mb-2";
+        statusTitle.innerText = "Bersedia Untuk Mengimbas Seterusnya";
+        statusSub.innerText = "Halakan QR Code murid";
+      }, 2500);
+    }
+
+    // Initialize Camera Scanner
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", 
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      /* verbose= */ false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
