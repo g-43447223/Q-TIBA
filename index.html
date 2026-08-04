@@ -187,12 +187,12 @@
     </div>
 
   </div>
-<!-- JAVASCRIPT LOGIC (KEBAL RALAT / SAFE NULL-CHECK) -->
+<!-- JAVASCRIPT LOGIC (AUTOMATIK & LIVE TREND) -->
   <script>
     // =============================================================
     // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG DI SINI:
     // =============================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbyisNKnsInsLZY3V1STce4Zg1lRnmQVPHqDuvw_rZTOcPixLdlUOQHmdj-Yd1ZEMMy63g/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxH_Bmgj1_MsukZ3H-nPf-oPLof6h1-woOVUJZzaMqzFory69_37RBNXBwUi-71XPyxmQ/exec";
 
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -216,34 +216,32 @@
       });
     }
 
-    // B. Line Chart: Trend Imbasan
+    // B. Line Chart: Trend Imbasan (AUTO UPDATE DARI GOOGLE SHEETS)
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
     let trendChart = null;
     if (ctxTrend) {
       trendChart = new Chart(ctxTrend, {
         type: 'line',
         data: {
-          labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
+          labels: ['M1 (5Mg Lps)', 'M2 (4Mg Lps)', 'M3 (3Mg Lps)', 'M4 (2Mg Lps)', 'M5 (Mg Lps)', 'M6 (Mg Ini)'],
           datasets: [{
             data: [0, 0, 0, 0, 0, 0],
             borderColor: '#22d3ee',
             backgroundColor: 'rgba(34, 211, 238, 0.1)',
-            fill: true, tension: 0.35, borderWidth: 2, pointRadius: 2
+            fill: true, tension: 0.35, borderWidth: 2, pointRadius: 3
           }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
     }
 
-    // Helper Function: Tukar teks secara selamat tanpa menyebabkan crash
+    // Helper Function
     function setElementText(id, value) {
       const el = document.getElementById(id);
-      if (el) {
-        el.innerText = value;
-      }
+      if (el) el.innerText = value;
     }
 
-    // C. Fungsi Utama Ambil Data Live Dari Google Sheets
+    // C. Fungsi Utama Ambil Data Live
     async function fetchLiveData() {
       const tableBody = document.getElementById('student-table-body');
       const syncStatus = document.getElementById('sync-status');
@@ -253,15 +251,6 @@
           syncStatus.innerText = "URL API Belum Diset";
           syncStatus.className = "text-rose-400 font-bold ml-1";
         }
-        if (tableBody) {
-          tableBody.innerHTML = `
-            <tr>
-              <td colspan="6" class="py-6 text-center text-amber-400 code-font">
-                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-                Sila masukkan Web App URL Google Apps Script anda dalam fail index.html!
-              </td>
-            </tr>`;
-        }
         return;
       }
 
@@ -270,13 +259,12 @@
         const data = await response.json();
 
         if (data.status === "Success") {
-          // Status Sync
           if (syncStatus) {
             syncStatus.innerText = "Live Analytics";
             syncStatus.className = "text-emerald-400 font-bold ml-1";
           }
 
-          // 1. Update Kad KPI secara Selamat
+          // 1. Update Kad KPI
           setElementText('kpi-sasaran', data.totalSasaran || 0);
           setElementText('kpi-hari-ini', data.lewatHariIni || 0);
           
@@ -293,16 +281,22 @@
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
 
-          // 2. Update Charts
+          // 2. Update Bar Chart (Masa)
           if (timeChart && data.slotWaktu && data.slotWaktu.length === 4) {
             timeChart.data.datasets[0].data = data.slotWaktu;
             timeChart.update();
           }
 
-          // 3. Update Jadual Murid
+          // 3. Update Line Chart (Trend Auto dari Apps Script!)
+          if (trendChart && data.trendMingguan && data.trendMingguan.length === 6) {
+            trendChart.data.datasets[0].data = data.trendMingguan;
+            trendChart.update();
+          }
+
+          // 4. Update Jadual Murid
           if (tableBody) {
             if (data.muridList && data.muridList.length > 0) {
-              tableBody.innerHTML = ''; // Kosongkan loading
+              tableBody.innerHTML = '';
 
               data.muridList.forEach((m, index) => {
                 let statusBadge = m.kiraan === 0 
@@ -336,23 +330,9 @@
         }
       } catch (error) {
         console.error("Q-TIBA Error:", error);
-        if (syncStatus) {
-          syncStatus.innerText = "Ralat Sambungan";
-          syncStatus.className = "text-rose-400 font-bold ml-1";
-        }
-        if (tableBody) {
-          tableBody.innerHTML = `
-            <tr>
-              <td colspan="6" class="py-6 text-center text-rose-400 code-font">
-                <i class="fa-solid fa-circle-exclamation mr-2"></i>
-                Gagal membuat sambungan ke Google Sheets API. Sila semak Web App URL anda.
-              </td>
-            </tr>`;
-        }
       }
     }
 
-    // Jalankan fungsi
     fetchLiveData();
   </script>
   
