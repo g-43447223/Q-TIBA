@@ -1,3 +1,20 @@
+<!-- TETAPAN PWA & HOMESCREEN ICON -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#020617">
+  
+  <!-- Tetapan Khas Untuk iPhone / iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Q-TIBA">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <script>
+    // Daftarkan Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+
 <!DOCTYPE html>
 <html lang="ms">
 <head>
