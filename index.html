@@ -187,11 +187,10 @@
     </div>
 
   </div>
-
-  <!-- 6. JAVASCRIPT LOGIC (DATA DINAMIK DARI GOOGLE SHEETS) -->
+<!-- JAVASCRIPT LOGIC (KEBAL RALAT / SAFE NULL-CHECK) -->
   <script>
     // =============================================================
-    // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG KAT SINI:
+    // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG DI SINI:
     // =============================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbyisNKnsInsLZY3V1STce4Zg1lRnmQVPHqDuvw_rZTOcPixLdlUOQHmdj-Yd1ZEMMy63g/exec";
 
@@ -199,52 +198,70 @@
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
     Chart.defaults.font.size = 10;
 
-    // A. Bar Chart: Taburan Masa (Bermula Kosong)
-    const ctxTime = document.getElementById('timeChart').getContext('2d');
-    const timeChart = new Chart(ctxTime, {
-      type: 'bar',
-      data: {
-        labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
-        datasets: [{
-          data: [0, 0, 0, 0],
-          backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
-          borderRadius: 4
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    // A. Bar Chart: Taburan Masa
+    const ctxTime = document.getElementById('timeChart')?.getContext('2d');
+    let timeChart = null;
+    if (ctxTime) {
+      timeChart = new Chart(ctxTime, {
+        type: 'bar',
+        data: {
+          labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
+          datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
+            borderRadius: 4
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
 
-    // B. Line Chart: Trend Imbasan (Bermula Kosong)
-    const ctxTrend = document.getElementById('trendChart').getContext('2d');
-    const trendChart = new Chart(ctxTrend, {
-      type: 'line',
-      data: {
-        labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
-        datasets: [{
-          data: [0, 0, 0, 0, 0, 0],
-          borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34, 211, 238, 0.1)',
-          fill: true, tension: 0.35, borderWidth: 2, pointRadius: 2
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    // B. Line Chart: Trend Imbasan
+    const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
+    let trendChart = null;
+    if (ctxTrend) {
+      trendChart = new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
+          datasets: [{
+            data: [0, 0, 0, 0, 0, 0],
+            borderColor: '#22d3ee',
+            backgroundColor: 'rgba(34, 211, 238, 0.1)',
+            fill: true, tension: 0.35, borderWidth: 2, pointRadius: 2
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
 
-    // C. Fungsi Ambil Data Live Dari Google Sheets
+    // Helper Function: Tukar teks secara selamat tanpa menyebabkan crash
+    function setElementText(id, value) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerText = value;
+      }
+    }
+
+    // C. Fungsi Utama Ambil Data Live Dari Google Sheets
     async function fetchLiveData() {
       const tableBody = document.getElementById('student-table-body');
       const syncStatus = document.getElementById('sync-status');
 
       if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbyisNKnsInsLZY3V1STce4Zg1lRnmQVPHqDuvw_rZTOcPixLdlUOQHmdj-Yd1ZEMMy63g/exec") {
-        syncStatus.innerText = "URL API Belum Diset";
-        syncStatus.className = "text-rose-400 font-bold ml-1";
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="6" class="py-6 text-center text-amber-400 code-font">
-              <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-              Sila masukkan Web App URL Google Apps Script anda dalam fail index.html!
-            </td>
-          </tr>`;
+        if (syncStatus) {
+          syncStatus.innerText = "URL API Belum Diset";
+          syncStatus.className = "text-rose-400 font-bold ml-1";
+        }
+        if (tableBody) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="py-6 text-center text-amber-400 code-font">
+                <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                Sila masukkan Web App URL Google Apps Script anda dalam fail index.html!
+              </td>
+            </tr>`;
+        }
         return;
       }
 
@@ -254,12 +271,14 @@
 
         if (data.status === "Success") {
           // Status Sync
-          syncStatus.innerText = "Live Analytics";
-          syncStatus.className = "text-emerald-400 font-bold ml-1";
+          if (syncStatus) {
+            syncStatus.innerText = "Live Analytics";
+            syncStatus.className = "text-emerald-400 font-bold ml-1";
+          }
 
-          // 1. Update KPI Cards secara Dinamik
-          document.getElementById('kpi-sasaran').innerText = data.totalSasaran || 0;
-          document.getElementById('kpi-hari-ini').innerText = data.lewatHariIni || 0;
+          // 1. Update Kad KPI secara Selamat
+          setElementText('kpi-sasaran', data.totalSasaran || 0);
+          setElementText('kpi-hari-ini', data.lewatHariIni || 0);
           
           let totalKesSum = 0;
           let countBebasLewat = 0;
@@ -271,64 +290,69 @@
             });
           }
 
-          document.getElementById('kpi-total-kes').innerText = totalKesSum;
-          document.getElementById('kpi-bebas-lewat').innerText = countBebasLewat;
+          setElementText('kpi-total-kes', totalKesSum);
+          setElementText('kpi-bebas-lewat', countBebasLewat);
 
-          // 2. Update Charts secara Dinamik
-          if (data.slotWaktu && data.slotWaktu.length === 4) {
+          // 2. Update Charts
+          if (timeChart && data.slotWaktu && data.slotWaktu.length === 4) {
             timeChart.data.datasets[0].data = data.slotWaktu;
             timeChart.update();
           }
 
-          // 3. Update Jadual Murid Mengikut Data Sebenar Google Sheet
-          if (data.muridList && data.muridList.length > 0) {
-            tableBody.innerHTML = ''; // Padamkan loading spinner
+          // 3. Update Jadual Murid
+          if (tableBody) {
+            if (data.muridList && data.muridList.length > 0) {
+              tableBody.innerHTML = ''; // Kosongkan loading
 
-            data.muridList.forEach((m, index) => {
-              let statusBadge = m.kiraan === 0 
-                ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full"><i class="fa-solid fa-check mr-1"></i>Cemerlang (0 Lewat)</span>`
-                : `<span class="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full">Dipantau (${m.kiraan} Kes)</span>`;
+              data.muridList.forEach((m, index) => {
+                let statusBadge = m.kiraan === 0 
+                  ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full"><i class="fa-solid fa-check mr-1"></i>Cemerlang (0 Lewat)</span>`
+                  : `<span class="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full">Dipantau (${m.kiraan} Kes)</span>`;
 
-              const row = `
-                <tr class="hover:bg-slate-800/30">
-                  <td class="py-2 code-font"><span class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full inline-flex items-center justify-center font-bold text-[10px]">${index + 1}</span></td>
-                  <td class="py-2 text-slate-400 code-font">${m.id}</td>
-                  <td class="py-2 font-semibold text-white">${m.nama}</td>
-                  <td class="py-2 text-slate-400 code-font">${m.kelas}</td>
-                  <td class="py-2 text-center text-emerald-400 font-semibold code-font">${m.kiraan}</td>
-                  <td class="py-2 text-right">${statusBadge}</td>
-                </tr>
-              `;
-              tableBody.innerHTML += row;
-            });
-          } else {
-            tableBody.innerHTML = `
-              <tr>
-                <td colspan="6" class="py-6 text-center text-slate-400 code-font">
-                  <i class="fa-solid fa-folder-open mr-2"></i>
-                  Tiada rekod murid sasaran ditemui. Sila masukkan data dalam tab <b class="text-cyan-400">Senarai_Sasaran</b> Google Sheet anda.
-                </td>
-              </tr>`;
+                const row = `
+                  <tr class="hover:bg-slate-800/30">
+                    <td class="py-2 code-font"><span class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full inline-flex items-center justify-center font-bold text-[10px]">${index + 1}</span></td>
+                    <td class="py-2 text-slate-400 code-font">${m.id}</td>
+                    <td class="py-2 font-semibold text-white">${m.nama}</td>
+                    <td class="py-2 text-slate-400 code-font">${m.kelas}</td>
+                    <td class="py-2 text-center text-emerald-400 font-semibold code-font">${m.kiraan}</td>
+                    <td class="py-2 text-right">${statusBadge}</td>
+                  </tr>
+                `;
+                tableBody.innerHTML += row;
+              });
+            } else {
+              tableBody.innerHTML = `
+                <tr>
+                  <td colspan="6" class="py-6 text-center text-slate-400 code-font">
+                    <i class="fa-solid fa-folder-open mr-2"></i>
+                    Tiada rekod murid sasaran ditemui. Sila masukkan data dalam tab <b class="text-cyan-400">Senarai_Sasaran</b> Google Sheet anda.
+                  </td>
+                </tr>`;
+            }
           }
 
-          console.log("Q-TIBA: Data Live dari Google Sheets berjaya dikemaskini!");
+          console.log("Q-TIBA: Data Live Berjaya Dimuatkan!");
         }
       } catch (error) {
         console.error("Q-TIBA Error:", error);
-        syncStatus.innerText = "Ralat Sambungan";
-        syncStatus.className = "text-rose-400 font-bold ml-1";
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="6" class="py-6 text-center text-rose-400 code-font">
-              <i class="fa-solid fa-circle-exclamation mr-2"></i>
-              Gagal membuat sambungan ke Google Sheets API. Sila semak Web App URL anda.
-            </td>
-          </tr>`;
+        if (syncStatus) {
+          syncStatus.innerText = "Ralat Sambungan";
+          syncStatus.className = "text-rose-400 font-bold ml-1";
+        }
+        if (tableBody) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="py-6 text-center text-rose-400 code-font">
+                <i class="fa-solid fa-circle-exclamation mr-2"></i>
+                Gagal membuat sambungan ke Google Sheets API. Sila semak Web App URL anda.
+              </td>
+            </tr>`;
+        }
       }
     }
 
-    // Jalankan imbasan
+    // Jalankan fungsi
     fetchLiveData();
   </script>
-</body>
-</html>
+  
