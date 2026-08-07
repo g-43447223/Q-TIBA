@@ -138,7 +138,7 @@
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-trophy text-amber-500 text-base"></i> Hero Disiplin & Top Improvement
+              <i class="fa-solid fa-trophy text-amber-500 text-base"></i> Hero Disiplin & Peningkatan Prestasi
             </h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Murid sasaran dengan rekod kehadiran paling cemerlang.</p>
           </div>
@@ -311,19 +311,9 @@
     // =========================================================================
     // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI:
     // =========================================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbwjUkbW5RHrF850TVdlr1asWk4WZRagL5-MSKxxoXx_oos7EUAKApVo0zggevITQ_nuOw/exec"; 
+    const API_URL = "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI"; 
 
     let globalMuridList = [];
-    
-    // FUNGSI UNTUK AUTO-CONVERT LINK GOOGLE DRIVE KEPADA DIRECT IMAGE LINK
-function fixDriveUrl(url) {
-  if (!url || url.trim() === "") return "";
-  var match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    return "https://lh3.googleusercontent.com/d/" + match[1];
-  }
-  return url;
-}
 
     // SETUP TEACHER TEMPLATE
     const teacherTemplate = document.getElementById('teacher-team-template').content;
@@ -443,9 +433,9 @@ function fixDriveUrl(url) {
           : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
         const userImg = (m.urlGambar && m.urlGambar !== '') 
-  ? fixDriveUrl(m.urlGambar) 
-  : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
-        
+          ? m.urlGambar 
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
         tableBody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-2.5 code-font">${index + 1}</td>
