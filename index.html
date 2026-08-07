@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Q-TIBA - Analytics Dashboard</title>
   
-  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
+    tailwind.config = { darkMode: 'class' }
   </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- PWA Metadata -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
 
@@ -24,7 +20,6 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .code-font { font-family: 'JetBrains Mono', monospace; }
 
-    /* GLASSMORPHISM & HOVER ANIMATION */
     .glass-card {
       background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(16px);
@@ -48,7 +43,6 @@
       box-shadow: 0 12px 30px -10px rgba(56, 189, 248, 0.2);
     }
 
-    /* TAB BUTTON ACTIVE STYLES */
     .tab-btn-active {
       background: #06b6d4 !important;
       color: #ffffff !important;
@@ -59,35 +53,29 @@
 
 <body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative overflow-x-hidden">
 
-  <!-- LIGHT GLOW FOLLOWING CURSOR -->
   <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
 
-  <!-- HEADER / BAR ATAS -->
+  <!-- HEADER -->
   <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300">
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Q-TIBA
-            </h1>
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Q-TIBA</h1>
             <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">LIVE</span>
           </div>
-          <p class="text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide">
-            "Menganalisis Data, Mengubah Budaya"
-          </p>
+          <p class="text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide">"Menganalisis Data, Mengubah Budaya"</p>
         </div>
       </div>
 
-      <!-- TOGGLE TEMA & STATUS -->
       <div class="flex items-center gap-3">
         <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="sync-status" class="text-emerald-600 dark:text-emerald-400">Live Analytics</span>
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="sync-status" class="text-amber-600 dark:text-amber-400">Menghubungkan...</span>
         </div>
 
-        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all shadow-sm border border-slate-300/50 dark:border-slate-700">
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
           <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
         </button>
       </div>
@@ -97,23 +85,20 @@
   <!-- KANDUNGAN UTAMA DASHBOARD -->
   <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5 z-10 relative">
 
-    <!-- NAVIGASI TAB UTAMA -->
+    <!-- TAB NAVIGATION -->
     <div class="glass-card p-1.5 rounded-2xl flex items-center justify-between gap-1 sm:gap-2">
-      <button onclick="switchTab('utama')" id="tab-btn-utama" class="tab-btn-active flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
-        <i class="fa-solid fa-house"></i>
-        <span class="hidden sm:inline">Dashboard</span> Utama
+      <button onclick="switchTab('utama')" id="tab-btn-utama" class="tab-btn-active flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2">
+        <i class="fa-solid fa-house"></i> <span class="hidden sm:inline">Dashboard</span> Utama
       </button>
       <button onclick="switchTab('analitik')" id="tab-btn-analitik" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
-        <i class="fa-solid fa-chart-pie"></i>
-        Analitik <span class="hidden sm:inline">& Graf</span>
+        <i class="fa-solid fa-chart-pie"></i> Analitik <span class="hidden sm:inline">& Graf</span>
       </button>
       <button onclick="switchTab('murid')" id="tab-btn-murid" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
-        <i class="fa-solid fa-users"></i>
-        Murid Sasaran
+        <i class="fa-solid fa-users"></i> Murid Sasaran
       </button>
     </div>
 
-    <!-- SUB-HERO BANNER (AKRONIM & TAGLINE) -->
+    <!-- BANNER HERO -->
     <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-l-cyan-500">
       <div>
         <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 code-font">Inovasi Disiplin SK Pulau Indah</span>
@@ -121,18 +106,14 @@
           Q-TIBA: <span class="text-cyan-600 dark:text-cyan-400">QR Code Tracking & Intervention Behaviometric Analytics</span>
         </h2>
         <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 italic">
-          <i class="fa-solid fa-quote-left mr-1 text-cyan-500"></i>
-          Menganalisis Data, Mengubah Budaya
-          <i class="fa-solid fa-quote-right ml-1 text-cyan-500"></i>
+          <i class="fa-solid fa-quote-left mr-1 text-cyan-500"></i> Menganalisis Data, Mengubah Budaya <i class="fa-solid fa-quote-right ml-1 text-cyan-500"></i>
         </p>
       </div>
     </div>
 
-    <!-- ============================================================== -->
     <!-- TAB 1: DASHBOARD UTAMA -->
-    <!-- ============================================================== -->
     <div id="tab-utama" class="tab-content flex flex-col gap-5">
-      <!-- KPI SUMMARY -->
+      <!-- KPI CARDS -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="glass-card rounded-2xl p-4">
           <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Murid Sasaran</p>
@@ -152,34 +133,34 @@
         </div>
       </div>
 
-      <!-- HERO DISIPLIN (TOP IMPROVEMENT) -->
+      <!-- HERO DISIPLIN -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-trophy text-amber-500 text-base"></i> Hero Disiplin / Penmabahbaikan Terbaik
+              <i class="fa-solid fa-trophy text-amber-500 text-base"></i> Hero Disiplin & Penambahbaikan Terbaik
             </h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Murid sasaran yang berjaya mengekalkan rekod cemerlang tanpa kelewatan / Murid yang menunjukkan peningkatan prestasi yang baik.</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Murid sasaran dengan rekod kehadiran paling cemerlang.</p>
           </div>
-          <span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold code-font">0 KES LEWAT</span>
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold code-font">TOP RECORD</span>
         </div>
         <div id="hero-students-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
-            <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Memuatkan data hero...
+            <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Memuatkan data...
           </div>
         </div>
       </div>
 
-      <!-- SENARAI MURID LEWAT HARI INI -->
+      <!-- JADUAL MURID LEWAT HARI INI -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-user-clock text-amber-500"></i> Rekod Murid Lewat Hari Ini
             </h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Senarai imbasan kehadiran lewat yang direkodkan hari ini sahaja.</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Senarai imbasan kelewatan hari ini beserta masa imbasan.</p>
           </div>
-          <span id="today-date-badge" class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold code-font">HARI INI</span>
+          <span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold code-font">HARI INI</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -197,7 +178,7 @@
             <tbody id="today-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60">
               <tr>
                 <td colspan="6" class="py-8 text-center text-slate-400 code-font">
-                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuatkan rekod hari ini...
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuatkan rekod...
                 </td>
               </tr>
             </tbody>
@@ -205,19 +186,15 @@
         </div>
       </div>
 
-      <!-- PASUKAN INOVASI CIKGU -->
       <div class="teacher-team-section"></div>
     </div>
 
-    <!-- ============================================================== -->
     <!-- TAB 2: ANALITIK & GRAF -->
-    <!-- ============================================================== -->
     <div id="tab-analitik" class="tab-content hidden flex flex-col gap-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span><i class="fa-solid fa-clock mr-1.5 text-cyan-500"></i> Taburan Masa Imbasan</span>
-            <span class="text-[10px] text-slate-400 normal-case code-font">Kategori Masa</span>
+          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+            <i class="fa-solid fa-clock mr-1.5 text-cyan-500"></i> Taburan Masa Imbasan
           </h3>
           <div class="h-64 relative">
             <canvas id="timeChart"></canvas>
@@ -225,9 +202,8 @@
         </div>
 
         <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span><i class="fa-solid fa-chart-line mr-1.5 text-indigo-500"></i> Trend Kelewatan (6 Minggu)</span>
-            <span class="text-[10px] text-slate-400 normal-case code-font">Minggu Ke Minggu</span>
+          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+            <i class="fa-solid fa-chart-line mr-1.5 text-indigo-500"></i> Trend Kelewatan (6 Minggu)
           </h3>
           <div class="h-64 relative">
             <canvas id="trendChart"></canvas>
@@ -235,13 +211,10 @@
         </div>
       </div>
 
-      <!-- PASUKAN INOVASI CIKGU -->
       <div class="teacher-team-section"></div>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 3: SENARAI MURID SASARAN (70 ORANG) -->
-    <!-- ============================================================== -->
+    <!-- TAB 3: SENARAI MURID SASARAN -->
     <div id="tab-murid" class="tab-content hidden flex flex-col gap-5">
       <div class="glass-card rounded-2xl p-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -249,13 +222,11 @@
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-users text-blue-500"></i> Senarai Murid Sasaran Dipantau
             </h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Senarai lengkap murid yang didaftarkan di dalam program Q-TIBA.</p>
           </div>
 
-          <!-- KOTAK CARIAN (SEARCH BAR) -->
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="search-input" onkeyup="filterStudents()" placeholder="Cari Nama / ID / Kelas..." class="w-full sm:w-64 pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500 transition-all">
+            <input type="text" id="search-input" onkeyup="filterStudents()" placeholder="Cari Nama / ID / Kelas..." class="w-full sm:w-64 pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500">
           </div>
         </div>
 
@@ -274,7 +245,7 @@
             <tbody id="student-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60">
               <tr>
                 <td colspan="6" class="py-8 text-center text-slate-400 code-font">
-                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuatkan data murid sasaran...
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuatkan data...
                 </td>
               </tr>
             </tbody>
@@ -282,13 +253,12 @@
         </div>
       </div>
 
-      <!-- PASUKAN INOVASI CIKGU -->
       <div class="teacher-team-section"></div>
     </div>
 
   </main>
 
-  <!-- REUSABLE TEACHER TEAM TEMPLATE (AKAN DI-INJECT KE SEMUA TAB BY JS) -->
+  <!-- TEMPLATE PASUKAN GURU -->
   <template id="teacher-team-template">
     <div class="glass-card rounded-2xl p-5 mt-2">
       <div class="flex items-center justify-between mb-5">
@@ -299,105 +269,83 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <!-- Cikgu 1 -->
-        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3 hover:border-cyan-500/50 transition-all">
-          <img src="cikgu1.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" alt="Cikgu Ketua" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover shadow-md">
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="cikgu1.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
           <div>
-            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">[Nama Cikgu Ketua]</h4>
             <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
-              "<span class="italic">Disiplin yang kukuh adalah asas pembentukan insan cemerlang.</span>"
-            </p>
           </div>
         </div>
 
-        <!-- Cikgu 2 -->
-        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3 hover:border-indigo-500/50 transition-all">
-          <img src="cikgu2.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" alt="Cikgu Sistem" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover shadow-md">
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="cikgu2.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
           <div>
-            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">[Nama Cikgu Sistem]</h4>
             <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem & Data</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
-              "<span class="italic">Analisis data tepat memandu keputusan intervensi berkesan.</span>"
-            </p>
           </div>
         </div>
 
-        <!-- Cikgu 3 -->
-        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3 hover:border-emerald-500/50 transition-all">
-          <img src="cikgu3.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" alt="Cikgu Disiplin" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover shadow-md">
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="cikgu3.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
           <div>
-            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">[Nama Cikgu Disiplin]</h4>
             <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin & Intervensi</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
-              "<span class="italic">Mendidik dengan empati, memimpin dengan ketegasan positif.</span>"
-            </p>
           </div>
         </div>
       </div>
     </div>
   </template>
 
-  <!-- FOOTER -->
-  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-500 code-font pt-4 pb-6 leading-relaxed z-10">
+  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
     <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
     <div>HAK CIPTA TERPELIHARA.</div>
   </footer>
 
-  <!-- LOGIK JAVASCRIPT -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzEGQXz-HlBwxO0RwydROrfkJTUZ2uKMjtXWEjE7hBkNs-vGKvRuNfOuQQXrzt3iILFvg/exec";
+    // =========================================================================
+    // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI:
+    // =========================================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbzEGQXz-HlBwxO0RwydROrfkJTUZ2uKMjtXWEjE7hBkNs-vGKvRuNfOuQQXrzt3iILFvg/exec"; 
+
     let globalMuridList = [];
 
-    // A. SETUP TECAHER TEAM ON EVERY TAB
+    // SETUP TEACHER TEMPLATE
     const teacherTemplate = document.getElementById('teacher-team-template').content;
     document.querySelectorAll('.teacher-team-section').forEach(sec => {
       sec.appendChild(teacherTemplate.cloneNode(true));
     });
 
-    // B. LOGIK SWITCH TAB
+    // TAB SWITCHER
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      
-      const targetTab = document.getElementById(`tab-${tabName}`);
-      if (targetTab) targetTab.classList.remove('hidden');
+      const target = document.getElementById(`tab-${tabName}`);
+      if (target) target.classList.remove('hidden');
 
-      // Kemas kini style butang active
       ['utama', 'analitik', 'murid'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
-        if (t === tabName) {
-          btn.classList.add('tab-btn-active');
-        } else {
-          btn.classList.remove('tab-btn-active');
-        }
+        if (t === tabName) btn.classList.add('tab-btn-active');
+        else btn.classList.remove('tab-btn-active');
       });
 
-      // Kemas kini saiz carta jika masuk Tab Analitik
       if (tabName === 'analitik' && timeChart && trendChart) {
-        setTimeout(() => {
-          timeChart.resize();
-          trendChart.resize();
-        }, 100);
+        setTimeout(() => { timeChart.resize(); trendChart.resize(); }, 100);
       }
     }
 
-    // C. CURSOR GLOW
+    // CURSOR GLOW
     const cursorGlow = document.getElementById('cursor-glow');
     window.addEventListener('mousemove', (e) => {
       cursorGlow.style.left = `${e.clientX}px`;
       cursorGlow.style.top = `${e.clientY}px`;
     });
 
-    // D. TOGGLE TEMA
+    // THEME TOGGLE
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleIcon = document.getElementById('theme-toggle-icon');
 
     if (localStorage.getItem('theme') === 'light') {
       document.documentElement.classList.remove('dark');
       themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
-    } else {
-      document.documentElement.classList.add('dark');
-      themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
     }
 
     themeToggleBtn.addEventListener('click', () => {
@@ -412,7 +360,7 @@
       }
     });
 
-    // E. SETUP CHARTS
+    // CHARTS SETUP
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
@@ -421,11 +369,7 @@
       type: 'bar',
       data: {
         labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
-        datasets: [{
-          data: [0, 0, 0, 0],
-          backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
-          borderRadius: 6
-        }]
+        datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'], borderRadius: 6 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
@@ -434,13 +378,8 @@
     let trendChart = new Chart(ctxTrend, {
       type: 'line',
       data: {
-        labels: ['M1 (5Mg Lps)', 'M2 (4Mg Lps)', 'M3 (3Mg Lps)', 'M4 (2Mg Lps)', 'M5 (Mg Lps)', 'M6 (Mg Ini)'],
-        datasets: [{
-          data: [0, 0, 0, 0, 0, 0],
-          borderColor: '#06b6d4',
-          backgroundColor: 'rgba(6, 182, 212, 0.15)',
-          fill: true, tension: 0.35, borderWidth: 2, pointRadius: 3
-        }]
+        labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6 (Minggu Ini)'],
+        datasets: [{ data: [0, 0, 0, 0, 0, 0], borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.15)', fill: true, tension: 0.35, borderWidth: 2 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
@@ -450,7 +389,18 @@
       if (el) el.innerText = value;
     }
 
-    // F. CARI MURID (SEARCH FILTER TAB 3)
+    function updateSyncStatus(text, colorClass) {
+      const syncStatus = document.getElementById('sync-status');
+      const syncDot = document.getElementById('sync-dot');
+      if (syncStatus) {
+        syncStatus.innerText = text;
+        syncStatus.className = colorClass;
+      }
+      if (syncDot) {
+        syncDot.className = `w-2 h-2 rounded-full ${colorClass.includes('emerald') ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`;
+      }
+    }
+
     function filterStudents() {
       const query = document.getElementById('search-input').value.toLowerCase();
       const filtered = globalMuridList.filter(m => 
@@ -461,13 +411,12 @@
       renderTargetStudentTable(filtered);
     }
 
-    // G. RENDER JADUAL ALL MURID (TAB 3)
     function renderTargetStudentTable(list) {
       const tableBody = document.getElementById('student-table-body');
       if (!tableBody) return;
 
       if (list.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada murid dijumpai.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada rekod murid dijumpai.</td></tr>`;
         return;
       }
 
@@ -477,7 +426,7 @@
           ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
           : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
-        const row = `
+        tableBody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-2.5 code-font">${index + 1}</td>
             <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
@@ -487,26 +436,30 @@
             <td class="py-2.5 text-right">${statusBadge}</td>
           </tr>
         `;
-        tableBody.innerHTML += row;
       });
     }
 
-    // H. FETCH DATA LIVE & DISTRIBUTE TO TABS
+    // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
       const todayTableBody = document.getElementById('today-table-body');
-      const syncStatus = document.getElementById('sync-status');
       const heroContainer = document.getElementById('hero-students-container');
 
-      if (!API_URL || API_URL === "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI") {
-        if (syncStatus) syncStatus.innerText = "URL API Belum Diset";
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) {
+        updateSyncStatus("URL API Belum Diset", "text-rose-500");
+        if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Sila masukkan Web App API URL di dalam fail index.html.</td></tr>`;
         return;
       }
 
       try {
+        updateSyncStatus("Memuatkan Data...", "text-amber-500");
         const response = await fetch(API_URL);
+        
+        if (!response.ok) throw new Error("Gagal menyambung ke server Google");
+
         const data = await response.json();
 
         if (data.status === "Success") {
+          updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
           globalMuridList = data.muridList || [];
 
           setElementText('kpi-sasaran', data.totalSasaran || 0);
@@ -523,7 +476,6 @@
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
 
-          // UPDATE CHARTS (TAB 2)
           if (timeChart && data.slotWaktu) {
             timeChart.data.datasets[0].data = data.slotWaktu;
             timeChart.update();
@@ -534,7 +486,7 @@
             trendChart.update();
           }
 
-          // RENDER HERO DISIPLIN (TAB 1)
+          // RENDER HERO
           if (heroContainer && globalMuridList.length > 0) {
             const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
             const topHeroes = sortedMurid.slice(0, 4);
@@ -558,12 +510,11 @@
                       <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
                     </p>
                   </div>
-                </div>
-              `;
+                </div>`;
             });
           }
 
-          // RENDER SENARAI LEWAT HARI INI (TAB 1)
+          // RENDER MURID LEWAT HARI INI
           if (todayTableBody) {
             const muridLewatToday = globalMuridList.filter(m => m.lewatHariIni);
             if (muridLewatToday.length === 0) {
@@ -589,11 +540,17 @@
             }
           }
 
-          // RENDER TABEL SEMUA MURID (TAB 3)
           renderTargetStudentTable(globalMuridList);
+
+        } else {
+          updateSyncStatus("Ralat Google Sheets", "text-rose-500");
+          if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Ralat Apps Script: ${data.message}</td></tr>`;
         }
+
       } catch (error) {
-        console.error("Q-TIBA Error:", error);
+        console.error("Q-TIBA Fetch Error:", error);
+        updateSyncStatus("Gagal Menyambung Data", "text-rose-500");
+        if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
       }
     }
 
