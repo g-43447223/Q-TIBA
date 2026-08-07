@@ -314,6 +314,16 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwjUkbW5RHrF850TVdlr1asWk4WZRagL5-MSKxxoXx_oos7EUAKApVo0zggevITQ_nuOw/exec"; 
 
     let globalMuridList = [];
+    
+    // FUNGSI UNTUK AUTO-CONVERT LINK GOOGLE DRIVE KEPADA DIRECT IMAGE LINK
+function fixDriveUrl(url) {
+  if (!url || url.trim() === "") return "";
+  var match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return "https://lh3.googleusercontent.com/d/" + match[1];
+  }
+  return url;
+}
 
     // SETUP TEACHER TEMPLATE
     const teacherTemplate = document.getElementById('teacher-team-template').content;
@@ -584,16 +594,6 @@
         if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
       }
     }
-
-    // FUNGSI UNTUK AUTO-CONVERT LINK GOOGLE DRIVE KEPADA DIRECT IMAGE LINK
-function fixDriveUrl(url) {
-  if (!url || url.trim() === "") return "";
-  var match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    return "https://lh3.googleusercontent.com/d/" + match[1];
-  }
-  return url;
-}
 
     fetchLiveData();
   </script>
