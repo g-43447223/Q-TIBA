@@ -433,18 +433,20 @@
           : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
         tableBody.innerHTML += `
-          <tr class="hover:bg-slate-500/5 transition-colors">
-            <td class="py-2.5 code-font">${index + 1}</td>
-            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-            <td class="py-2.5 font-semibold text-slate-800 dark:text-white">${m.nama}</td>
-            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
-            <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
-            <td class="py-2.5 text-right">${statusBadge}</td>
-          </tr>
-        `;
-      });
-    }
-
+  <tr class="hover:bg-slate-500/5 transition-colors">
+    <td class="py-2.5 code-font">${index + 1}</td>
+    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+    <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+      <img src="${(m.urlGambar && m.urlGambar !== '') ? m.urlGambar : 'https://api.dicebear.com/7.x/bottts/svg?seed=' + m.id}" 
+           class="w-7 h-7 rounded-full object-cover border border-slate-300 dark:border-slate-700" 
+           onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${m.id}'">
+      <span>${m.nama}</span>
+    </td>
+    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
+    <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
+    <td class="py-2.5 text-right">${statusBadge}</td>
+  </tr>
+`;
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
       const todayTableBody = document.getElementById('today-table-body');
@@ -499,7 +501,10 @@
 
             heroContainer.innerHTML = '';
             topHeroes.forEach((m, idx) => {
-              const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+              // Memeriksa sama ada URL gambar wujud dalam Google Sheet
+const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
+  ? m.urlGambar 
+  : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
               const rankBadge = idx === 0 ? '👑 #1 HERO' : `#${idx + 1} TOP`;
               const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
