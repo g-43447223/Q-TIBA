@@ -138,7 +138,7 @@
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-trophy text-amber-500 text-base"></i> Hero Disiplin & Penambahbaikan Terbaik
+              <i class="fa-solid fa-trophy text-amber-500 text-base"></i> Hero Disiplin & Top Improvement
             </h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Murid sasaran dengan rekod kehadiran paling cemerlang.</p>
           </div>
@@ -270,7 +270,7 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
+          <img src="cikgu1.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
             <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
@@ -280,7 +280,7 @@
         </div>
 
         <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
+          <img src="cikgu2.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
             <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem & Data</p>
@@ -290,11 +290,11 @@
         </div>
 
         <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
+          <img src="cikgu3.jpg" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
             <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin & Intervensi</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+            e-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
             "<span class="italic">Mendidik dengan empati, memimpin dengan ketegasan positif.</span>"
           </div>
         </div>
@@ -432,21 +432,29 @@
           ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
           : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
+        const userImg = (m.urlGambar && m.urlGambar !== '') 
+          ? m.urlGambar 
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
         tableBody.innerHTML += `
-  <tr class="hover:bg-slate-500/5 transition-colors">
-    <td class="py-2.5 code-font">${index + 1}</td>
-    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-    <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-      <img src="${(m.urlGambar && m.urlGambar !== '') ? m.urlGambar : 'https://api.dicebear.com/7.x/bottts/svg?seed=' + m.id}" 
-           class="w-7 h-7 rounded-full object-cover border border-slate-300 dark:border-slate-700" 
-           onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${m.id}'">
-      <span>${m.nama}</span>
-    </td>
-    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
-    <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
-    <td class="py-2.5 text-right">${statusBadge}</td>
-  </tr>
-`;
+          <tr class="hover:bg-slate-500/5 transition-colors">
+            <td class="py-2.5 code-font">${index + 1}</td>
+            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+            <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2.5">
+              <img src="${userImg}" 
+                   alt="${m.nama}" 
+                   class="w-7 h-7 rounded-full object-cover border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800" 
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+              <span>${m.nama}</span>
+            </td>
+            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
+            <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
+            <td class="py-2.5 text-right">${statusBadge}</td>
+          </tr>
+        `;
+      });
+    }
+
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
       const todayTableBody = document.getElementById('today-table-body');
@@ -501,17 +509,20 @@
 
             heroContainer.innerHTML = '';
             topHeroes.forEach((m, idx) => {
-              // Memeriksa sama ada URL gambar wujud dalam Google Sheet
-const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
-  ? m.urlGambar 
-  : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+              const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
+                ? m.urlGambar 
+                : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+              
               const rankBadge = idx === 0 ? '👑 #1 HERO' : `#${idx + 1} TOP`;
               const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
               heroContainer.innerHTML += `
                 <div class="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3 shadow-sm">
                   <div class="relative">
-                    <img src="${avatarUrl}" alt="${m.nama}" class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-emerald-500 p-0.5 object-cover">
+                    <img src="${avatarUrl}" 
+                         alt="${m.nama}" 
+                         class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-emerald-500 p-0.5 object-cover"
+                         onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
                     <span class="absolute -bottom-1 -right-1 text-[9px] font-black ${rankColor} border px-1.5 py-0.2 rounded-full code-font">${rankBadge}</span>
                   </div>
                   <div class="overflow-hidden">
@@ -538,11 +549,20 @@ const avatarUrl = (m.urlGambar && m.urlGambar !== "")
             } else {
               todayTableBody.innerHTML = '';
               muridLewatToday.forEach((m, idx) => {
+                const userImg = (m.urlGambar && m.urlGambar !== '') 
+                  ? m.urlGambar 
+                  : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
                 todayTableBody.innerHTML += `
                   <tr class="hover:bg-slate-500/5 transition-colors">
                     <td class="py-2.5 code-font">${idx + 1}</td>
                     <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-                    <td class="py-2.5 font-semibold text-slate-800 dark:text-white">${m.nama}</td>
+                    <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                      <img src="${userImg}" 
+                           class="w-6 h-6 rounded-full object-cover border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800" 
+                           onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                      <span>${m.nama}</span>
+                    </td>
                     <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
                     <td class="py-2.5 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${m.waktuHariIni || 'Terrekod'}</td>
                     <td class="py-2.5 text-right"><span class="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/20 px-2 py-0.5 rounded-full font-medium">Lewat Hari Ini</span></td>
