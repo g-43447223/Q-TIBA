@@ -226,15 +226,16 @@
     // =========================================================================
     // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI:
     // =========================================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycby_OFv7ShMUgRltccPSI56MHsAf4aTKYS5LYL7jAEPBDTpnMHiKLpkjcy8dktHG6i33mA/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxNS88ZUyTVmw6RD5i-4macBMy6Kb9_EiHRrTqBjaUjsv4m62GAL4hCd6yVD419MkJJaQ/exec";
 
     let html5QrCode = null;
     let isScannerRunning = false;
     let isProcessingScan = false;
     let studentCacheMap = {};
+    let scannedTodaySet = new Set(); // Mengingati ID murid yang dah diimbas hari ini
     let sessionScannedList = [];
 
-    // AUDIO BEEP GENERATOR (Web Audio API - Tanpa bergantung fail MP3 luaran)
+    // AUDIO BEEP GENERATOR (Tone Success vs Warning)
     function playAudioBeep(type = 'success') {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -247,12 +248,12 @@
         gain.connect(ctx.destination);
 
         if (type === 'success') {
-          osc.frequency.setValueAtTime(880, ctx.currentTime); // Tone A5
+          osc.frequency.setValueAtTime(880, ctx.currentTime); // Tone Tinggi (Berjaya)
           gain.gain.setValueAtTime(0.3, ctx.currentTime);
           osc.start();
           osc.stop(ctx.currentTime + 0.15);
         } else {
-          osc.frequency.setValueAtTime(300, ctx.currentTime); // Tone Low Error
+          osc.frequency.setValueAtTime(220, ctx.currentTime); // Tone Rendah (Amaran/Duplikat)
           gain.gain.setValueAtTime(0.4, ctx.currentTime);
           osc.start();
           osc.stop(ctx.currentTime + 0.35);
@@ -290,7 +291,7 @@
       }
     });
 
-    // PRA-AMBIL DATA MURID UNTUK MEMADANKAN NAMA & GAMBAR PANTAS
+    // PRA-AMBIL DATA MURID & SENARAI MURID YANG DAH LEWAT HARI INI
     async function preloadStudentData() {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       try {
@@ -298,9 +299,15 @@
         const data = await response.json();
         if (data.status === "Success" && data.muridList) {
           data.muridList.forEach(m => {
-            studentCacheMap[m.id.trim().toUpperCase()] = m;
+            const cleanId = m.id.trim().toUpperCase();
+            studentCacheMap[cleanId] = m;
+            
+            // Masukkan dalam set jika murid dah diimbas hari ini mengikut data Google Sheets
+            if (m.lewatHariIni) {
+              scannedTodaySet.add(cleanId);
+            }
           });
-          console.log("Q-TIBA: Cached", Object.keys(studentCacheMap).length, "students.");
+          console.log("Q-TIBA: Loaded", Object.keys(studentCacheMap).length, "students. Already scanned today:", scannedTodaySet.size);
         }
       } catch (err) {
         console.warn("Preload student map failed:", err);
@@ -321,7 +328,6 @@
             opt.innerText = cam.label || `Kamera ${index + 1}`;
             cameraSelect.appendChild(opt);
           });
-          // Default ke kamera belakang jika ada
           const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
           if (backCam) cameraSelect.value = backCam.id;
           else cameraSelect.value = devices[0].id;
@@ -344,10 +350,7 @@
 
       html5QrCode.start(
         cameraConfig,
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 }
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         onScanSuccess,
         onScanError
       ).then(() => {
@@ -356,7 +359,7 @@
         document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
       }).catch(err => {
         console.error("Gagal menjalankan kamera:", err);
-        alert("Gagal membuka kamera. Pastikan kebenaran (permission) kamera dibenarkan.");
+        alert("Gagal membuka kamera. Pastikan kebenaran kamera dibenarkan.");
         document.getElementById('camera-placeholder').style.display = 'flex';
         document.getElementById('scan-laser').style.display = 'none';
       });
@@ -386,23 +389,19 @@
       }
     }
 
-    function onScanError(errorMessage) {
-      // Ignore routine scan frame errors
-    }
+    function onScanError(errorMessage) {}
 
-    // APABILA QR KOD BERJAYA DIIMBAS
     function onScanSuccess(decodedText) {
-      if (isProcessingScan) return; // Prevent double trigger
+      if (isProcessingScan) return;
       
       const scannedId = String(decodedText || "").trim().toUpperCase();
       if (!scannedId) return;
 
       isProcessingScan = true;
-      playAudioBeep('success');
 
       processScannedStudent(scannedId);
 
-      // Cooldown 2 saat sebelum membenarkan imbasan seterusnya
+      // Cooldown 2 saat sebelum membenarkan imbasan berikutnya
       setTimeout(() => {
         isProcessingScan = false;
       }, 2000);
@@ -413,18 +412,16 @@
       const input = document.getElementById('manual-id');
       const val = input.value.trim().toUpperCase();
       if (val) {
-        playAudioBeep('success');
         processScannedStudent(val);
         input.value = '';
       }
     }
 
-    // PROSES HANTAR DATA KE APPS SCRIPT BACKEND
+    // PROSES IMBASAN & MENYEMAK DUPLIKAT HARI INI
     async function processScannedStudent(scannedId) {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      // Cari data murid dari Cache jika ada
       const matchedStudent = studentCacheMap[scannedId] || {
         id: scannedId,
         nama: "MURID DIIMBAS",
@@ -436,8 +433,36 @@
         ? matchedStudent.urlGambar 
         : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}`;
 
-      // Kemas kini Paparan Kad Terkini
       const resultBox = document.getElementById('scanned-result-box');
+
+      // SEMAKAN: JIKA MURID SUDAH DIIMBAS HARI INI
+      if (scannedTodaySet.has(scannedId)) {
+        playAudioBeep('error'); // Bunyi amaran
+
+        resultBox.innerHTML = `
+          <div class="pop-in flex flex-col items-center w-full">
+            <div class="relative my-2">
+              <img src="${userImg}" 
+                   class="w-20 h-20 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
+              <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1 text-[10px]">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </span>
+            </div>
+            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
+            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
+            <div class="mt-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
+              <i class="fa-solid fa-ban"></i> SUDAH DIIMBAS HARI INI!
+            </div>
+          </div>
+        `;
+        return; // Hentikan proses, tak perlu simpan ke Google Sheet
+      }
+
+      // JIKA BELUM DIIMBAS HARI INI:
+      playAudioBeep('success'); // Bunyi berjaya
+      scannedTodaySet.add(scannedId); // Tandakan ID telah diimbas untuk hari ini
+
       resultBox.innerHTML = `
         <div class="pop-in flex flex-col items-center w-full">
           <div class="relative my-2">
@@ -456,7 +481,6 @@
         </div>
       `;
 
-      // Tambah ke Senarai Log Sesi Ini
       sessionScannedList.unshift({
         id: scannedId,
         nama: matchedStudent.nama,
@@ -467,12 +491,12 @@
 
       renderSessionLog();
 
-      // Hantar Data Ke Backend Google Apps Script (POST)
+      // HANTAR REKOD KEPADA GOOGLE APPS SCRIPT
       if (API_URL && !API_URL.includes("MASUKKAN_URL")) {
         try {
           await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors', // Memintas sekaan CORS untuk Google Apps Script
+            mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               id: scannedId,
@@ -480,7 +504,7 @@
               kelas: matchedStudent.kelas
             })
           });
-          console.log("Q-TIBA: Imbasan dihantar ke Google Sheets.");
+          console.log("Q-TIBA: Rekod baharu berjaya dihantar.");
         } catch (err) {
           console.error("Gagal menghantar rekod POST:", err);
         }
@@ -499,7 +523,7 @@
       }
 
       logList.innerHTML = '';
-      sessionScannedList.forEach((item, idx) => {
+      sessionScannedList.forEach((item) => {
         logList.innerHTML += `
           <li class="py-2 flex items-center justify-between gap-2 hover:bg-slate-500/5 transition-colors">
             <div class="flex items-center gap-2 overflow-hidden">
@@ -520,7 +544,6 @@
       renderSessionLog();
     }
 
-    // MULA PELAKSANAAN
     initCameraDevices();
     preloadStudentData();
   </script>
