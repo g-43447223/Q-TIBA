@@ -8,7 +8,6 @@
   <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Aktifkan sokongan dark mode berasaskan kelas
     tailwind.config = {
       darkMode: 'class',
     }
@@ -25,13 +24,14 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .code-font { font-family: 'JetBrains Mono', monospace; }
 
-    /* CLASS KAS GLASSMORPHISM */
+    /* CLASS GLASSMORPHISM & HOVER ANIMATION */
     .glass-card {
-      background: rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
     }
 
     .dark .glass-card {
@@ -41,21 +41,37 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
+
+    /* KESAN HOVER APABILA CURSOR LALU ATAS KAD */
+    .glass-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 12px 30px -10px rgba(56, 189, 248, 0.2);
+    }
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300">
+<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative overflow-x-hidden">
+
+  <!-- LIGHT GLOW FOLLOWING CURSOR -->
+  <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
 
   <!-- HEADER / BAR ATAS -->
   <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 object-contain drop-shadow">
+        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300">
         <div>
-          <h1 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            Q-TIBA <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">LIVE</span>
-          </h1>
-          <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">SK PULAU INDAH</p>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Q-TIBA
+            </h1>
+            <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">LIVE</span>
+          </div>
+          <!-- TAGLINE BARASAN HEADER -->
+          <p class="text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide">
+            "Menganalisis Data, Mengubah Budaya"
+          </p>
         </div>
       </div>
 
@@ -67,7 +83,7 @@
         </div>
 
         <!-- TOGGLE BUTTON -->
-        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all shadow-sm border border-slate-300/50 dark:border-slate-700">
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all shadow-sm border border-slate-300/50 dark:border-slate-700">
           <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
         </button>
       </div>
@@ -75,7 +91,22 @@
   </header>
 
   <!-- KANDUNGAN UTAMA DASHBOARD -->
-  <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5">
+  <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5 z-10 relative">
+
+    <!-- SUB-HERO BANNER (AKRONIM & TAGLINE) -->
+    <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-l-cyan-500">
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 code-font">Inovasi Disiplin SK Pulau Indah</span>
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-0.5">
+          Q-TIBA: <span class="text-cyan-600 dark:text-cyan-400">QR Code Tracking & Intervention Behaviometric Analytics</span>
+        </h2>
+        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 italic">
+          <i class="fa-solid fa-quote-left mr-1 text-cyan-500"></i>
+          Menganalisis Data, Mengubah Budaya
+          <i class="fa-solid fa-quote-right ml-1 text-cyan-500"></i>
+        </p>
+      </div>
+    </div>
 
     <!-- 1. KAD KPI (METRICS SUMMARY) -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -99,7 +130,6 @@
 
     <!-- 2. CARTA ANALITIK (TIME & TREND) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Chart Taburan Masa -->
       <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
         <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
           <i class="fa-solid fa-clock mr-1.5 text-cyan-500"></i> Taburan Masa Imbasan
@@ -109,7 +139,6 @@
         </div>
       </div>
 
-      <!-- Chart Trend Auto -->
       <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
         <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
           <i class="fa-solid fa-chart-line mr-1.5 text-indigo-500"></i> Trend Kelewatan (6 Minggu)
@@ -151,65 +180,78 @@
       </div>
     </div>
 
-       <!-- 5. SEKSYEN GURU INOVATOR Q-TIBA -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 mt-6">
-      <div class="text-center max-w-xl mx-auto mb-4">
-        <span class="text-[10px] font-bold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 rounded-full code-font uppercase">Team Inovasi SK Pulau Indah</span>
-        <h2 class="text-base font-bold text-white mt-1">Sidang Inovator Projek Q-TIBA</h2>
-        <p class="text-xs text-slate-400">Pasukan pendidik yang mengemudi sistem intervensi berfokus kelewatan murid.</p>
+    <!-- 4. BAHAGIAN PASUKAN INOVASI (AHLI KUMPULAN CIKGU) -->
+    <div class="glass-card rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-amber-500"></i> Pasukan Inovasi Q-TIBA
+        </h3>
+        <span class="text-[10px] text-slate-500 code-font">SK Pulau Indah</span>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <!-- Guru 1 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
-          <img src="321.png" alt="Cikgu 1" class="w-16 h-16 rounded-full border-2 border-cyan-500/40 object-cover mb-2">
-          <h3 class="text-xs font-bold text-white">Ustaz Ismail</h3>
-          <p class="text-[10px] text-cyan-400 font-medium code-font">Ketua Guru Disiplin SK Pulau Indah</p>
-          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
-            "Sistem Q-TIBA mengubah cara kita mengurus disiplin—daripada menghukum kepada membimbing dengan data."
-          </p>
+      <!-- Kad Kumpulan Cikgu -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        <!-- Cikgu 1 -->
+        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-user-gear"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">[Nama Cikgu Ketua]</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">Ketua Inovator / Penyelaras</p>
+          </div>
         </div>
 
-        <!-- Guru 2 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
-          <img src="304.png" alt="Cikgu 2" class="w-16 h-16 rounded-full border-2 border-amber-500/40 object-cover mb-2">
-          <h3 class="text-xs font-bold text-white">Ustaz Fahmi</h3>
-          <p class="text-[10px] text-amber-400 font-medium code-font">Guru Penyelaras ICT SK Pulau Indah</p>
-          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
-            "Fokus pada 70 murid tegar membolehkan intervensi psikologi dijalankan secara lebih teratur dan efektif."
-          </p>
+        <!-- Cikgu 2 -->
+        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-code"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">[Nama Cikgu Sistem]</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">Pembangun Sistem & Data</p>
+          </div>
         </div>
 
-        <!-- Guru 3 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
-          <img src="303.png" alt="Cikgu 3" class="w-16 h-16 rounded-full border-2 border-emerald-500/40 object-cover mb-2">
-          <h3 class="text-xs font-bold text-white">Ustaz Hafifi</h3>
-          <p class="text-[10px] text-emerald-400 font-medium code-font">Guru Penyelaras Tahun 6 SK Pulau Indah</p>
-          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
-            "Imbasan QR pantas 1-saat menjimatkan masa guru bertugas dan merekod trend secara langsung (real-time)."
-          </p>
+        <!-- Cikgu 3 -->
+        <div class="p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">[Nama Cikgu Disiplin]</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">Guru Disiplin & Intervensi</p>
+          </div>
         </div>
+      </div>
+    </div>
 
   </main>
 
   <!-- FOOTER -->
-  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-500 code-font pt-4 pb-6 leading-relaxed">
+  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-500 code-font pt-4 pb-6 leading-relaxed z-10">
     <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
     <div>ALL RIGHTS RESERVED.</div>
   </footer>
 
-  <!-- LOGIK JAVASCRIPT (TOGGLE TEMA + APPS SCRIPT) -->
+  <!-- LOGIK JAVASCRIPT -->
   <script>
     // =============================================================
     // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG DI SINI:
     // =============================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxH_Bmgj1_MsukZ3H-nPf-oPLof6h1-woOVUJZzaMqzFory69_37RBNXBwUi-71XPyxmQ/exec";
 
-    // 1. LOGIK TOGGLE SIANG / MALAM (THEME TOGGLE)
+    // A. KESAN CURSOR GLOW FOLLOWING MOUSE
+    const cursorGlow = document.getElementById('cursor-glow');
+    window.addEventListener('mousemove', (e) => {
+      cursorGlow.style.left = `${e.clientX}px`;
+      cursorGlow.style.top = `${e.clientY}px`;
+    });
+
+    // B. TOGGLE TEMA SIANG / MALAM
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleIcon = document.getElementById('theme-toggle-icon');
 
-    // Semak pilihan simpanan pengguna
     if (localStorage.getItem('theme') === 'light') {
       document.documentElement.classList.remove('dark');
       themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
@@ -230,7 +272,7 @@
       }
     });
 
-    // 2. SETUP CHARTS
+    // C. SETUP CHARTS
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
@@ -255,8 +297,8 @@
         labels: ['M1 (5Mg Lps)', 'M2 (4Mg Lps)', 'M3 (3Mg Lps)', 'M4 (2Mg Lps)', 'M5 (Mg Lps)', 'M6 (Mg Ini)'],
         datasets: [{
           data: [0, 0, 0, 0, 0, 0],
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.15)',
+          borderColor: '#06b6d4',
+          backgroundColor: 'rgba(6, 182, 212, 0.15)',
           fill: true, tension: 0.35, borderWidth: 2, pointRadius: 3
         }]
       },
@@ -268,7 +310,7 @@
       if (el) el.innerText = value;
     }
 
-    // 3. AMBIL DATA LIVE DARI GOOGLE SHEETS
+    // D. AMBIL DATA LIVE DARI GOOGLE SHEETS
     async function fetchLiveData() {
       const tableBody = document.getElementById('student-table-body');
       const syncStatus = document.getElementById('sync-status');
