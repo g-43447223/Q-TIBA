@@ -311,7 +311,7 @@
     // =========================================================================
     // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI:
     // =========================================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbzEGQXz-HlBwxO0RwydROrfkJTUZ2uKMjtXWEjE7hBkNs-vGKvRuNfOuQQXrzt3iILFvg/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbwjUkbW5RHrF850TVdlr1asWk4WZRagL5-MSKxxoXx_oos7EUAKApVo0zggevITQ_nuOw/exec"; 
 
     let globalMuridList = [];
 
@@ -433,9 +433,9 @@
           : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
         const userImg = (m.urlGambar && m.urlGambar !== '') 
-          ? m.urlGambar 
-          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
-
+  ? fixDriveUrl(m.urlGambar) 
+  : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+        
         tableBody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-2.5 code-font">${index + 1}</td>
@@ -584,6 +584,16 @@
         if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
       }
     }
+
+    // FUNGSI UNTUK AUTO-CONVERT LINK GOOGLE DRIVE KEPADA DIRECT IMAGE LINK
+function fixDriveUrl(url) {
+  if (!url || url.trim() === "") return "";
+  var match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return "https://lh3.googleusercontent.com/d/" + match[1];
+  }
+  return url;
+}
 
     fetchLiveData();
   </script>
