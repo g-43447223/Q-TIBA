@@ -1,142 +1,528 @@
-<!-- TETAPAN PWA & HOMESCREEN ICON -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#020617">
-  
-  <!-- Tetapan Khas Untuk iPhone / iOS -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Q-TIBA">
-  <link rel="apple-touch-icon" href="logo.png">
-
-  <script>
-    // Daftarkan Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
-
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="ms" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Q-TIBA | Direct QR Scanner</title>
+  <title>Q-TIBA - Pengimbas QR Kelewatan</title>
+
+  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- HTML5-QRCode Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    #reader video { border-radius: 12px; object-fit: cover; }
+    .code-font { font-family: 'JetBrains Mono', monospace; }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.70);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Animasi Garisan Laser Scanner */
+    .scanner-overlay {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .scan-laser {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #06b6d4, #38bdf8, #06b6d4, transparent);
+      box-shadow: 0 0 15px #06b6d4, 0 0 8px #38bdf8;
+      top: 0;
+      left: 0;
+      animation: scanAnimation 2s infinite ease-in-out;
+      z-index: 10;
+    }
+
+    @keyframes scanAnimation {
+      0% { top: 0%; opacity: 0.8; }
+      50% { top: 95%; opacity: 1; }
+      100% { top: 0%; opacity: 0.8; }
+    }
+
+    /* Video Scanner Tweaks */
+    #reader video {
+      object-fit: cover !important;
+      border-radius: 1rem;
+      width: 100% !important;
+    }
+
+    #reader {
+      border: none !important;
+    }
+
+    /* Success Pop Animation */
+    .pop-in {
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center p-3">
 
-  <div class="w-full max-w-md space-y-4">
-    <!-- Header -->
-    <div class="text-center pt-2">
-      <span class="text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">SK PULAU INDAH</span>
-      <h1 class="text-lg font-bold text-white mt-1"><i class="fa-solid fa-qrcode text-cyan-400 mr-2"></i>Pengimbas QR Q-TIBA</h1>
-      <p class="text-xs text-slate-400">Halakan kamera pada QR Code murid</p>
+<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative overflow-x-hidden">
+
+  <!-- Cursor Glow Effect -->
+  <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" onerror="this.style.display='none'">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Q-TIBA</h1>
+            <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold">SCANNER</span>
+          </div>
+          <p class="text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide">Pengimbas QR Kelewatan Murid</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-cyan-500 hover:text-white transition-all border border-slate-300/50 dark:border-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Dashboard</span>
+        </a>
+
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- KANDUNGAN UTAMA -->
+  <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 z-10 relative">
+
+    <!-- RUANG KAMERA (SEBELAH KIRI) -->
+    <div class="md:col-span-7 flex flex-col gap-4">
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between h-full border-l-4 border-l-cyan-500">
+        
+        <!-- Tajuk & Status -->
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-qrcode text-cyan-500 text-base"></i> Halakan Kad QR Murid
+            </h2>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pastikan kod QR berada di dalam garisan imbasan.</p>
+          </div>
+          <span id="scan-status-badge" class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> READY
+          </span>
+        </div>
+
+        <!-- BOX KAMERA -->
+        <div class="relative w-full aspect-square sm:aspect-video md:aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-inner flex items-center justify-center scanner-overlay">
+          
+          <div id="scan-laser" class="scan-laser"></div>
+
+          <div id="reader" class="w-full h-full"></div>
+
+          <!-- Empty Overlay Placeholder -->
+          <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center z-20 bg-slate-950">
+            <i class="fa-solid fa-camera text-4xl text-slate-600 mb-3 animate-bounce"></i>
+            <p class="text-xs font-semibold text-slate-300">Kamera Belum Diaktifkan</p>
+            <p class="text-[10px] text-slate-500 mt-1 max-w-xs">Tekan Mula Kamera di bawah untuk memulakan sesi imbasan.</p>
+            <button onclick="startScanner()" class="mt-4 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Mula Kamera
+            </button>
+          </div>
+        </div>
+
+        <!-- KAWALAN KAMERA & INPUT MANUAL -->
+        <div class="mt-4 flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <button id="btn-toggle-cam" onclick="toggleCameraState()" class="flex-1 py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-video"></i> <span id="lbl-toggle-cam">Mula Kamera</span>
+            </button>
+            <select id="camera-select" onchange="onCameraChange()" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 focus:outline-none code-font">
+              <option value="">Pilih Kamera...</option>
+            </select>
+          </div>
+
+          <!-- Input Manual Fallback -->
+          <form onsubmit="handleManualSubmit(event)" class="flex items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+            <input type="text" id="manual-id" placeholder="Masukkan ID Murid secara manual..." class="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white code-font focus:outline-none focus:border-cyan-500">
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold hover:bg-slate-900 transition-all">
+              Hantar
+            </button>
+          </form>
+        </div>
+
+      </div>
     </div>
 
-    <!-- Tetingkap Kamera Web Scanner -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-xl relative overflow-hidden">
-      <div id="reader" class="w-full"></div>
+    <!-- KEPUTUSAN IMBASAN & REKOD SESI (SEBELAH KANAN) -->
+    <div class="md:col-span-5 flex flex-col gap-4">
+      
+      <!-- KAD KEPUTUSAN TERKINI -->
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500 flex flex-col items-center text-center relative overflow-hidden">
+        
+        <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400 code-font mb-2">IMBASAN TERAKHIR</span>
+
+        <div id="scanned-result-box" class="w-full flex flex-col items-center">
+          <!-- Default State -->
+          <div class="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-dashed border-slate-400 dark:border-slate-700 flex items-center justify-center my-2 text-slate-400">
+            <i class="fa-solid fa-user-clock text-2xl"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 mt-2">Menunggu Imbasan...</h3>
+          <p class="text-[11px] text-slate-400 code-font mt-0.5">Sila imbas kod QR murid</p>
+        </div>
+
+      </div>
+
+      <!-- SENARAI IMBASAN SESI INI -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex-1 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-cyan-500"></i> Sesi Imbasan Ini (<span id="session-count">0</span>)
+          </h3>
+          <button onclick="clearSessionLog()" class="text-[10px] text-slate-400 hover:text-rose-500 transition-colors code-font">
+            <i class="fa-solid fa-trash-can mr-1"></i>Reset
+          </button>
+        </div>
+
+        <div class="overflow-y-auto max-h-64 sm:max-h-80 pr-1">
+          <ul id="session-log-list" class="divide-y divide-slate-200/50 dark:divide-slate-800/60 text-xs">
+            <li class="py-6 text-center text-slate-400 code-font text-[11px]">Belum ada imbasan dilakukan dalam sesi ini.</li>
+          </ul>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Kotak Keputusan Imbasan Live -->
-    <div id="result-card" class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center transition-all duration-300">
-      <i id="status-icon" class="fa-solid fa-camera text-3xl text-slate-600 mb-2"></i>
-      <h2 id="status-title" class="text-sm font-bold text-slate-300">Bersedia Untuk Mengimbas</h2>
-      <p id="status-sub" class="text-xs text-slate-500 mt-1">Sistem akan merekod secara automatik</p>
-    </div>
+  </main>
 
-    <!-- Butang Kembali ke Dashboard -->
-    <div class="text-center">
-      <a href="index.html" class="inline-flex items-center text-xs text-cyan-400 hover:underline">
-        <i class="fa-solid fa-arrow-left mr-1.5"></i> Kembali ke Dashboard Utama
-      </a>
-    </div>
-  </div>
+  <!-- FOOTER -->
+  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
+    <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH</div>
+  </footer>
 
   <script>
-    // =============================================================
-    // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG KAT SINI:
-    // =============================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbyisNKnsInsLZY3V1STce4Zg1lRnmQVPHqDuvw_rZTOcPixLdlUOQHmdj-Yd1ZEMMy63g/exec";
+    // =========================================================================
+    // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI:
+    // =========================================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycby_OFv7ShMUgRltccPSI56MHsAf4aTKYS5LYL7jAEPBDTpnMHiKLpkjcy8dktHG6i33mA/exec";
 
-    let isProcessing = false;
+    let html5QrCode = null;
+    let isScannerRunning = false;
+    let isProcessingScan = false;
+    let studentCacheMap = {};
+    let sessionScannedList = [];
 
-    // Bunyi Beep Audio (Auto generate guna Web Audio API)
-    function playBeep() {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880; // Nada BEEP 880Hz
-      gain.gain.value = 0.1;
-      osc.start();
-      osc.stop(ctx.currentTime + 0.15);
+    // AUDIO BEEP GENERATOR (Web Audio API - Tanpa bergantung fail MP3 luaran)
+    function playAudioBeep(type = 'success') {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'success') {
+          osc.frequency.setValueAtTime(880, ctx.currentTime); // Tone A5
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.15);
+        } else {
+          osc.frequency.setValueAtTime(300, ctx.currentTime); // Tone Low Error
+          gain.gain.setValueAtTime(0.4, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+        }
+      } catch (e) {
+        console.log("Audio not supported / blocked");
+      }
     }
 
-    async function onScanSuccess(decodedText, decodedResult) {
-      if (isProcessing) return; // Elak imbas berturut-turut dalam 1 saat
-      isProcessing = true;
+    // CURSOR GLOW
+    const cursorGlow = document.getElementById('cursor-glow');
+    window.addEventListener('mousemove', (e) => {
+      cursorGlow.style.left = `${e.clientX}px`;
+      cursorGlow.style.top = `${e.clientY}px`;
+    });
 
-      playBeep();
+    // THEME TOGGLE
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
 
-      const resultCard = document.getElementById('result-card');
-      const statusIcon = document.getElementById('status-icon');
-      const statusTitle = document.getElementById('status-title');
-      const statusSub = document.getElementById('status-sub');
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.remove('dark');
+      themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+    }
 
-      // Tunjuk status memproses
-      resultCard.className = "bg-amber-950/40 border border-amber-500/50 rounded-xl p-4 text-center animate-pulse";
-      statusIcon.className = "fa-solid fa-spinner fa-spin text-3xl text-amber-400 mb-2";
-      statusTitle.innerText = "Merekod Kelewatan...";
-      statusSub.innerText = "ID: " + decodedText;
+    themeToggleBtn.addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
+      }
+    });
 
+    // PRA-AMBIL DATA MURID UNTUK MEMADANKAN NAMA & GAMBAR PANTAS
+    async function preloadStudentData() {
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       try {
-        // Hantar data terus ke Google Sheets di sebalik tabir
-        const sendUrl = `${API_URL}?action=scan&id=${encodeURIComponent(decodedText)}`;
-        const response = await fetch(sendUrl);
+        const response = await fetch(API_URL);
         const data = await response.json();
-
-        if (data.status === "Success") {
-          // Tunjuk status BERJAYA
-          resultCard.className = "bg-emerald-950/50 border border-emerald-500/50 rounded-xl p-4 text-center";
-          statusIcon.className = "fa-solid fa-circle-check text-3xl text-emerald-400 mb-2";
-          statusTitle.innerText = data.nama + " (" + data.kelas + ")";
-          statusSub.innerText = "✅ Rekod Kelewatan Berjaya Dihantar!";
-        } else {
-          throw new Error("Gagal");
+        if (data.status === "Success" && data.muridList) {
+          data.muridList.forEach(m => {
+            studentCacheMap[m.id.trim().toUpperCase()] = m;
+          });
+          console.log("Q-TIBA: Cached", Object.keys(studentCacheMap).length, "students.");
         }
       } catch (err) {
-        resultCard.className = "bg-rose-950/50 border border-rose-500/50 rounded-xl p-4 text-center";
-        statusIcon.className = "fa-solid fa-circle-xmark text-3xl text-rose-400 mb-2";
-        statusTitle.innerText = "Ralat Sambungan";
-        statusSub.innerText = "Gagal menyimpan ke Google Sheets";
+        console.warn("Preload student map failed:", err);
       }
-
-      // Re-enable scanner selepas 2 saat untuk murid seterusnya
-      setTimeout(() => {
-        isProcessing = false;
-        resultCard.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 text-center";
-        statusIcon.className = "fa-solid fa-camera text-3xl text-slate-600 mb-2";
-        statusTitle.innerText = "Bersedia Untuk Mengimbas Seterusnya";
-        statusSub.innerText = "Halakan QR Code murid";
-      }, 2500);
     }
 
-    // Initialize Camera Scanner
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", 
-      { fps: 10, qrbox: { width: 220, height: 220 } },
-      /* verbose= */ false
-    );
-    html5QrcodeScanner.render(onScanSuccess);
+    // INIT SCANNER & LIST KAMERA
+    async function initCameraDevices() {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        const cameraSelect = document.getElementById('camera-select');
+        cameraSelect.innerHTML = '<option value="">Pilih Kamera...</option>';
+
+        if (devices && devices.length > 0) {
+          devices.forEach((cam, index) => {
+            const opt = document.createElement('option');
+            opt.value = cam.id;
+            opt.innerText = cam.label || `Kamera ${index + 1}`;
+            cameraSelect.appendChild(opt);
+          });
+          // Default ke kamera belakang jika ada
+          const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
+          if (backCam) cameraSelect.value = backCam.id;
+          else cameraSelect.value = devices[0].id;
+        }
+      } catch (err) {
+        console.error("Gagal mendapatkan senarai kamera:", err);
+      }
+    }
+
+    function startScanner() {
+      const selectedCamId = document.getElementById('camera-select').value;
+      const cameraConfig = selectedCamId ? { deviceId: { exact: selectedCamId } } : { facingMode: "environment" };
+
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+
+      document.getElementById('camera-placeholder').style.display = 'none';
+      document.getElementById('scan-laser').style.display = 'block';
+
+      html5QrCode.start(
+        cameraConfig,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
+        onScanSuccess,
+        onScanError
+      ).then(() => {
+        isScannerRunning = true;
+        document.getElementById('lbl-toggle-cam').innerText = "Hentikan Kamera";
+        document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
+      }).catch(err => {
+        console.error("Gagal menjalankan kamera:", err);
+        alert("Gagal membuka kamera. Pastikan kebenaran (permission) kamera dibenarkan.");
+        document.getElementById('camera-placeholder').style.display = 'flex';
+        document.getElementById('scan-laser').style.display = 'none';
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode && isScannerRunning) {
+        html5QrCode.stop().then(() => {
+          isScannerRunning = false;
+          document.getElementById('camera-placeholder').style.display = 'flex';
+          document.getElementById('scan-laser').style.display = 'none';
+          document.getElementById('lbl-toggle-cam').innerText = "Mula Kamera";
+          document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
+        }).catch(err => console.error("Stop scanner error:", err));
+      }
+    }
+
+    function toggleCameraState() {
+      if (isScannerRunning) stopScanner();
+      else startScanner();
+    }
+
+    function onCameraChange() {
+      if (isScannerRunning) {
+        stopScanner();
+        setTimeout(() => startScanner(), 300);
+      }
+    }
+
+    function onScanError(errorMessage) {
+      // Ignore routine scan frame errors
+    }
+
+    // APABILA QR KOD BERJAYA DIIMBAS
+    function onScanSuccess(decodedText) {
+      if (isProcessingScan) return; // Prevent double trigger
+      
+      const scannedId = String(decodedText || "").trim().toUpperCase();
+      if (!scannedId) return;
+
+      isProcessingScan = true;
+      playAudioBeep('success');
+
+      processScannedStudent(scannedId);
+
+      // Cooldown 2 saat sebelum membenarkan imbasan seterusnya
+      setTimeout(() => {
+        isProcessingScan = false;
+      }, 2000);
+    }
+
+    function handleManualSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('manual-id');
+      const val = input.value.trim().toUpperCase();
+      if (val) {
+        playAudioBeep('success');
+        processScannedStudent(val);
+        input.value = '';
+      }
+    }
+
+    // PROSES HANTAR DATA KE APPS SCRIPT BACKEND
+    async function processScannedStudent(scannedId) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      // Cari data murid dari Cache jika ada
+      const matchedStudent = studentCacheMap[scannedId] || {
+        id: scannedId,
+        nama: "MURID DIIMBAS",
+        kelas: "SASARAN",
+        urlGambar: ""
+      };
+
+      const userImg = (matchedStudent.urlGambar && matchedStudent.urlGambar !== "") 
+        ? matchedStudent.urlGambar 
+        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}`;
+
+      // Kemas kini Paparan Kad Terkini
+      const resultBox = document.getElementById('scanned-result-box');
+      resultBox.innerHTML = `
+        <div class="pop-in flex flex-col items-center w-full">
+          <div class="relative my-2">
+            <img src="${userImg}" 
+                 class="w-20 h-20 rounded-full object-cover border-4 border-amber-500 shadow-md bg-slate-200 dark:bg-slate-800"
+                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
+            <span class="absolute bottom-0 right-0 bg-emerald-500 text-white rounded-full p-1 text-[10px]">
+              <i class="fa-solid fa-check"></i>
+            </span>
+          </div>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
+          <p class="text-xs font-bold text-amber-600 dark:text-amber-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
+          <div class="mt-2 text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-3 py-1 rounded-full font-bold code-font">
+            <i class="fa-solid fa-clock mr-1"></i>${timeStr} - RAKAM KELEWATAN
+          </div>
+        </div>
+      `;
+
+      // Tambah ke Senarai Log Sesi Ini
+      sessionScannedList.unshift({
+        id: scannedId,
+        nama: matchedStudent.nama,
+        kelas: matchedStudent.kelas,
+        masa: timeStr,
+        img: userImg
+      });
+
+      renderSessionLog();
+
+      // Hantar Data Ke Backend Google Apps Script (POST)
+      if (API_URL && !API_URL.includes("MASUKKAN_URL")) {
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Memintas sekaan CORS untuk Google Apps Script
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: scannedId,
+              nama: matchedStudent.nama,
+              kelas: matchedStudent.kelas
+            })
+          });
+          console.log("Q-TIBA: Imbasan dihantar ke Google Sheets.");
+        } catch (err) {
+          console.error("Gagal menghantar rekod POST:", err);
+        }
+      }
+    }
+
+    function renderSessionLog() {
+      const logList = document.getElementById('session-log-list');
+      const countEl = document.getElementById('session-count');
+      
+      countEl.innerText = sessionScannedList.length;
+
+      if (sessionScannedList.length === 0) {
+        logList.innerHTML = `<li class="py-6 text-center text-slate-400 code-font text-[11px]">Belum ada imbasan dilakukan dalam sesi ini.</li>`;
+        return;
+      }
+
+      logList.innerHTML = '';
+      sessionScannedList.forEach((item, idx) => {
+        logList.innerHTML += `
+          <li class="py-2 flex items-center justify-between gap-2 hover:bg-slate-500/5 transition-colors">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <img src="${item.img}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
+              <div class="truncate">
+                <p class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">${item.nama}</p>
+                <p class="text-[9px] text-slate-400 code-font">${item.id} &bull; ${item.kelas}</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 code-font bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">${item.masa}</span>
+          </li>
+        `;
+      });
+    }
+
+    function clearSessionLog() {
+      sessionScannedList = [];
+      renderSessionLog();
+    }
+
+    // MULA PELAKSANAAN
+    initCameraDevices();
+    preloadStudentData();
   </script>
 </body>
 </html>
