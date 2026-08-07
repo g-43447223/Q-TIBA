@@ -1,159 +1,149 @@
-<!-- TETAPAN PWA & HOMESCREEN ICON -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#<!-- TETAPAN PWA & HOMESCREEN ICON -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#020617">
-  
-  <!-- Tetapan Khas Untuk iPhone / iOS -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Q-TIBA">
-  <link rel="apple-touch-icon" href="logo.png">
-
-  <script>
-    // Daftarkan Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
-
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="ms" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Q-TIBA | SK Pulau Indah</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Q-TIBA - Analytics Dashboard</title>
+  
+  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js CDN -->
+  <script>
+    // Aktifkan sokongan dark mode berasaskan kelas
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- PWA Metadata -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .code-font { font-family: 'JetBrains Mono', monospace; }
-    /* Sembunyikan scrollbar untuk paparan kemas */
-    ::-webkit-scrollbar { display: none; }
-    html { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* CLASS KAS GLASSMORPHISM */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 p-2 sm:p-4 w-full min-h-screen">
 
-  <div class="max-w-7xl mx-auto space-y-4">
+<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300">
 
-    <!-- 1. HEADER SECTION (SK PULAU INDAH + LOGO) -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+  <!-- HEADER / BAR ATAS -->
+  <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <!-- PENTING: Gantikan URL gambar di di bawah dengan link Logo SK Pulau Indah sebenar -->
-        <div class="w-14 h-14 bg-slate-900 border border-slate-700 rounded-xl p-1 flex items-center justify-center shrink-0">
-          <img src="LOGO-SEKOLAH.png" alt="Logo SK Pulau Indah" id="school-logo" class="max-h-full max-w-full object-contain">
-        </div>
+        <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 object-contain drop-shadow">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 code-font">
-              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5 animate-pulse"></span>SK PULAU INDAH
-            </span>
-            <span class="text-[10px] text-slate-500 code-font">// INNOVATION_2026</span>
-          </div>
-          <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight mt-0.5 text-white flex items-center">
-            Dashboard Inovasi Q-TIBA
+          <h1 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            Q-TIBA <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">LIVE</span>
           </h1>
-          <p class="text-xs text-slate-400">
-            <span class="font-bold text-cyan-400">Q</span>R-Code <span class="font-bold text-cyan-400">T</span>racking & <span class="font-bold text-cyan-400">I</span>ntervensi <span class="font-bold text-cyan-400">B</span>erfokus <span class="font-bold text-cyan-400">A</span>wal | Menganalisis Data, Mengubah Budaya
-          </p>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">SK PULAU INDAH</p>
         </div>
       </div>
-      <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg code-font text-xs text-slate-300 self-start md:self-auto flex items-center">
-        <i class="fa-regular fa-calendar-check text-cyan-400 mr-2"></i>Status: <span class="text-emerald-400 font-bold ml-1">Live Analytics</span>
+
+      <!-- BUTANG TOGGLE TEMA & STATUS -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="sync-status" class="text-emerald-600 dark:text-emerald-400">Live Analytics</span>
+        </div>
+
+        <!-- TOGGLE BUTTON -->
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all shadow-sm border border-slate-300/50 dark:border-slate-700">
+          <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- KANDUNGAN UTAMA DASHBOARD -->
+  <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5">
+
+    <!-- 1. KAD KPI (METRICS SUMMARY) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div class="glass-card rounded-2xl p-4">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Murid Sasaran</p>
+        <h3 id="kpi-sasaran" class="text-2xl font-bold code-font text-slate-900 dark:text-white mt-1">0</h3>
+      </div>
+      <div class="glass-card rounded-2xl p-4">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Lewat Hari Ini</p>
+        <h3 id="kpi-hari-ini" class="text-2xl font-bold code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
+      </div>
+      <div class="glass-card rounded-2xl p-4">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Jumlah Kes Overall</p>
+        <h3 id="kpi-total-kes" class="text-2xl font-bold code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
+      </div>
+      <div class="glass-card rounded-2xl p-4">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Bebas Lewat (0 Kes)</p>
+        <h3 id="kpi-bebas-lewat" class="text-2xl font-bold code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
       </div>
     </div>
 
-    <!-- 2. TOP KPI CARDS (Bermula dari 0) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <!-- Card 1: Sasaran -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-800 transition">
-        <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Sasaran (T)</p>
-          <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-users-viewfinder text-sm"></i></div>
+    <!-- 2. CARTA ANALITIK (TIME & TREND) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Chart Taburan Masa -->
+      <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+          <i class="fa-solid fa-clock mr-1.5 text-cyan-500"></i> Taburan Masa Imbasan
+        </h3>
+        <div class="h-48 relative">
+          <canvas id="timeChart"></canvas>
         </div>
-        <h3 id="kpi-sasaran" class="text-2xl sm:text-3xl font-extrabold text-white mt-1 code-font">0</h3>
-        <p class="text-[10px] text-slate-500 mt-1">Murid Sasaran Dipantau</p>
       </div>
 
-      <!-- Card 2: Imbasan Lewat Hari Ini -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-amber-800 transition">
-        <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Imbasan (Q)</p>
-          <div class="p-1.5 bg-amber-500/10 rounded text-amber-400 border border-amber-500/20"><i class="fa-solid fa-qrcode text-sm animate-pulse"></i></div>
+      <!-- Chart Trend Auto -->
+      <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+          <i class="fa-solid fa-chart-line mr-1.5 text-indigo-500"></i> Trend Kelewatan (6 Minggu)
+        </h3>
+        <div class="h-48 relative">
+          <canvas id="trendChart"></canvas>
         </div>
-        <h3 id="kpi-hari-ini" class="text-2xl sm:text-3xl font-extrabold text-amber-400 mt-1 code-font">0</h3>
-        <p class="text-[10px] text-amber-400 mt-1"><i class="fa-solid fa-clock-rotate-left mr-0.5"></i> Imbasan Hari Ini</p>
-      </div>
-
-      <!-- Card 3: Jumlah Kes Lewat Terkumpul -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-emerald-800 transition">
-        <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Jumlah Kes (I)</p>
-          <div class="p-1.5 bg-emerald-500/10 rounded text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-chart-line text-sm"></i></div>
-        </div>
-        <h3 id="kpi-total-kes" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1 code-font">0</h3>
-        <p class="text-[10px] text-slate-400 mt-1">Rekod Kes Terkumpul</p>
-      </div>
-
-      <!-- Card 4: Murid Zero Lewat -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 hover:border-cyan-800 transition">
-        <div class="flex justify-between items-start">
-          <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Bebas Lewat (A)</p>
-          <div class="p-1.5 bg-cyan-500/10 rounded text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-award text-sm text-cyan-300"></i></div>
-        </div>
-        <h3 id="kpi-bebas-lewat" class="text-2xl sm:text-3xl font-extrabold text-cyan-400 mt-1 code-font">0</h3>
-        <p class="text-[10px] text-slate-400 mt-1">Murid 0 Rekod Lewat</p>
       </div>
     </div>
 
-    <!-- 3. CHARTS SECTION -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      <!-- Line Chart -->
-      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-        <h2 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center">
-          <i class="fa-solid fa-chart-line text-cyan-400 mr-2"></i>Trend Imbasan Kelewatan
-        </h2>
-        <div class="h-44"><canvas id="trendChart"></canvas></div>
+    <!-- 3. JADUAL SENARAI MURID -->
+    <div class="glass-card rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-users text-blue-500"></i> Status Murid Sasaran
+        </h3>
       </div>
-      <!-- Bar Chart -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-        <h2 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center">
-          <i class="fa-solid fa-hourglass-start text-amber-400 mr-2"></i>Taburan Masa Imbasan QR
-        </h2>
-        <div class="h-44"><canvas id="timeChart"></canvas></div>
-      </div>
-    </div>
 
-    <!-- 4. SENARAI & REKOD MURID (TANPA DUMMY DATA) -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-      <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-        <h2 class="text-xs sm:text-sm font-bold text-white flex items-center">
-          <i class="fa-solid fa-users text-amber-400 mr-2"></i>Senarai & Status Murid Sasaran
-        </h2>
-        <span class="text-[10px] code-font text-slate-400 bg-slate-800 px-2 py-0.5 rounded">SK PULAU INDAH</span>
-      </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead>
-            <tr class="border-b border-slate-800 text-slate-500 code-font uppercase text-[9px]">
-              <th class="pb-2">#</th>
-              <th class="pb-2">ID Murid</th>
-              <th class="pb-2">Nama Murid</th>
-              <th class="pb-2">Kelas</th>
-              <th class="pb-2 text-center">Jumlah Lewat</th>
-              <th class="pb-2 text-right">Status</th>
+            <tr class="border-b border-slate-200/80 dark:border-slate-800 text-slate-400 font-semibold code-font">
+              <th class="pb-2">NO</th>
+              <th class="pb-2">ID</th>
+              <th class="pb-2">NAMA MURID</th>
+              <th class="pb-2">KELAS</th>
+              <th class="pb-2 text-center">KELEWATAN</th>
+              <th class="pb-2 text-right">STATUS</th>
             </tr>
           </thead>
-          <tbody id="student-table-body" class="divide-y divide-slate-800/50">
+          <tbody id="student-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60">
             <tr>
-              <td colspan="6" class="py-6 text-center text-slate-500 code-font">
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuatkan data dari Google Sheets...
+              <td colspan="6" class="py-8 text-center text-slate-400 code-font">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuatkan data dari Google Sheets...
               </td>
             </tr>
           </tbody>
@@ -161,116 +151,91 @@
       </div>
     </div>
 
-    <!-- 5. SEKSYEN GURU INOVATOR Q-TIBA -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 mt-6">
-      <div class="text-center max-w-xl mx-auto mb-4">
-        <span class="text-[10px] font-bold text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-0.5 rounded-full code-font uppercase">Team Inovasi SK Pulau Indah</span>
-        <h2 class="text-base font-bold text-white mt-1">Sidang Inovator Projek Q-TIBA</h2>
-        <p class="text-xs text-slate-400">Pasukan pendidik yang mengemudi sistem intervensi berfokus kelewatan murid.</p>
-      </div>
+  </main>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <!-- Guru 1 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
-          <img src="321.png" alt="Cikgu 1" class="w-16 h-16 rounded-full border-2 border-cyan-500/40 object-cover mb-2">
-          <h3 class="text-xs font-bold text-white">Ustaz Ismail</h3>
-          <p class="text-[10px] text-cyan-400 font-medium code-font">Ketua Guru Disiplin SK Pulau Indah</p>
-          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
-            "Sistem Q-TIBA mengubah cara kita mengurus disiplin—daripada menghukum kepada membimbing dengan data."
-          </p>
-        </div>
+  <!-- FOOTER -->
+  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-500 code-font pt-4 pb-6 leading-relaxed">
+    <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
+    <div>ALL RIGHTS RESERVED.</div>
+  </footer>
 
-        <!-- Guru 2 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
-          <img src="304.png" alt="Cikgu 2" class="w-16 h-16 rounded-full border-2 border-amber-500/40 object-cover mb-2">
-          <h3 class="text-xs font-bold text-white">Ustaz Fahmi</h3>
-          <p class="text-[10px] text-amber-400 font-medium code-font">Guru Penyelaras ICT SK Pulau Indah</p>
-          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
-            "Fokus pada 70 murid tegar membolehkan intervensi psikologi dijalankan secara lebih teratur dan efektif."
-          </p>
-        </div>
-
-        <!-- Guru 3 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 flex flex-col items-center text-center hover:border-cyan-800/50 transition">
-          <img src="303.png" alt="Cikgu 3" class="w-16 h-16 rounded-full border-2 border-emerald-500/40 object-cover mb-2">
-          <h3 class="text-xs font-bold text-white">Ustaz Hafifi</h3>
-          <p class="text-[10px] text-emerald-400 font-medium code-font">Guru Penyelaras Tahun 6 SK Pulau Indah</p>
-          <p class="text-[11px] text-slate-400 italic mt-2 bg-slate-900/60 p-2 rounded border border-slate-800/50">
-            "Imbasan QR pantas 1-saat menjimatkan masa guru bertugas dan merekod trend secara langsung (real-time)."
-          </p>
-        </div>
-
-    <!-- FOOTER -->
-    <div class="w-full text-center text-[10px] sm:text-[11px] text-slate-600 code-font pt-2 pb-4 leading-relaxed">
-      <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
-      <div>ALL RIGHTS RESERVED.</div>
-    </div>
-
-  </div>
-<!-- JAVASCRIPT LOGIC (AUTOMATIK & LIVE TREND) -->
+  <!-- LOGIK JAVASCRIPT (TOGGLE TEMA + APPS SCRIPT) -->
   <script>
     // =============================================================
     // SILA PASTE LINK WEB APP GOOGLE APPS SCRIPT KORANG DI SINI:
     // =============================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxH_Bmgj1_MsukZ3H-nPf-oPLof6h1-woOVUJZzaMqzFory69_37RBNXBwUi-71XPyxmQ/exec";
 
+    // 1. LOGIK TOGGLE SIANG / MALAM (THEME TOGGLE)
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
+
+    // Semak pilihan simpanan pengguna
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.remove('dark');
+      themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+    } else {
+      document.documentElement.classList.add('dark');
+      themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
+      }
+    });
+
+    // 2. SETUP CHARTS
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-    Chart.defaults.font.size = 10;
 
-    // A. Bar Chart: Taburan Masa
     const ctxTime = document.getElementById('timeChart')?.getContext('2d');
-    let timeChart = null;
-    if (ctxTime) {
-      timeChart = new Chart(ctxTime, {
-        type: 'bar',
-        data: {
-          labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
-          datasets: [{
-            data: [0, 0, 0, 0],
-            backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
-            borderRadius: 4
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-    }
+    let timeChart = new Chart(ctxTime, {
+      type: 'bar',
+      data: {
+        labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
+        datasets: [{
+          data: [0, 0, 0, 0],
+          backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'],
+          borderRadius: 6
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
 
-    // B. Line Chart: Trend Imbasan (AUTO UPDATE DARI GOOGLE SHEETS)
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
-    let trendChart = null;
-    if (ctxTrend) {
-      trendChart = new Chart(ctxTrend, {
-        type: 'line',
-        data: {
-          labels: ['M1 (5 Mingge Lepas)', 'M2 (4 Minggu Lepas)', 'M3 (3 Minggu Lepas)', 'M4 (2 Minggu Lepas)', 'M5 (Minggu Lepas)', 'M6 (Minggu Ini)'],
-          datasets: [{
-            data: [0, 0, 0, 0, 0, 0],
-            borderColor: '#22d3ee',
-            backgroundColor: 'rgba(34, 211, 238, 0.1)',
-            fill: true, tension: 0.35, borderWidth: 2, pointRadius: 3
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-    }
+    let trendChart = new Chart(ctxTrend, {
+      type: 'line',
+      data: {
+        labels: ['M1 (5Mg Lps)', 'M2 (4Mg Lps)', 'M3 (3Mg Lps)', 'M4 (2Mg Lps)', 'M5 (Mg Lps)', 'M6 (Mg Ini)'],
+        datasets: [{
+          data: [0, 0, 0, 0, 0, 0],
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.15)',
+          fill: true, tension: 0.35, borderWidth: 2, pointRadius: 3
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
 
-    // Helper Function
     function setElementText(id, value) {
       const el = document.getElementById(id);
       if (el) el.innerText = value;
     }
 
-    // C. Fungsi Utama Ambil Data Live
+    // 3. AMBIL DATA LIVE DARI GOOGLE SHEETS
     async function fetchLiveData() {
       const tableBody = document.getElementById('student-table-body');
       const syncStatus = document.getElementById('sync-status');
 
       if (!API_URL || API_URL === "MASUKKAN_URL_WEB_APP_APPS_SCRIPT_DI_SINI") {
-        if (syncStatus) {
-          syncStatus.innerText = "URL API Belum Diset";
-          syncStatus.className = "text-rose-400 font-bold ml-1";
-        }
+        if (syncStatus) syncStatus.innerText = "URL API Belum Diset";
         return;
       }
 
@@ -279,12 +244,6 @@
         const data = await response.json();
 
         if (data.status === "Success") {
-          if (syncStatus) {
-            syncStatus.innerText = "Live Analytics";
-            syncStatus.className = "text-emerald-400 font-bold ml-1";
-          }
-
-          // 1. Update Kad KPI
           setElementText('kpi-sasaran', data.totalSasaran || 0);
           setElementText('kpi-hari-ini', data.lewatHariIni || 0);
           
@@ -301,52 +260,38 @@
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
 
-          // 2. Update Bar Chart (Masa)
-          if (timeChart && data.slotWaktu && data.slotWaktu.length === 4) {
+          if (timeChart && data.slotWaktu) {
             timeChart.data.datasets[0].data = data.slotWaktu;
             timeChart.update();
           }
 
-          // 3. Update Line Chart (Trend Auto dari Apps Script!)
-          if (trendChart && data.trendMingguan && data.trendMingguan.length === 6) {
+          if (trendChart && data.trendMingguan) {
             trendChart.data.datasets[0].data = data.trendMingguan;
             trendChart.update();
           }
 
-          // 4. Update Jadual Murid
           if (tableBody) {
             if (data.muridList && data.muridList.length > 0) {
               tableBody.innerHTML = '';
-
               data.muridList.forEach((m, index) => {
                 let statusBadge = m.kiraan === 0 
-                  ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full"><i class="fa-solid fa-check mr-1"></i>Cemerlang (0 Lewat)</span>`
-                  : `<span class="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full">Dipantau (${m.kiraan} Kes)</span>`;
+                  ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
+                  : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
                 const row = `
-                  <tr class="hover:bg-slate-800/30">
-                    <td class="py-2 code-font"><span class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full inline-flex items-center justify-center font-bold text-[10px]">${index + 1}</span></td>
-                    <td class="py-2 text-slate-400 code-font">${m.id}</td>
-                    <td class="py-2 font-semibold text-white">${m.nama}</td>
-                    <td class="py-2 text-slate-400 code-font">${m.kelas}</td>
-                    <td class="py-2 text-center text-emerald-400 font-semibold code-font">${m.kiraan}</td>
-                    <td class="py-2 text-right">${statusBadge}</td>
+                  <tr class="hover:bg-slate-500/5 transition-colors">
+                    <td class="py-2.5 code-font">${index + 1}</td>
+                    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+                    <td class="py-2.5 font-semibold text-slate-800 dark:text-white">${m.nama}</td>
+                    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
+                    <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
+                    <td class="py-2.5 text-right">${statusBadge}</td>
                   </tr>
                 `;
                 tableBody.innerHTML += row;
               });
-            } else {
-              tableBody.innerHTML = `
-                <tr>
-                  <td colspan="6" class="py-6 text-center text-slate-400 code-font">
-                    <i class="fa-solid fa-folder-open mr-2"></i>
-                    Tiada rekod murid sasaran ditemui. Sila masukkan data dalam tab <b class="text-cyan-400">Senarai_Sasaran</b> Google Sheet anda.
-                  </td>
-                </tr>`;
             }
           }
-
-          console.log("Q-TIBA: Data Live Berjaya Dimuatkan!");
         }
       } catch (error) {
         console.error("Q-TIBA Error:", error);
@@ -355,4 +300,5 @@
 
     fetchLiveData();
   </script>
- 
+</body>
+</html>
