@@ -175,7 +175,7 @@
       <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🌟</span>
+            <span class="text-xl">⭐</span>
             <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Pemulihan Sahsiah (Hadir Awal Konsisten)</h3>
           </div>
           <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Program Rewards</span>
@@ -539,7 +539,7 @@
   </footer>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxxT1exkWPnYOmUYOOwPz_MOTYrv3RnuKk-P7K0ngmpOkFundEGwFPt0lPKMXIZ8iISHQ/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbwfR5Ai9NW74oeMwCiq0Wtcvk7mjGi2egCa6GCqCNhn1vfI5JfPYnB3XLyRzz4zdNrq/exec"; 
 
     let globalMuridList = [];
     let globalRekodList = [];
@@ -937,7 +937,7 @@
                 ? m.urlGambar 
                 : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
               
-              const rankBadge = idx === 0 ? '👑 #1 HERO' : `#${idx + 1} TOP`;
+              const rankBadge = idx === 0 ? '🏆 #1 HERO' : `#${idx + 1} TOP`;
               const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
               heroContainer.innerHTML += `
@@ -1165,7 +1165,7 @@
       container.innerHTML = '';
       streakList.forEach(m => {
         let badgeColor = m.streakHari >= 7 ? 'from-amber-500 to-orange-500' : 'from-cyan-500 to-blue-500';
-        let badgeTitle = m.streakHari >= 7 ? '🏆 Sahsiah Terpuji' : '🔥 Istiqamah Awal';
+        let badgeTitle = m.streakHari >= 7 ? '🌟 Sahsiah Terpuji' : '🔥 Istiqamah Awal';
 
         container.innerHTML += `
           <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
@@ -1175,7 +1175,7 @@
             </div>
             <div class="text-right">
               <span class="text-xs font-black text-white px-2 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm">
-                🌟 ${m.streakHari} Hari Awal
+                🔥 ${m.streakHari} Hari Awal
               </span>
               <p class="text-[9px] text-emerald-500 font-bold mt-1">${badgeTitle}</p>
             </div>
