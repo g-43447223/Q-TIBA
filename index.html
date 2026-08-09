@@ -66,7 +66,7 @@
   <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300">
+        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" onerror="this.src='q-tibalogo.png'">
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Q-TIBA</h1>
@@ -285,50 +285,81 @@
 
   <!-- TEMPLAT SURAT AMARAN (TERSEMBUNYI) -->
   <div class="hidden">
-    <div id="surat-amaran-pdf" class="p-8 text-black bg-white font-serif leading-relaxed" style="width: 210mm; min-height: 297mm;">
-      <!-- Kepala Surat Sekolah -->
-      <div class="text-center border-b-2 border-black pb-4 mb-6">
-        <h2 class="text-lg font-bold uppercase">SEKOLAH KEBANGSAAN PULAU INDAH</h2>
-        <p class="text-xs">42920 Pelabuhan Klang, Selangor Darul Ehsan</p>
-        <p class="text-xs">Kod Sekolah: BBA0013 | Tel: 03-31012139</p>
+    <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 11pt;" class="p-2">
+      
+      <!-- KEPALA SURAT (HEADER RASMI) -->
+      <div class="flex items-center justify-between border-b-2 border-black pb-3 mb-4 gap-4">
+        <img src="logo.png" alt="Logo Sekolah" class="w-20 h-20 object-contain" onerror="this.src='q-tibalogo.png'">
+        <div class="text-center flex-1">
+          <h2 class="text-base font-bold uppercase tracking-wide">SEKOLAH KEBANGSAAN PULAU INDAH</h2>
+          <p class="text-xs">42920 PELABUHAN KLANG, SELANGOR DARUL EHSAN</p>
+          <p class="text-[10px] mt-0.5">Kod Sekolah: BBA0013 | No. Tel: 03-31012139 | Emel: BBA0013@moe.edu.my</p>
+        </div>
+        <div class="w-20"></div> <!-- Ruang penyeimbang alignment center -->
       </div>
 
-      <div class="flex justify-between text-xs mb-6">
-        <div>Ruj. Kami: SKPI/UBK/2026/01<br>Tarikh: <span id="pdf-tarikh-surat"></span></div>
+      <!-- RUJUKAN & TARIKH -->
+      <div class="flex justify-between text-xs font-semibold mb-4">
+        <div>
+          <p>Ruj. Kami : SKPI/UBK/2026/AMARAN</p>
+          <p>Tarikh : <span id="pdf-tarikh-surat"></span></p>
+        </div>
       </div>
 
-      <p class="text-sm font-bold mb-4">Kepada Ibu Bapa / Penjaga:<br><span id="pdf-nama-murid" class="uppercase"></span> (<span id="pdf-kelas-murid"></span>)</p>
-
-      <h3 class="text-sm font-bold uppercase underline mb-4">SURAT AMARAN KELEWATAN KEPADA MURID SEKOLAH</h3>
-
-      <p class="text-xs mb-3">Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
-      <p class="text-xs mb-4">2. Dukacita dimaklumkan bahawa anak/jagaan tuan/puan telah mendaftar masuk lewat ke sekolah berasaskan rekod imbasan digital Q-TIBA melebihi amaran lazim seperti berikut:</p>
-
-      <!-- Ringkasan Rekod Lewat -->
-      <table class="w-full text-xs border-collapse border border-black mb-6">
-        <thead>
-          <tr class="bg-gray-100">
-            <th class="border border-black p-1">Jumlah Kelewatan</th>
-            <th class="border border-black p-1">Status Tindakan UBK</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="border border-black p-2 text-center font-bold" id="pdf-jumlah-lewat">0 Kali</td>
-            <td class="border border-black p-2 text-center">Sesi Bimbingan & Kaunseling / Amaran Pentadbiran</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="text-xs mb-4">3. Sehubungan dengan itu, pihak sekolah memohon kerjasama tuan/puan untuk memastikan anak jagaan hadir sebelum jam 7:20 pagi bagi membolehkan proses PdP berjalan lancar.</p>
-
-      <div class="mt-12 text-xs">
-        <p>Yang menurut perintah,</p>
-        <br><br><br>
-        <p class="font-bold underline">===========================</p>
-        <p>Guru Bimbingan & Kaunseling / Unit Disiplin</p>
-        <p>SK Pulau Indah</p>
+      <!-- PENERIMA -->
+      <div class="text-xs mb-4 leading-normal">
+        <p class="font-bold">Kepada Ibu Bapa / Penjaga:</p>
+        <p class="font-bold uppercase text-sm text-black"><span id="pdf-nama-murid"></span> (<span id="pdf-kelas-murid"></span>)</p>
+        <p class="mt-1">Tuan / Puan,</p>
       </div>
+
+      <!-- TAJUK SURAT -->
+      <h3 class="text-xs font-bold uppercase underline mb-3 tracking-wide">
+        SURAT AMARAN KELEWATAN HADIR KE SEKOLAH
+      </h3>
+
+      <!-- ISI KANDUNGAN -->
+      <div class="text-xs space-y-2.5 leading-relaxed text-justify">
+        <p>Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
+        
+        <p>2. Dukacita dimaklumkan bahawa anak / jagaan tuan/puan telah mendaftar masuk lewat ke sekolah menerusi rekod imbasan digital <strong>Q-TIBA</strong> dengan butiran seperti berikut:</p>
+
+        <!-- JADUAL REKOD LEWAT -->
+        <table class="w-full text-xs border-collapse border border-black my-3">
+          <thead>
+            <tr class="bg-gray-100 font-bold">
+              <th class="border border-black p-2 text-center w-1/3">Jumlah Kelewatan</th>
+              <th class="border border-black p-2 text-center">Status / Tindakan Intervensi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border border-black p-2 text-center font-bold text-red-700 text-sm" id="pdf-jumlah-lewat">0 Kali</td>
+              <td class="border border-black p-2 text-center">Sesi Bimbingan & Kaunseling / Amaran Unit Disiplin</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:20 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
+
+        <p>4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
+      </div>
+
+      <p class="text-xs mt-3">Sekian, terima kasih.</p>
+
+      <!-- SLOGAN & TANDATANGAN -->
+      <div class="mt-4 text-xs leading-relaxed">
+        <p class="font-bold italic">"BERKHIDMAT UNTUK NEGARA"</p>
+        <p class="mt-2">Saya yang menjalankan amanah,</p>
+        
+        <!-- Ruang Tandatangan Kemas -->
+        <div class="h-14"></div>
+
+        <p class="font-bold uppercase text-xs">___________________________________</p>
+        <p class="font-bold uppercase mt-1">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
+        <p>Sekolah Kebangsaan Pulau Indah</p>
+      </div>
+
     </div>
   </div>
 
@@ -667,19 +698,21 @@
       }
     }
 
+    // FUNGSI JANA SURAT AMARAN PDF (KEMAS 1 PAGE)
     function generateSuratAmaran(nama, kelas, jumlahLewat) {
       document.getElementById('pdf-nama-murid').innerText = nama;
       document.getElementById('pdf-kelas-murid').innerText = kelas;
       document.getElementById('pdf-jumlah-lewat').innerText = jumlahLewat + " Kali";
-      document.getElementById('pdf-tarikh-surat').innerText = new Date().toLocaleDateString('ms-MY');
+      document.getElementById('pdf-tarikh-surat').innerText = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
 
       const element = document.getElementById('surat-amaran-pdf');
       const opt = {
-        margin:       10,
-        filename:     `Surat_Amaran_${nama.replaceAll(' ', '_')}.pdf`,
+        margin:       10, // Margin 10mm pada setiap sisi
+        filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: 'avoid-all' } // Kunci strict 1 muka surat
       };
 
       html2pdf().set(opt).from(element).save();
