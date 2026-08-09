@@ -612,6 +612,101 @@ async function installPWA() {
   deferredPrompt = null;
   closePwaModal();
 }
+    let currentScanData = null;
+
+// ==========================================
+// CIRI #4: MAKLUM BALAS SUARA (TEXT-TO-SPEECH)
+// ==========================================
+function speakText(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // Hentikan suara sedia ada
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'id-ID'; // Gunakan Sebutan Bahasa Melayu
+    utterance.rate = 1.0;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+// ==========================================
+// PROSES IMBASAN & BUKA MODAL PUNCA (CIRI #1 & #4)
+// ==========================================
+function onScanSuccess(studentId, studentName) {
+  currentScanData = {
+    id: studentId,
+    nama: studentName,
+    tarikh: new Date().toLocaleDateString('en-CA'),
+    masa: new Date().toLocaleTimeString('ms-MY', { hour12: false }),
+    punca: 'Tiada Catatan'
+  };
+
+  // Suara Sebutan
+  speakText(`Terima kasih ${studentName}. Sila nyatakan punca kelewatan.`);
+
+  // Papar Modal
+  document.getElementById('modal-student-name').innerText = studentName;
+  document.getElementById('reason-modal').classList.remove('hidden');
+}
+
+function submitReason(reason) {
+  if (!currentScanData) return;
+  currentScanData.punca = reason;
+  document.getElementById('reason-modal').classList.add('hidden');
+
+  // Hantar data (Sama ada Online atau Offline)
+  sendDataToBackend(currentScanData);
+  
+  speakText("Rekod berjaya disimpan. Sila masuk ke kelas.");
+  currentScanData = null;
+}
+
+// ==========================================
+// CIRI #3: SOKONGAN LUAR TALIAN (OFFLINE MODE)
+// ==========================================
+function sendDataToBackend(payload) {
+  if (navigator.onLine) {
+    // Jika Online: Hantar terus ke Apps Script API
+    fetch('URL_GOOGLE_APPS_SCRIPT_ANDA', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(() => {
+      console.log('Data berjaya dihantar ke cloud');
+    }).catch(() => {
+      saveOffline(payload);
+    });
+  } else {
+    // Jika Offline: Simpan dalam LocalStorage
+    saveOffline(payload);
+  }
+}
+
+function saveOffline(payload) {
+  let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+  offlineQueue.push(payload);
+  localStorage.setItem('qtiba_offline_queue', JSON.stringify(offlineQueue));
+  alert('Talian terputus. Data disimpan secara tempatan (Offline).');
+}
+
+// Automatik Sync apabila Internet pulih
+window.addEventListener('online', () => {
+  let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+  if (offlineQueue.length > 0) {
+    console.log(`Menghantar ${offlineQueue.length} data offline ke server...`);
+    
+    offlineQueue.forEach((item) => {
+      fetch('URL_GOOGLE_APPS_SCRIPT_ANDA', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+    });
+
+    localStorage.removeItem('qtiba_offline_queue');
+    speakText("Data offline telah berjaya dikemas kini ke cloud.");
+  }
+});
     
   </script>
 
@@ -654,6 +749,24 @@ async function installPWA() {
 
   </div>
 </div>
-  
+  <!-- MODAL PUNCA KELEWATAN (CIRI #1) -->
+<div id="reason-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl text-center">
+    <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 text-xl">
+      <i class="fa-solid fa-clipboard-question"></i>
+    </div>
+    <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modal-student-name">Nama Murid</h3>
+    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Sila pilih punca kelewatan:</p>
+    
+    <div class="grid grid-cols-2 gap-2 text-xs font-semibold mb-3">
+      <button onclick="submitReason('Bangun Lewat')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">⏰ Bangun Lewat</button>
+      <button onclick="submitReason('Kesesakan Trafik')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🚗 Trafik Jam</button>
+      <button onclick="submitReason('Masalah Kenderaan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🔧 Kenderaan Rosak</button>
+      <button onclick="submitReason('Cuaca / Hujan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🌧️ Faktor Cuaca</button>
+    </div>
+    
+    <button onclick="submitReason('Lain-lain')" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl">Lain-lain / Tiada</button>
+  </div>
+</div>
 </body>
 </html>
