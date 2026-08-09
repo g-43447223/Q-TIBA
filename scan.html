@@ -284,7 +284,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxxT1exkWPnYOmUYOOwPz_MOTYrv3RnuKk-P7K0ngmpOkFundEGwFPt0lPKMXIZ8iISHQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwfR5Ai9NW74oeMwCiq0Wtcvk7mjGi2egCa6GCqCNhn1vfI5JfPYnB3XLyRzz4zdNrq/exec";
 
     let html5QrCode = null;
     let isScannerRunning = false;
@@ -557,7 +557,6 @@
     function finalizeScanProcess(data) {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const dateStr = now.toLocaleDateString('en-CA');
 
       playAudioBeep('success');
       scannedTodaySet.add(data.id);
@@ -593,16 +592,11 @@
       renderSessionLog();
 
       const payload = {
-  id: idMurid,
-  nama: namaMurid,
-  kelas: kelasMurid,
-  punca: document.getElementById('select-punca').value // Memastikan punca dihantar
-};
-
-fetch(API_URL, {
-  method: 'POST',
-  body: JSON.stringify(payload)
-});
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        punca: data.punca
+      };
 
       sendDataToBackend(payload);
       speakText("Rekod kelewatan berjaya disimpan.");
