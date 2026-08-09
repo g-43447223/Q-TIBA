@@ -492,45 +492,54 @@
     }
 
     function renderTargetStudentTable(list) {
-      const tableBody = document.getElementById('student-table-body');
-      if (!tableBody) return;
+  const tableBody = document.getElementById('student-table-body');
+  if (!tableBody) return;
 
-      if (list.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada rekod murid dijumpai.</td></tr>`;
-        return;
-      }
+  if (list.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada rekod murid dijumpai.</td></tr>`;
+    return;
+  }
 
-      tableBody.innerHTML = '';
-      list.forEach((m, index) => {
-        let statusBadge = m.kiraan === 0 
-          ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
-          : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
+  tableBody.innerHTML = '';
+  list.forEach((m, index) => {
+    let statusBadge = m.kiraan === 0 
+      ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
+      : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
 
-        const userImg = (m.urlGambar && m.urlGambar !== '') 
-          ? m.urlGambar 
-          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+    const userImg = (m.urlGambar && m.urlGambar !== '') 
+      ? m.urlGambar 
+      : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
 
-        tableBody.innerHTML += `
-          <tr class="hover:bg-slate-500/5 transition-colors">
-            <td class="py-2.5 code-font">${index + 1}</td>
-            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-            <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2.5">
-              <img src="${userImg}" 
-                   alt="${m.nama}" 
-                   class="w-7 h-7 rounded-full object-cover border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800" 
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <span>${m.nama}</span>
-            </td>
-            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
-            <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
-            <td class="py-2.5 text-right">${statusBadge}</td>
-          </tr>
-        `;
-      });
-    }
+    // Butang PDF Jana Surat Amaran (Hanya paparkan jika murid mempunyai sekurang-kurangnya 1 kes kelewatan)
+    const btnSurat = m.kiraan > 0 
+      ? `<button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', ${m.kiraan})" 
+                 class="ml-2 px-2.5 py-1 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-lg shadow-sm transition-all flex items-center gap-1 inline-flex">
+           <i class="fa-solid fa-file-pdf"></i> Surat
+         </button>`
+      : '';
+
+    tableBody.innerHTML += `
+      <tr class="hover:bg-slate-500/5 transition-colors">
+        <td class="py-2.5 code-font">${index + 1}</td>
+        <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+        <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2.5">
+          <img src="${userImg}" 
+               alt="${m.nama}" 
+               class="w-7 h-7 rounded-full object-cover border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800" 
+               onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+          <span>${m.nama}</span>
+        </td>
+        <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
+        <td class="py-2.5 text-center text-blue-600 dark:text-cyan-400 font-semibold code-font">${m.kiraan}</td>
+        <td class="py-2.5 text-right flex items-center justify-end gap-1">${statusBadge} ${btnSurat}</td>
+      </tr>
+    `;
+  });
+}
 
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
+      globalMuridList = data.muridList || [];
       const todayTableBody = document.getElementById('today-table-body');
       const heroContainer = document.getElementById('hero-students-container');
 
@@ -539,6 +548,8 @@
         if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Sila masukkan Web App API URL di dalam fail index.html.</td></tr>`;
         return;
       }
+
+      fetchLiveData();
 
       try {
         updateSyncStatus("Memuatkan Data...", "text-amber-500");
@@ -681,11 +692,25 @@ const muridStreakData = [
   { nama: 'Siti Nurhaliza', kelas: '4 Melati', streakHari: 5 }
 ];
 
-function renderStreakTracker() {
+function renderStreakTracker(list) {
+  // Memasukkan data sahsiah sebenar dari Google Apps Script
+renderStreakTracker(data.streakList || globalMuridList);
   const container = document.getElementById('streak-container');
-  container.innerHTML = '';
+  if (!container) return;
 
-  muridStreakData.forEach(m => {
+  // Menapis murid yang mempunyai kunci `streakHari` daripada Google Apps Script
+  const streakList = (list || []).filter(m => m.streakHari && m.streakHari > 0);
+
+  if (streakList.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
+        Tiada rekod pemulihan sahsiah / streak hadir awal buat masa ini.
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  streakList.forEach(m => {
     let badgeColor = m.streakHari >= 7 ? 'from-amber-500 to-orange-500' : 'from-cyan-500 to-blue-500';
     let badgeTitle = m.streakHari >= 7 ? '🏆 Sahsiah Terpuji' : '⭐ Istiqamah Awal';
 
@@ -709,7 +734,6 @@ function renderStreakTracker() {
 // Jalankan fungsi
 renderStreakTracker();
 
-    fetchLiveData();
   </script>
 </body>
 </html>
