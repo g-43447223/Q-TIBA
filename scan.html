@@ -2,10 +2,10 @@
 <html lang="ms" class="dark">
 <head>
   <!-- Ikon khas untuk iPhone / iPad (Safari) -->
-<link rel="apple-touch-icon" sizes="180x180" href="q-tibalogo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="q-tibalogo.png">
 
-<!-- Ikon asas pelayar web -->
-<link rel="icon" type="image/png" sizes="32x32" href="q-tibalogo.png">
+  <!-- Ikon asas pelayar web -->
+  <link rel="icon" type="image/png" sizes="32x32" href="q-tibalogo.png">
   <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -228,20 +228,73 @@
     <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH</div>
   </footer>
 
+  <!-- POP-UP INSTALL PWA -->
+  <div id="pwa-install-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative animate-bounce-short">
+      <button onclick="closePwaModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white text-sm p-1 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 text-2xl shrink-0">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pasang Aplikasi Q-TIBA</h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Tambah ke Skrin Utama untuk imbasan pantas di pintu pagar tanpa pelayar web.</p>
+        </div>
+      </div>
+
+      <div id="pwa-android-btn-container">
+        <button onclick="installPWA()" class="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-download"></i> Pasang Sekarang
+        </button>
+      </div>
+
+      <div id="pwa-ios-instructions" class="hidden text-[11px] bg-slate-100 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 space-y-1.5 mt-2">
+        <p class="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
+          <i class="fa-brands fa-apple"></i> Pengguna iPhone / Safari:
+        </p>
+        <ol class="list-decimal list-inside space-y-1 text-[10px]">
+          <li>Tekan ikon <b>Kongsi / Share</b> (<i class="fa-solid fa-share-from-square"></i>) di bawah Safari.</li>
+          <li>Tatal ke bawah dan pilih <b>"Add to Home Screen"</b> (<i class="fa-solid fa-plus-square"></i>).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PUNCA KELEWATAN -->
+  <div id="reason-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 text-xl">
+        <i class="fa-solid fa-clipboard-question"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modal-student-name">Nama Murid</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Sila pilih punca kelewatan:</p>
+      
+      <div class="grid grid-cols-2 gap-2 text-xs font-semibold mb-3">
+        <button onclick="submitReason('Bangun Lewat')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">⏰ Bangun Lewat</button>
+        <button onclick="submitReason('Kesesakan Trafik')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🚗 Trafik Jam</button>
+        <button onclick="submitReason('Masalah Kenderaan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🔧 Kenderaan Rosak</button>
+        <button onclick="submitReason('Cuaca / Hujan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🌧️ Faktor Cuaca</button>
+      </div>
+      
+      <button onclick="submitReason('Lain-lain')" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl">Lain-lain / Tiada</button>
+    </div>
+  </div>
+
   <script>
-    // =========================================================================
-    // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI:
-    // =========================================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxNS88ZUyTVmw6RD5i-4macBMy6Kb9_EiHRrTqBjaUjsv4m62GAL4hCd6yVD419MkJJaQ/exec";
 
     let html5QrCode = null;
     let isScannerRunning = false;
     let isProcessingScan = false;
     let studentCacheMap = {};
-    let scannedTodaySet = new Set(); // Mengingati ID murid yang dah diimbas hari ini
+    let scannedTodaySet = new Set();
     let sessionScannedList = [];
+    let pendingScanData = null; // Menyimpan data sementara sebelum punca dipilih
 
-    // AUDIO BEEP GENERATOR (Tone Success vs Warning)
+    // AUDIO BEEP GENERATOR
     function playAudioBeep(type = 'success') {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -254,18 +307,29 @@
         gain.connect(ctx.destination);
 
         if (type === 'success') {
-          osc.frequency.setValueAtTime(880, ctx.currentTime); // Tone Tinggi (Berjaya)
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
           gain.gain.setValueAtTime(0.3, ctx.currentTime);
           osc.start();
           osc.stop(ctx.currentTime + 0.15);
         } else {
-          osc.frequency.setValueAtTime(220, ctx.currentTime); // Tone Rendah (Amaran/Duplikat)
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
           gain.gain.setValueAtTime(0.4, ctx.currentTime);
           osc.start();
           osc.stop(ctx.currentTime + 0.35);
         }
       } catch (e) {
         console.log("Audio not supported / blocked");
+      }
+    }
+
+    // TEXT-TO-SPEECH (SEBUTAN SUARA)
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
       }
     }
 
@@ -297,7 +361,7 @@
       }
     });
 
-    // PRA-AMBIL DATA MURID & SENARAI MURID YANG DAH LEWAT HARI INI
+    // PRELOAD DATA MURID
     async function preloadStudentData() {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       try {
@@ -307,20 +371,18 @@
           data.muridList.forEach(m => {
             const cleanId = m.id.trim().toUpperCase();
             studentCacheMap[cleanId] = m;
-            
-            // Masukkan dalam set jika murid dah diimbas hari ini mengikut data Google Sheets
             if (m.lewatHariIni) {
               scannedTodaySet.add(cleanId);
             }
           });
-          console.log("Q-TIBA: Loaded", Object.keys(studentCacheMap).length, "students. Already scanned today:", scannedTodaySet.size);
+          console.log("Q-TIBA: Loaded", Object.keys(studentCacheMap).length, "students.");
         }
       } catch (err) {
         console.warn("Preload student map failed:", err);
       }
     }
 
-    // INIT SCANNER & LIST KAMERA
+    // KAMERA SETUP
     async function initCameraDevices() {
       try {
         const devices = await Html5Qrcode.getCameras();
@@ -397,6 +459,7 @@
 
     function onScanError(errorMessage) {}
 
+    // FUNGSI CALLBACK IMBASAN KAMERA
     function onScanSuccess(decodedText) {
       if (isProcessingScan) return;
       
@@ -404,30 +467,26 @@
       if (!scannedId) return;
 
       isProcessingScan = true;
+      initiateScanProcess(scannedId);
 
-      processScannedStudent(scannedId);
-
-      // Cooldown 2 saat sebelum membenarkan imbasan berikutnya
       setTimeout(() => {
         isProcessingScan = false;
-      }, 2000);
+      }, 2500);
     }
 
+    // FUNGSI INPUT MANUAL
     function handleManualSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('manual-id');
       const val = input.value.trim().toUpperCase();
       if (val) {
-        processScannedStudent(val);
+        initiateScanProcess(val);
         input.value = '';
       }
     }
 
-    // PROSES IMBASAN & MENYEMAK DUPLIKAT HARI INI
-    async function processScannedStudent(scannedId) {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
+    // MEMULA PROSES IMBASAN (SEMAK DUPLIKAT & BUKA MODAL)
+    function initiateScanProcess(scannedId) {
       const matchedStudent = studentCacheMap[scannedId] || {
         id: scannedId,
         nama: "MURID DIIMBAS",
@@ -441,9 +500,10 @@
 
       const resultBox = document.getElementById('scanned-result-box');
 
-      // SEMAKAN: JIKA MURID SUDAH DIIMBAS HARI INI
+      // 1. Semak Jika Sudah Diimbas Hari Ini
       if (scannedTodaySet.has(scannedId)) {
-        playAudioBeep('error'); // Bunyi amaran
+        playAudioBeep('error');
+        speakText(`Amaran. ${matchedStudent.nama} telah diimbas hari ini.`);
 
         resultBox.innerHTML = `
           <div class="pop-in flex flex-col items-center w-full">
@@ -462,60 +522,135 @@
             </div>
           </div>
         `;
-        return; // Hentikan proses, tak perlu simpan ke Google Sheet
+        return;
       }
 
-      // JIKA BELUM DIIMBAS HARI INI:
-      playAudioBeep('success'); // Bunyi berjaya
-      scannedTodaySet.add(scannedId); // Tandakan ID telah diimbas untuk hari ini
+      // 2. Simpan Data Sementara & Buka Modal Punca
+      pendingScanData = {
+        id: scannedId,
+        nama: matchedStudent.nama,
+        kelas: matchedStudent.kelas,
+        img: userImg
+      };
 
+      speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
+      document.getElementById('modal-student-name').innerText = matchedStudent.nama;
+      document.getElementById('reason-modal').classList.remove('hidden');
+    }
+
+    // DIPANGGIL APABILA BUTANG PUNCA DITEKAN
+    function submitReason(reason) {
+      if (!pendingScanData) return;
+
+      document.getElementById('reason-modal').classList.add('hidden');
+      
+      const scanData = {
+        ...pendingScanData,
+        punca: reason
+      };
+
+      pendingScanData = null;
+      finalizeScanProcess(scanData);
+    }
+
+    // SIMPAN REKOD & HANTAR KE BACKEND
+    function finalizeScanProcess(data) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = now.toLocaleDateString('en-CA');
+
+      playAudioBeep('success');
+      scannedTodaySet.add(data.id);
+
+      const resultBox = document.getElementById('scanned-result-box');
       resultBox.innerHTML = `
         <div class="pop-in flex flex-col items-center w-full">
           <div class="relative my-2">
-            <img src="${userImg}" 
+            <img src="${data.img}" 
                  class="w-20 h-20 rounded-full object-cover border-4 border-amber-500 shadow-md bg-slate-200 dark:bg-slate-800"
-                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
+                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
             <span class="absolute bottom-0 right-0 bg-emerald-500 text-white rounded-full p-1 text-[10px]">
               <i class="fa-solid fa-check"></i>
             </span>
           </div>
-          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
-          <p class="text-xs font-bold text-amber-600 dark:text-amber-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
+          <p class="text-xs font-bold text-amber-600 dark:text-amber-400 code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
           <div class="mt-2 text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-3 py-1 rounded-full font-bold code-font">
-            <i class="fa-solid fa-clock mr-1"></i>${timeStr} - RAKAM KELEWATAN
+            <i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}
           </div>
         </div>
       `;
 
       sessionScannedList.unshift({
-        id: scannedId,
-        nama: matchedStudent.nama,
-        kelas: matchedStudent.kelas,
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
         masa: timeStr,
-        img: userImg
+        punca: data.punca,
+        img: data.img
       });
 
       renderSessionLog();
 
-      // HANTAR REKOD KEPADA GOOGLE APPS SCRIPT
-      if (API_URL && !API_URL.includes("MASUKKAN_URL")) {
-        try {
-          await fetch(API_URL, {
+      const payload = {
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        punca: data.punca,
+        masa: timeStr,
+        tarikh: dateStr
+      };
+
+      sendDataToBackend(payload);
+      speakText("Rekod kelewatan berjaya disimpan.");
+    }
+
+    // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
+    function sendDataToBackend(payload) {
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+
+      if (navigator.onLine) {
+        fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(() => {
+          console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
+        }).catch(() => {
+          saveOffline(payload);
+        });
+      } else {
+        saveOffline(payload);
+      }
+    }
+
+    function saveOffline(payload) {
+      let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      offlineQueue.push(payload);
+      localStorage.setItem('qtiba_offline_queue', JSON.stringify(offlineQueue));
+      console.log('Talian terputus. Data disimpan secara tempatan (Offline).');
+    }
+
+    // SINKRONISASI AUTOMATIK APABILA TALIAN ONLINE RECOVER
+    window.addEventListener('online', () => {
+      let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      if (offlineQueue.length > 0 && API_URL && !API_URL.includes("MASUKKAN_URL")) {
+        console.log(`Menghantar ${offlineQueue.length} data offline ke server...`);
+        
+        offlineQueue.forEach((item) => {
+          fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: scannedId,
-              nama: matchedStudent.nama,
-              kelas: matchedStudent.kelas
-            })
+            body: JSON.stringify(item)
           });
-          console.log("Q-TIBA: Rekod baharu berjaya dihantar.");
-        } catch (err) {
-          console.error("Gagal menghantar rekod POST:", err);
-        }
+        });
+
+        localStorage.removeItem('qtiba_offline_queue');
+        speakText("Data offline telah berjaya dikemas kini ke cloud.");
       }
-    }
+    });
 
     function renderSessionLog() {
       const logList = document.getElementById('session-log-list');
@@ -536,7 +671,7 @@
               <img src="${item.img}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
               <div class="truncate">
                 <p class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">${item.nama}</p>
-                <p class="text-[9px] text-slate-400 code-font">${item.id} &bull; ${item.kelas}</p>
+                <p class="text-[9px] text-slate-400 code-font">${item.id} &bull; ${item.kelas} ${item.punca ? '&bull; <span class="text-amber-500 font-semibold">' + item.punca + '</span>' : ''}</p>
               </div>
             </div>
             <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 code-font bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">${item.masa}</span>
@@ -550,223 +685,54 @@
       renderSessionLog();
     }
 
+    // PWA SETUP
+    let deferredPrompt = null;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isPwaDismissed = localStorage.getItem('qtiba_pwa_dismissed') === 'true';
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isStandalone && !isPwaDismissed) showPwaModal();
+    });
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    window.addEventListener('load', () => {
+      if (isIOS && !isStandalone && !isPwaDismissed) {
+        document.getElementById('pwa-android-btn-container')?.classList.add('hidden');
+        document.getElementById('pwa-ios-instructions')?.classList.remove('hidden');
+        showPwaModal();
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+      }
+    });
+
+    function showPwaModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closePwaModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.classList.add('hidden');
+      localStorage.setItem('qtiba_pwa_dismissed', 'true');
+    }
+
+    async function installPWA() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') console.log('Q-TIBA PWA dipasang.');
+      deferredPrompt = null;
+      closePwaModal();
+    }
+
+    // INISIALISASI
     initCameraDevices();
     preloadStudentData();
-
-    let deferredPrompt = null;
-
-// Semak jika pengguna sudah berada dalam mod App (Standalone) atau pernah dismiss pop-up
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-const isPwaDismissed = localStorage.getItem('qtiba_pwa_dismissed') === 'true';
-
-// 1. Android & Desktop Chrome (Menangkap Acara 'beforeinstallprompt')
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  // Paparkan modal jika belum di-install & belum dimatikan pengguna
-  if (!isStandalone && !isPwaDismissed) {
-    showPwaModal();
-  }
-});
-
-// 2. Deteksi iPhone / iOS Safari
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-window.addEventListener('load', () => {
-  // Safari iOS tidak menyokong beforeinstallprompt, jadi paparkan arahan manual jika dibuka dari browser biasa
-  if (isIOS && !isStandalone && !isPwaDismissed) {
-    document.getElementById('pwa-android-btn-container')?.classList.add('hidden');
-    document.getElementById('pwa-ios-instructions')?.classList.remove('hidden');
-    showPwaModal();
-  }
-
-  // Daftar Service Worker (Wajib untuk kriteria PWA)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
-  }
-});
-
-function showPwaModal() {
-  const modal = document.getElementById('pwa-install-modal');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function closePwaModal() {
-  const modal = document.getElementById('pwa-install-modal');
-  if (modal) modal.classList.add('hidden');
-  // Simpan ke localStorage supaya tak ganggu lagi selepas ditutup
-  localStorage.setItem('qtiba_pwa_dismissed', 'true');
-}
-
-async function installPWA() {
-  if (!deferredPrompt) return;
-  
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  
-  if (outcome === 'accepted') {
-    console.log('Q-TIBA PWA berjaya dipasang.');
-  }
-  
-  deferredPrompt = null;
-  closePwaModal();
-}
-    let currentScanData = null;
-
-// ==========================================
-// CIRI #4: MAKLUM BALAS SUARA (TEXT-TO-SPEECH)
-// ==========================================
-function speakText(text) {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel(); // Hentikan suara sedia ada
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'id-ID'; // Gunakan Sebutan Bahasa Melayu
-    utterance.rate = 1.0;
-    window.speechSynthesis.speak(utterance);
-  }
-}
-
-// ==========================================
-// PROSES IMBASAN & BUKA MODAL PUNCA (CIRI #1 & #4)
-// ==========================================
-function onScanSuccess(studentId, studentName) {
-  currentScanData = {
-    id: studentId,
-    nama: studentName,
-    tarikh: new Date().toLocaleDateString('en-CA'),
-    masa: new Date().toLocaleTimeString('ms-MY', { hour12: false }),
-    punca: 'Tiada Catatan'
-  };
-
-  // Suara Sebutan
-  speakText(`Terima kasih ${studentName}. Sila nyatakan punca kelewatan.`);
-
-  // Papar Modal
-  document.getElementById('modal-student-name').innerText = studentName;
-  document.getElementById('reason-modal').classList.remove('hidden');
-}
-
-function submitReason(reason) {
-  if (!currentScanData) return;
-  currentScanData.punca = reason;
-  document.getElementById('reason-modal').classList.add('hidden');
-
-  // Hantar data (Sama ada Online atau Offline)
-  sendDataToBackend(currentScanData);
-  
-  speakText("Rekod berjaya disimpan. Sila masuk ke kelas.");
-  currentScanData = null;
-}
-
-// ==========================================
-// CIRI #3: SOKONGAN LUAR TALIAN (OFFLINE MODE)
-// ==========================================
-function sendDataToBackend(payload) {
-  if (navigator.onLine) {
-    // Jika Online: Hantar terus ke Apps Script API
-    fetch('URL_GOOGLE_APPS_SCRIPT_ANDA', {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(() => {
-      console.log('Data berjaya dihantar ke cloud');
-    }).catch(() => {
-      saveOffline(payload);
-    });
-  } else {
-    // Jika Offline: Simpan dalam LocalStorage
-    saveOffline(payload);
-  }
-}
-
-function saveOffline(payload) {
-  let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
-  offlineQueue.push(payload);
-  localStorage.setItem('qtiba_offline_queue', JSON.stringify(offlineQueue));
-  alert('Talian terputus. Data disimpan secara tempatan (Offline).');
-}
-
-// Automatik Sync apabila Internet pulih
-window.addEventListener('online', () => {
-  let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
-  if (offlineQueue.length > 0) {
-    console.log(`Menghantar ${offlineQueue.length} data offline ke server...`);
-    
-    offlineQueue.forEach((item) => {
-      fetch('URL_GOOGLE_APPS_SCRIPT_ANDA', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
-      });
-    });
-
-    localStorage.removeItem('qtiba_offline_queue');
-    speakText("Data offline telah berjaya dikemas kini ke cloud.");
-  }
-});
-    
   </script>
-
-  <!-- POP-UP INSTALL PWA -->
-<div id="pwa-install-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
-  <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative animate-bounce-short">
-    
-    <!-- Butang Tutup -->
-    <button onclick="closePwaModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white text-sm p-1 transition-colors">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-
-    <div class="flex items-center gap-3 mb-3">
-      <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 text-2xl shrink-0">
-        <i class="fa-solid fa-mobile-screen-button"></i>
-      </div>
-      <div>
-        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pasang Aplikasi Q-TIBA</h3>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400">Tambah ke Skrin Utama untuk imbasan pantas di pintu pagar tanpa pelayar web.</p>
-      </div>
-    </div>
-
-    <!-- Butang Install (Android / Desktop Chrome) -->
-    <div id="pwa-android-btn-container">
-      <button onclick="installPWA()" class="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
-        <i class="fa-solid fa-download"></i> Pasang Sekarang
-      </button>
-    </div>
-
-    <!-- Arahan Khas Pengguna iOS / iPhone Safari -->
-    <div id="pwa-ios-instructions" class="hidden text-[11px] bg-slate-100 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 space-y-1.5 mt-2">
-      <p class="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
-        <i class="fa-brands fa-apple"></i> Pengguna iPhone / Safari:
-      </p>
-      <ol class="list-decimal list-inside space-y-1 text-[10px]">
-        <li>Tekan ikon <b>Kongsi / Share</b> (<i class="fa-solid fa-share-from-square"></i>) di bawah Safari.</li>
-        <li>Tatal ke bawah dan pilih <b>"Add to Home Screen"</b> (<i class="fa-solid fa-plus-square"></i>).</li>
-      </ol>
-    </div>
-
-  </div>
-</div>
-  <!-- MODAL PUNCA KELEWATAN (CIRI #1) -->
-<div id="reason-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-  <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl text-center">
-    <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 text-xl">
-      <i class="fa-solid fa-clipboard-question"></i>
-    </div>
-    <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modal-student-name">Nama Murid</h3>
-    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Sila pilih punca kelewatan:</p>
-    
-    <div class="grid grid-cols-2 gap-2 text-xs font-semibold mb-3">
-      <button onclick="submitReason('Bangun Lewat')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">⏰ Bangun Lewat</button>
-      <button onclick="submitReason('Kesesakan Trafik')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🚗 Trafik Jam</button>
-      <button onclick="submitReason('Masalah Kenderaan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🔧 Kenderaan Rosak</button>
-      <button onclick="submitReason('Cuaca / Hujan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🌧️ Faktor Cuaca</button>
-    </div>
-    
-    <button onclick="submitReason('Lain-lain')" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl">Lain-lain / Tiada</button>
-  </div>
-</div>
 </body>
 </html>
