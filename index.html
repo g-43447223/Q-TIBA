@@ -54,6 +54,14 @@
       color: #ffffff !important;
       box-shadow: 0 4px 14px 0 rgba(6, 182, 212, 0.39);
     }
+
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sortable:hover {
+      color: #06b6d4;
+    }
   </style>
 </head>
 
@@ -178,14 +186,14 @@
         </div>
       </div>
 
-      <!-- JADUAL MURID LEWAT HARI INI -->
+      <!-- JADUAL MURID LEWAT HARI INI (WITH SORTING) -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-user-clock text-amber-500"></i> Rekod Murid Lewat Hari Ini
             </h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Senarai imbasan kelewatan hari ini beserta masa imbasan.</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Klik tajuk lajur untuk menyusun data.</p>
           </div>
           <span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold code-font">HARI INI</span>
         </div>
@@ -195,11 +203,11 @@
             <thead>
               <tr class="border-b border-slate-200/80 dark:border-slate-800 text-slate-400 font-semibold code-font">
                 <th class="pb-2">NO</th>
-                <th class="pb-2">ID</th>
-                <th class="pb-2">NAMA MURID</th>
-                <th class="pb-2">KELAS</th>
-                <th class="pb-2 text-center">MASA IMBAS</th>
-                <th class="pb-2 text-right">STATUS</th>
+                <th class="pb-2 sortable" onclick="sortTodayTable('id')">ID <i id="sort-icon-id" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2 sortable" onclick="sortTodayTable('nama')">NAMA MURID <i id="sort-icon-nama" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2 sortable" onclick="sortTodayTable('kelas')">KELAS <i id="sort-icon-kelas" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2 text-center sortable" onclick="sortTodayTable('waktuHariIni')">MASA IMBAS <i id="sort-icon-waktuHariIni" class="fa-solid fa-sort-down ml-1 text-cyan-500"></i></th>
+                <th class="pb-2 text-right sortable" onclick="sortTodayTable('kiraan')">STATUS / KES <i id="sort-icon-kiraan" class="fa-solid fa-sort ml-1"></i></th>
               </tr>
             </thead>
             <tbody id="today-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60">
@@ -309,7 +317,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: SENARAI REKOD & BNK -->
+    <!-- TAB 4: SENARAI REKOD & BNK (DIKELOMPOKKAN MENGIKUT MURID) -->
     <div id="tab-records" class="tab-content hidden flex flex-col gap-6">
       
       <!-- BAR ALATAN PENAPIS & CARIAN -->
@@ -353,17 +361,17 @@
         </div>
       </section>
 
-      <!-- JADUAL REKOD TERPERINCI -->
+      <!-- JADUAL REKOD DIKELOMPOKKAN -->
       <section class="glass-card rounded-2xl p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-list text-indigo-500"></i> Rekod Kelewatan & Penanda BNK
+              <i class="fa-solid fa-address-book text-indigo-500"></i> Ringkasan Rekod Murid & Tindakan BNK
             </h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">Murid yang lewat melebihi 3 kali ditanda untuk senarai kaunseling</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Data dikelompokkan mengikut murid untuk memandu intervensi Unit Bimbingan & Kaunseling</p>
           </div>
           <span id="record-count-badge" class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full font-bold code-font">
-            0 Rekod
+            0 Murid
           </span>
         </div>
 
@@ -371,20 +379,20 @@
           <table class="w-full text-left text-xs border-collapse">
             <thead>
               <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                <th class="py-3 px-3">Tarikh & Masa</th>
+                <th class="py-3 px-3">NO</th>
                 <th class="py-3 px-3">ID Murid</th>
                 <th class="py-3 px-3">Nama Murid</th>
                 <th class="py-3 px-3">Kelas</th>
-                <th class="py-3 px-3">Punca Kelewatan</th>
-                <th class="py-3 px-3 text-center">Kekerapan</th>
-                <th class="py-3 px-3 text-center">Status / Tindakan</th>
+                <th class="py-3 px-3">Punca Kelewatan Ringkas</th>
+                <th class="py-3 px-3 text-center">Jumlah Kes</th>
+                <th class="py-3 px-3 text-center">Status / Surat BNK</th>
               </tr>
             </thead>
             <tbody id="table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60 font-medium">
               <tr>
                 <td colspan="7" class="py-8 text-center text-slate-400 code-font">
                   <i class="fa-solid fa-spinner animate-spin text-lg mb-2"></i>
-                  <p>Memuatkan data kelewatan...</p>
+                  <p>Memuatkan ringkasan data...</p>
                 </td>
               </tr>
             </tbody>
@@ -535,6 +543,10 @@
 
     let globalMuridList = [];
     let globalRekodList = [];
+
+    // TENTUKAN TETAPAN SORTING JADUAL LEWAT HARI INI
+    let todaySortCol = 'waktuHariIni';
+    let todaySortAsc = false; // Default: Masa Imbas terkini di atas (Descending)
 
     // SETUP TEACHER TEMPLATE (HANYA SEKALI)
     const teacherTemplate = document.getElementById('teacher-team-template').content;
@@ -737,7 +749,6 @@
     function updateAnalyticsCharts(rekodList) {
       if (!rekodList || rekodList.length === 0) return;
 
-      // 1. Kira Punca Kelewatan
       const reasonCounts = {
         "Bangun Lewat": 0,
         "Kesesakan Trafik": 0,
@@ -746,11 +757,9 @@
         "Lain-lain": 0
       };
 
-      // 2. Kira Kelewatan Mengikut Kelas
       const classCounts = {};
 
       rekodList.forEach(r => {
-        // Count reason
         const reason = r.punca || r.sebab || "Lain-lain";
         if (reasonCounts[reason] !== undefined) {
           reasonCounts[reason]++;
@@ -758,7 +767,6 @@
           reasonCounts["Lain-lain"]++;
         }
 
-        // Count class
         const kls = r.kelas || "Lain-lain";
         classCounts[kls] = (classCounts[kls] || 0) + 1;
       });
@@ -773,6 +781,82 @@
         classChart.data.datasets[0].data = Object.values(classCounts);
         classChart.update();
       }
+    }
+
+    // FUNGSI SORTING JADUAL LEWAT HARI INI
+    function sortTodayTable(columnKey) {
+      if (todaySortCol === columnKey) {
+        todaySortAsc = !todaySortAsc;
+      } else {
+        todaySortCol = columnKey;
+        todaySortAsc = true;
+      }
+
+      // Kemaskini Ikon Sort
+      ['id', 'nama', 'kelas', 'waktuHariIni', 'kiraan'].forEach(col => {
+        const icon = document.getElementById(`sort-icon-${col}`);
+        if (icon) {
+          if (col === todaySortCol) {
+            icon.className = todaySortAsc ? "fa-solid fa-sort-up ml-1 text-cyan-500" : "fa-solid fa-sort-down ml-1 text-cyan-500";
+          } else {
+            icon.className = "fa-solid fa-sort ml-1 opacity-40";
+          }
+        }
+      });
+
+      renderTodayTable();
+    }
+
+    function renderTodayTable() {
+      const todayTableBody = document.getElementById('today-table-body');
+      if (!todayTableBody) return;
+
+      let list = globalMuridList.filter(m => m.lewatHariIni);
+
+      if (list.length === 0) {
+        todayTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-emerald-600 dark:text-emerald-400 code-font">
+              <i class="fa-solid fa-circle-check text-base mr-2"></i> Tiada kelewatan murid sasaran direkodkan hari ini!
+            </td>
+          </tr>`;
+        return;
+      }
+
+      // SUSUN DATA MENGIKUT LAJUR DIPILIH
+      list.sort((a, b) => {
+        let valA = a[todaySortCol] ?? '';
+        let valB = b[todaySortCol] ?? '';
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return todaySortAsc ? -1 : 1;
+        if (valA > valB) return todaySortAsc ? 1 : -1;
+        return 0;
+      });
+
+      todayTableBody.innerHTML = '';
+      list.forEach((m, idx) => {
+        const userImg = (m.urlGambar && m.urlGambar !== '') 
+          ? m.urlGambar 
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
+        todayTableBody.innerHTML += `
+          <tr class="hover:bg-slate-500/5 transition-colors">
+            <td class="py-2.5 code-font">${idx + 1}</td>
+            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+            <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+              <img src="${userImg}" 
+                   class="w-6 h-6 rounded-full object-cover border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800" 
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+              <span>${m.nama}</span>
+            </td>
+            <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
+            <td class="py-2.5 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${m.waktuHariIni || 'Terrekod'}</td>
+            <td class="py-2.5 text-right font-bold code-font text-slate-700 dark:text-slate-300">${m.kiraan} Kes</td>
+          </tr>`;
+      });
     }
 
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
@@ -799,7 +883,6 @@
           globalMuridList = data.muridList || [];
           globalRekodList = data.rekodList || data.logs || [];
 
-          // Jika rekodList tiada dalam API, bina senarai automatik daripada muridList
           if (globalRekodList.length === 0 && globalMuridList.length > 0) {
             globalMuridList.forEach(m => {
               if (m.kiraan > 0) {
@@ -841,7 +924,6 @@
             trendChart.update();
           }
 
-          // Kemaskini Carta Punca & Kelas
           updateAnalyticsCharts(globalRekodList);
 
           // RENDER HERO
@@ -878,40 +960,8 @@
             });
           }
 
-          // RENDER MURID LEWAT HARI INI
-          if (todayTableBody) {
-            const muridLewatToday = globalMuridList.filter(m => m.lewatHariIni);
-            if (muridLewatToday.length === 0) {
-              todayTableBody.innerHTML = `
-                <tr>
-                  <td colspan="6" class="py-8 text-center text-emerald-600 dark:text-emerald-400 code-font">
-                    <i class="fa-solid fa-circle-check text-base mr-2"></i> Tiada kelewatan murid sasaran direkodkan hari ini!
-                  </td>
-                </tr>`;
-            } else {
-              todayTableBody.innerHTML = '';
-              muridLewatToday.forEach((m, idx) => {
-                const userImg = (m.urlGambar && m.urlGambar !== '') 
-                  ? m.urlGambar 
-                  : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
-
-                todayTableBody.innerHTML += `
-                  <tr class="hover:bg-slate-500/5 transition-colors">
-                    <td class="py-2.5 code-font">${idx + 1}</td>
-                    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-                    <td class="py-2.5 font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-                      <img src="${userImg}" 
-                           class="w-6 h-6 rounded-full object-cover border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800" 
-                           onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-                      <span>${m.nama}</span>
-                    </td>
-                    <td class="py-2.5 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
-                    <td class="py-2.5 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${m.waktuHariIni || 'Terrekod'}</td>
-                    <td class="py-2.5 text-right"><span class="text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/20 px-2 py-0.5 rounded-full font-medium">Lewat Hari Ini</span></td>
-                  </tr>`;
-              });
-            }
-          }
+          // RENDER JADUAL LEWAT HARI INI
+          renderTodayTable();
 
           renderTargetStudentTable(globalMuridList);
           renderStreakTracker(data.streakList || globalMuridList);
@@ -930,7 +980,6 @@
       }
     }
 
-    // PENUTUP FILTER KELAS
     function populateClassFilter() {
       const select = document.getElementById('filter-class');
       if (!select) return;
@@ -945,25 +994,64 @@
       });
     }
 
-    // PENAPIS TAB 4: SENARAI REKOD & BNK
+    // MEMBINA REKOD DIKELOMPOKKAN MENGIKUT MURID (GROUP BY STUDENT)
+    function getGroupedStudentRecords() {
+      const map = new Map();
+
+      // Utamakan gabungan dari globalMuridList
+      globalMuridList.forEach(m => {
+        map.set(m.id || m.nama, {
+          id: m.id || 'N/A',
+          nama: m.nama || 'Tanpa Nama',
+          kelas: m.kelas || 'N/A',
+          jumlahKes: m.kiraan || 0,
+          puncas: new Set()
+        });
+      });
+
+      // Tambah punca-punca kelewatan dari log rekod
+      globalRekodList.forEach(r => {
+        const key = r.id || r.nama;
+        if (!map.has(key)) {
+          map.set(key, {
+            id: r.id || 'N/A',
+            nama: r.nama || 'Tanpa Nama',
+            kelas: r.kelas || 'N/A',
+            jumlahKes: r.kekerapan || 1,
+            puncas: new Set()
+          });
+        }
+        const record = map.get(key);
+        if (r.punca || r.sebab) {
+          record.puncas.add(r.punca || r.sebab);
+        }
+      });
+
+      return Array.from(map.values()).filter(item => item.jumlahKes > 0);
+    }
+
+    // PENAPIS TAB 4 (BNK)
     function applyFilters() {
       const search = (document.getElementById('filter-search')?.value || '').toLowerCase();
       const selectedClass = document.getElementById('filter-class')?.value || '';
       const selectedReason = document.getElementById('filter-reason')?.value || '';
       const selectedStatus = document.getElementById('filter-status')?.value || '';
 
-      const filtered = globalRekodList.filter(r => {
+      const grouped = getGroupedStudentRecords();
+
+      const filtered = grouped.filter(student => {
         const matchSearch = !search || 
-          (r.nama && r.nama.toLowerCase().includes(search)) || 
-          (r.id && String(r.id).toLowerCase().includes(search));
+          (student.nama && student.nama.toLowerCase().includes(search)) || 
+          (student.id && String(student.id).toLowerCase().includes(search));
         
-        const matchClass = !selectedClass || r.kelas === selectedClass;
-        const matchReason = !selectedReason || (r.punca || r.sebab || 'Lain-lain') === selectedReason;
+        const matchClass = !selectedClass || student.kelas === selectedClass;
+
+        const puncasArray = Array.from(student.puncas);
+        const matchReason = !selectedReason || puncasArray.some(p => p === selectedReason) || (puncasArray.length === 0 && selectedReason === 'Lain-lain');
         
         let matchStatus = true;
-        const count = r.kekerapan || 0;
-        if (selectedStatus === 'tegar') matchStatus = count >= 3;
-        if (selectedStatus === 'normal') matchStatus = count < 3;
+        if (selectedStatus === 'tegar') matchStatus = student.jumlahKes >= 3;
+        if (selectedStatus === 'normal') matchStatus = student.jumlahKes < 3;
 
         return matchSearch && matchClass && matchReason && matchStatus;
       });
@@ -976,58 +1064,71 @@
       const badge = document.getElementById('record-count-badge');
       if (!tbody) return;
 
-      if (badge) badge.innerText = `${list.length} Rekod`;
+      if (badge) badge.innerText = `${list.length} Murid`;
 
       if (list.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 code-font">Tiada rekod kelewatan ditemui mengikut penapis ini.</td></tr>`;
         return;
       }
 
+      // Susun murid mengikut jumlah kes kelewatan tertinggi di atas
+      list.sort((a, b) => b.jumlahKes - a.jumlahKes);
+
       tbody.innerHTML = '';
-      list.forEach(r => {
-        const count = r.kekerapan || 1;
-        const isTegar = count >= 3;
+      list.forEach((s, index) => {
+        const isTegar = s.jumlahKes >= 3;
         
         const statusBadge = isTegar 
-          ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Sesi BNK / Tegar</span>`
+          ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Kes Tegar (Sesi BNK)</span>`
           : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">Kelewatan Biasa</span>`;
+
+        const btnSurat = isTegar 
+          ? `<button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', ${s.jumlahKes})" 
+                     class="ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all inline-flex items-center gap-1">
+               <i class="fa-solid fa-file-pdf"></i> Surat
+             </button>`
+          : '';
+
+        const puncasStr = s.puncas.size > 0 ? Array.from(s.puncas).join(', ') : 'Tiada Nyataan / Lain-lain';
 
         tbody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
-            <td class="py-3 px-3 code-font text-slate-500 dark:text-slate-400">${r.tarikhMasa || 'N/A'}</td>
-            <td class="py-3 px-3 code-font font-bold text-slate-700 dark:text-slate-300">${r.id}</td>
-            <td class="py-3 px-3 font-semibold text-slate-900 dark:text-white">${r.nama}</td>
-            <td class="py-3 px-3 code-font text-slate-500 dark:text-slate-400">${r.kelas}</td>
-            <td class="py-3 px-3">${r.punca || r.sebab || 'Tiada Nyataan'}</td>
-            <td class="py-3 px-3 text-center code-font font-bold ${isTegar ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}">${count} Kes</td>
-            <td class="py-3 px-3 text-center">${statusBadge}</td>
+            <td class="py-3 px-3 code-font text-slate-400">${index + 1}</td>
+            <td class="py-3 px-3 code-font font-bold text-slate-700 dark:text-slate-300">${s.id}</td>
+            <td class="py-3 px-3 font-semibold text-slate-900 dark:text-white">${s.nama}</td>
+            <td class="py-3 px-3 code-font text-slate-500 dark:text-slate-400">${s.kelas}</td>
+            <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px]">${puncasStr}</td>
+            <td class="py-3 px-3 text-center code-font font-extrabold ${isTegar ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}">${s.jumlahKes} Kes</td>
+            <td class="py-3 px-3 text-center">${statusBadge} ${btnSurat}</td>
           </tr>
         `;
       });
     }
 
-    // EKSPORT JADUAL REKOD KE CSV
+    // EKSPORT JADUAL RINGKASAN REKOD KE CSV
     function exportToCSV() {
-      if (globalRekodList.length === 0) {
+      const list = getGroupedStudentRecords();
+      if (list.length === 0) {
         alert("Tiada data rekod untuk dieksport.");
         return;
       }
 
-      let csv = 'Tarikh/Masa,ID Murid,Nama Murid,Kelas,Punca Kelewatan,Kekerapan\n';
-      globalRekodList.forEach(r => {
-        csv += `"${r.tarikhMasa || ''}","${r.id || ''}","${r.nama || ''}","${r.kelas || ''}","${r.punca || ''}","${r.kekerapan || 0}"\n`;
+      let csv = 'ID Murid,Nama Murid,Kelas,Punca Kelewatan,Jumlah Kes Kelewatan\n';
+      list.forEach(s => {
+        const puncasStr = s.puncas.size > 0 ? Array.from(s.puncas).join('; ') : 'Tiada Nyataan';
+        csv += `"${s.id || ''}","${s.nama || ''}","${s.kelas || ''}","${puncasStr}","${s.jumlahKes || 0}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `Rekod_Kelewatan_Q-TIBA_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute('download', `Ringkasan_BNK_Q-TIBA_${new Date().toISOString().slice(0,10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    // FUNGSI JANA SURAT AMARAN PDF (KEMAS 1 PAGE)
+    // FUNGSI JANA SURAT AMARAN PDF
     function generateSuratAmaran(nama, kelas, jumlahLewat) {
       document.getElementById('pdf-nama-murid').innerText = nama;
       document.getElementById('pdf-kelas-murid').innerText = kelas;
@@ -1083,7 +1184,6 @@
       });
     }
 
-    // Jalankan pengambilan data secara automatik apabila DOM siap dimuatkan
     document.addEventListener('DOMContentLoaded', () => {
       fetchLiveData();
     });
