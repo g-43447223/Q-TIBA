@@ -1,11 +1,11 @@
 {
-  "name": "Q-TIBA System",
+  "name": "Q-TIBA SK Pulau Indah",
   "short_name": "Q-TIBA",
-  "description": "QR-Code Tracking & Intervensi Berfokus Awal SK Pulau Indah",
+  "description": "QR-Code Tracking & Intervention Behaviometric Analytics",
   "start_url": "./scan.html",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#0f172a",
+  "theme_color": "#06b6d4",
   "orientation": "portrait",
   "icons": [
     {
