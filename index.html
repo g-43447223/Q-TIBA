@@ -11,7 +11,6 @@
   <title>Q-TIBA - Analytics Dashboard</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
@@ -106,8 +105,8 @@
       <button onclick="switchTab('murid')" id="tab-btn-murid" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
         <i class="fa-solid fa-users"></i> Murid Sasaran
       </button>
-      <button onclick="switchTab('records')" id="btn-tab-records" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-all flex items-center gap-2 whitespace-nowrap">
-        <i class="fa-solid fa-list-check"></i> Senarai Rekod & BNK
+      <button onclick="switchTab('records')" id="tab-btn-records" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
+        <i class="fa-solid fa-clipboard-list"></i> <span class="hidden sm:inline">Senarai Rekod</span> & BNK
       </button>
     </div>
 
@@ -165,10 +164,10 @@
       </div>
 
       <!-- KAD PENJEJAK SAHSIAH POSITIF -->
-      <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-6">
+      <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🔥</span>
+            <span class="text-xl">🌟</span>
             <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Pemulihan Sahsiah (Hadir Awal Konsisten)</h3>
           </div>
           <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Program Rewards</span>
@@ -213,8 +212,6 @@
           </table>
         </div>
       </div>
-
-      <div class="teacher-team-section"></div>
     </div>
 
     <!-- TAB 2: ANALITIK & GRAF -->
@@ -239,7 +236,9 @@
         </div>
       </div>
 
-      <div class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- CARTA PIE: AGIHAN PUNCA KELEWATAN -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -248,7 +247,7 @@
               <p class="text-[11px] text-slate-500 dark:text-slate-400">Pecahan sebab murid lewat untuk intervensi BNK</p>
             </div>
           </div>
-          <div class="relative w-full aspect-square max-h-64 flex items-center justify-center mx-auto">
+          <div class="relative w-full h-64 flex items-center justify-center mx-auto">
             <canvas id="reasonChart"></canvas>
           </div>
         </div>
@@ -263,15 +262,11 @@
               <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelas yang mencatatkan bilangan kelewatan tertinggi</p>
             </div>
           </div>
-          <div class="relative w-full aspect-video max-h-64 flex items-center justify-center">
+          <div class="relative w-full h-64 flex items-center justify-center">
             <canvas id="classChart"></canvas>
           </div>
         </div>
-      </section>
-
-    </div>
-
-      <div class="teacher-team-section"></div>
+      </div>
     </div>
 
     <!-- TAB 3: SENARAI MURID SASARAN -->
@@ -312,12 +307,10 @@
           </table>
         </div>
       </div>
-
-      <div class="teacher-team-section"></div>
     </div>
 
-    <!-- ================= TAB 4: SENARAI REKOD & BNK ================= -->
-    <div id="tab-records" class="tab-content hidden flex-col gap-6">
+    <!-- TAB 4: SENARAI REKOD & BNK -->
+    <div id="tab-records" class="tab-content hidden flex flex-col gap-6">
       
       <!-- BAR ALATAN PENAPIS & CARIAN -->
       <section class="glass-card rounded-2xl p-4 no-print">
@@ -349,7 +342,7 @@
             <select id="filter-status" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 focus:outline-none">
               <option value="">Semua Rekod</option>
               <option value="tegar">Kes Tegar (&ge; 3 Kali)</option>
-              <option value="normal">Kelewatan Biasa (< 3 Kali)</option>
+              <option value="normal">Kelewatan Biasa (&lt; 3 Kali)</option>
             </select>
           </div>
 
@@ -401,6 +394,9 @@
 
     </div>
 
+    <!-- PASUKAN GURU INOVASI (DIBAWAH SEKALI HANYA 1 SET) -->
+    <div id="teacher-team-container" class="mt-4"></div>
+
   </main>
 
   <!-- TEMPLAT SURAT AMARAN (TERSEMBUNYI) -->
@@ -415,7 +411,7 @@
           <p class="text-xs">42920 PELABUHAN KLANG, SELANGOR DARUL EHSAN</p>
           <p class="text-[10px] mt-0.5">Kod Sekolah: BBA0013 | No. Tel: 03-31012139 | Emel: BBA0013@moe.edu.my</p>
         </div>
-        <div class="w-20"></div> <!-- Ruang penyeimbang alignment center -->
+        <div class="w-20"></div>
       </div>
 
       <!-- RUJUKAN & TARIKH -->
@@ -472,7 +468,6 @@
         <p class="font-bold italic">"BERKHIDMAT UNTUK NEGARA"</p>
         <p class="mt-2">Saya yang menjalankan amanah,</p>
         
-        <!-- Ruang Tandatangan Kemas -->
         <div class="h-14"></div>
 
         <p class="font-bold uppercase text-xs">___________________________________</p>
@@ -485,7 +480,7 @@
 
   <!-- TEMPLATE PASUKAN GURU -->
   <template id="teacher-team-template">
-    <div class="glass-card rounded-2xl p-5 mt-2">
+    <div class="glass-card rounded-2xl p-5">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-lightbulb text-amber-500"></i> Pasukan Inovasi Q-TIBA
@@ -539,12 +534,14 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbxNS88ZUyTVmw6RD5i-4macBMy6Kb9_EiHRrTqBjaUjsv4m62GAL4hCd6yVD419MkJJaQ/exec"; 
 
     let globalMuridList = [];
+    let globalRekodList = [];
 
-    // SETUP TEACHER TEMPLATE
+    // SETUP TEACHER TEMPLATE (HANYA SEKALI)
     const teacherTemplate = document.getElementById('teacher-team-template').content;
-    document.querySelectorAll('.teacher-team-section').forEach(sec => {
-      sec.appendChild(teacherTemplate.cloneNode(true));
-    });
+    const teacherContainer = document.getElementById('teacher-team-container');
+    if (teacherContainer) {
+      teacherContainer.appendChild(teacherTemplate.cloneNode(true));
+    }
 
     // TAB SWITCHER
     function switchTab(tabName) {
@@ -552,14 +549,21 @@
       const target = document.getElementById(`tab-${tabName}`);
       if (target) target.classList.remove('hidden');
 
-      ['utama', 'analitik', 'murid'].forEach(t => {
+      ['utama', 'analitik', 'murid', 'records'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
-        if (t === tabName) btn.classList.add('tab-btn-active');
-        else btn.classList.remove('tab-btn-active');
+        if (btn) {
+          if (t === tabName) btn.classList.add('tab-btn-active');
+          else btn.classList.remove('tab-btn-active');
+        }
       });
 
-      if (tabName === 'analitik' && timeChart && trendChart) {
-        setTimeout(() => { timeChart.resize(); trendChart.resize(); }, 100);
+      if (tabName === 'analitik' && timeChart && trendChart && reasonChart && classChart) {
+        setTimeout(() => { 
+          timeChart.resize(); 
+          trendChart.resize(); 
+          reasonChart.resize();
+          classChart.resize();
+        }, 100);
       }
     }
 
@@ -595,6 +599,7 @@
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
+    // 1. Time Chart
     const ctxTime = document.getElementById('timeChart')?.getContext('2d');
     let timeChart = new Chart(ctxTime, {
       type: 'bar',
@@ -605,6 +610,7 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
+    // 2. Trend Chart
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
     let trendChart = new Chart(ctxTrend, {
       type: 'line',
@@ -613,6 +619,46 @@
         datasets: [{ data: [0, 0, 0, 0, 0, 0], borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.15)', fill: true, tension: 0.35, borderWidth: 2 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    // 3. Reason Chart (Punca Kelewatan)
+    const ctxReason = document.getElementById('reasonChart')?.getContext('2d');
+    let reasonChart = new Chart(ctxReason, {
+      type: 'doughnut',
+      data: {
+        labels: ['Bangun Lewat', 'Kesesakan Trafik', 'Masalah Kenderaan', 'Cuaca / Hujan', 'Lain-lain'],
+        datasets: [{
+          data: [0, 0, 0, 0, 0],
+          backgroundColor: ['#f59e0b', '#3b82f6', '#ef4444', '#10b981', '#8b5cf6'],
+          borderWidth: 2,
+          borderColor: 'transparent'
+        }]
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { 
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } 
+        } 
+      }
+    });
+
+    // 4. Class Chart (Mengikut Kelas)
+    const ctxClass = document.getElementById('classChart')?.getContext('2d');
+    let classChart = new Chart(ctxClass, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{ label: 'Kes Kelewatan', data: [], backgroundColor: '#06b6d4', borderRadius: 6 }]
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
     });
 
     function setElementText(id, value) {
@@ -687,6 +733,48 @@
       });
     }
 
+    // UPDATE DATA PUNCA & KELAS PADA CARTA ANALITIK
+    function updateAnalyticsCharts(rekodList) {
+      if (!rekodList || rekodList.length === 0) return;
+
+      // 1. Kira Punca Kelewatan
+      const reasonCounts = {
+        "Bangun Lewat": 0,
+        "Kesesakan Trafik": 0,
+        "Masalah Kenderaan": 0,
+        "Cuaca / Hujan": 0,
+        "Lain-lain": 0
+      };
+
+      // 2. Kira Kelewatan Mengikut Kelas
+      const classCounts = {};
+
+      rekodList.forEach(r => {
+        // Count reason
+        const reason = r.punca || r.sebab || "Lain-lain";
+        if (reasonCounts[reason] !== undefined) {
+          reasonCounts[reason]++;
+        } else {
+          reasonCounts["Lain-lain"]++;
+        }
+
+        // Count class
+        const kls = r.kelas || "Lain-lain";
+        classCounts[kls] = (classCounts[kls] || 0) + 1;
+      });
+
+      if (reasonChart) {
+        reasonChart.data.datasets[0].data = Object.values(reasonCounts);
+        reasonChart.update();
+      }
+
+      if (classChart) {
+        classChart.data.labels = Object.keys(classCounts);
+        classChart.data.datasets[0].data = Object.values(classCounts);
+        classChart.update();
+      }
+    }
+
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
       const todayTableBody = document.getElementById('today-table-body');
@@ -709,8 +797,27 @@
         if (data.status === "Success") {
           updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
           globalMuridList = data.muridList || [];
+          globalRekodList = data.rekodList || data.logs || [];
 
-          setElementText('kpi-sasaran', data.totalSasaran || 0);
+          // Jika rekodList tiada dalam API, bina senarai automatik daripada muridList
+          if (globalRekodList.length === 0 && globalMuridList.length > 0) {
+            globalMuridList.forEach(m => {
+              if (m.kiraan > 0) {
+                for (let i = 0; i < m.kiraan; i++) {
+                  globalRekodList.push({
+                    tarikhMasa: m.waktuHariIni || "Terrekod",
+                    id: m.id,
+                    nama: m.nama,
+                    kelas: m.kelas,
+                    punca: m.punca || "Bangun Lewat",
+                    kekerapan: m.kiraan
+                  });
+                }
+              }
+            });
+          }
+
+          setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
           setElementText('kpi-hari-ini', data.lewatHariIni || 0);
           
           let totalKesSum = 0;
@@ -733,6 +840,9 @@
             trendChart.data.datasets[0].data = data.trendMingguan;
             trendChart.update();
           }
+
+          // Kemaskini Carta Punca & Kelas
+          updateAnalyticsCharts(globalRekodList);
 
           // RENDER HERO
           if (heroContainer && globalMuridList.length > 0) {
@@ -805,6 +915,8 @@
 
           renderTargetStudentTable(globalMuridList);
           renderStreakTracker(data.streakList || globalMuridList);
+          populateClassFilter();
+          applyFilters();
 
         } else {
           updateSyncStatus("Ralat Google Sheets", "text-rose-500");
@@ -818,6 +930,103 @@
       }
     }
 
+    // PENUTUP FILTER KELAS
+    function populateClassFilter() {
+      const select = document.getElementById('filter-class');
+      if (!select) return;
+
+      const kelasSet = new Set();
+      globalMuridList.forEach(m => { if (m.kelas) kelasSet.add(m.kelas); });
+      globalRekodList.forEach(r => { if (r.kelas) kelasSet.add(r.kelas); });
+
+      select.innerHTML = '<option value="">Semua Kelas</option>';
+      Array.from(kelasSet).sort().forEach(k => {
+        select.innerHTML += `<option value="${k}">${k}</option>`;
+      });
+    }
+
+    // PENAPIS TAB 4: SENARAI REKOD & BNK
+    function applyFilters() {
+      const search = (document.getElementById('filter-search')?.value || '').toLowerCase();
+      const selectedClass = document.getElementById('filter-class')?.value || '';
+      const selectedReason = document.getElementById('filter-reason')?.value || '';
+      const selectedStatus = document.getElementById('filter-status')?.value || '';
+
+      const filtered = globalRekodList.filter(r => {
+        const matchSearch = !search || 
+          (r.nama && r.nama.toLowerCase().includes(search)) || 
+          (r.id && String(r.id).toLowerCase().includes(search));
+        
+        const matchClass = !selectedClass || r.kelas === selectedClass;
+        const matchReason = !selectedReason || (r.punca || r.sebab || 'Lain-lain') === selectedReason;
+        
+        let matchStatus = true;
+        const count = r.kekerapan || 0;
+        if (selectedStatus === 'tegar') matchStatus = count >= 3;
+        if (selectedStatus === 'normal') matchStatus = count < 3;
+
+        return matchSearch && matchClass && matchReason && matchStatus;
+      });
+
+      renderRecordsTable(filtered);
+    }
+
+    function renderRecordsTable(list) {
+      const tbody = document.getElementById('table-body');
+      const badge = document.getElementById('record-count-badge');
+      if (!tbody) return;
+
+      if (badge) badge.innerText = `${list.length} Rekod`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 code-font">Tiada rekod kelewatan ditemui mengikut penapis ini.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      list.forEach(r => {
+        const count = r.kekerapan || 1;
+        const isTegar = count >= 3;
+        
+        const statusBadge = isTegar 
+          ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Sesi BNK / Tegar</span>`
+          : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">Kelewatan Biasa</span>`;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-500/5 transition-colors">
+            <td class="py-3 px-3 code-font text-slate-500 dark:text-slate-400">${r.tarikhMasa || 'N/A'}</td>
+            <td class="py-3 px-3 code-font font-bold text-slate-700 dark:text-slate-300">${r.id}</td>
+            <td class="py-3 px-3 font-semibold text-slate-900 dark:text-white">${r.nama}</td>
+            <td class="py-3 px-3 code-font text-slate-500 dark:text-slate-400">${r.kelas}</td>
+            <td class="py-3 px-3">${r.punca || r.sebab || 'Tiada Nyataan'}</td>
+            <td class="py-3 px-3 text-center code-font font-bold ${isTegar ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}">${count} Kes</td>
+            <td class="py-3 px-3 text-center">${statusBadge}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // EKSPORT JADUAL REKOD KE CSV
+    function exportToCSV() {
+      if (globalRekodList.length === 0) {
+        alert("Tiada data rekod untuk dieksport.");
+        return;
+      }
+
+      let csv = 'Tarikh/Masa,ID Murid,Nama Murid,Kelas,Punca Kelewatan,Kekerapan\n';
+      globalRekodList.forEach(r => {
+        csv += `"${r.tarikhMasa || ''}","${r.id || ''}","${r.nama || ''}","${r.kelas || ''}","${r.punca || ''}","${r.kekerapan || 0}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `Rekod_Kelewatan_Q-TIBA_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     // FUNGSI JANA SURAT AMARAN PDF (KEMAS 1 PAGE)
     function generateSuratAmaran(nama, kelas, jumlahLewat) {
       document.getElementById('pdf-nama-murid').innerText = nama;
@@ -827,12 +1036,12 @@
 
       const element = document.getElementById('surat-amaran-pdf');
       const opt = {
-        margin:       10, // Margin 10mm pada setiap sisi
+        margin:       10,
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, logging: false },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: 'avoid-all' } // Kunci strict 1 muka surat
+        pagebreak:    { mode: 'avoid-all' }
       };
 
       html2pdf().set(opt).from(element).save();
@@ -855,7 +1064,7 @@
       container.innerHTML = '';
       streakList.forEach(m => {
         let badgeColor = m.streakHari >= 7 ? 'from-amber-500 to-orange-500' : 'from-cyan-500 to-blue-500';
-        let badgeTitle = m.streakHari >= 7 ? '🏆 Sahsiah Terpuji' : '⭐ Istiqamah Awal';
+        let badgeTitle = m.streakHari >= 7 ? '🏆 Sahsiah Terpuji' : '🔥 Istiqamah Awal';
 
         container.innerHTML += `
           <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
@@ -865,7 +1074,7 @@
             </div>
             <div class="text-right">
               <span class="text-xs font-black text-white px-2 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm">
-                🔥 ${m.streakHari} Hari Awal
+                🌟 ${m.streakHari} Hari Awal
               </span>
               <p class="text-[9px] text-emerald-500 font-bold mt-1">${badgeTitle}</p>
             </div>
