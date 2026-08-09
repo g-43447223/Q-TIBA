@@ -10,6 +10,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Q-TIBA - Analytics Dashboard</title>
   
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
@@ -159,6 +161,21 @@
         </div>
       </div>
 
+      <!-- KAD PENJEJAK SAHSIAH POSITIF -->
+<div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-6">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">🔥</span>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Pemulihan Sahsiah (Hadir Awal Konsisten)</h3>
+    </div>
+    <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Program Rewards</span>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="streak-container">
+    <!-- Senarai murid ber-streak dipaparkan menerusi JS -->
+  </div>
+</div>
+
       <!-- JADUAL MURID LEWAT HARI INI -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4">
@@ -265,6 +282,55 @@
     </div>
 
   </main>
+
+  <!-- TEMPLAT SURAT AMARAN (TERSEMBUNYI) -->
+<div class="hidden">
+  <div id="surat-amaran-pdf" class="p-8 text-black bg-white font-serif leading-relaxed" style="width: 210mm; min-height: 297mm;">
+    <!-- Kepala Surat Sekolah -->
+    <div class="text-center border-b-2 border-black pb-4 mb-6">
+      <h2 class="text-lg font-bold uppercase">SEKOLAH KEBANGSAAN PULAU INDAH</h2>
+      <p class="text-xs">42920 Pelabuhan Klang, Selangor Darul Ehsan</p>
+      <p class="text-xs">Kod Sekolah: BBA0013 | Tel: 03-31012139</p>
+    </div>
+
+    <div class="flex justify-between text-xs mb-6">
+      <div>Ruj. Kami: SKPI/UBK/2026/01<br>Tarikh: <span id="pdf-tarikh-surat"></span></div>
+    </div>
+
+    <p class="text-sm font-bold mb-4">Kepada Ibu Bapa / Penjaga:<br><span id="pdf-nama-murid" class="uppercase"></span> (<span id="pdf-kelas-murid"></span>)</p>
+
+    <h3 class="text-sm font-bold uppercase underline mb-4">SURAT AMARAN KELEWATAN KEPADA MURID SEKOLAH</h3>
+
+    <p class="text-xs mb-3">Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
+    <p class="text-xs mb-4">2. Dukacita dimaklumkan bahawa anak/jagaan tuan/puan telah mendaftar masuk lewat ke sekolah berasaskan rekod imbasan digital Q-TIBA melebihi amaran lazim seperti berikut:</p>
+
+    <!-- Ringkasan Rekod Lewat -->
+    <table class="w-full text-xs border-collapse border border-black mb-6">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border border-black p-1">Jumlah Kelewatan</th>
+          <th class="border border-black p-1">Status Tindakan UBK</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="border border-black p-2 text-center font-bold" id="pdf-jumlah-lewat">0 Kali</td>
+          <td class="border border-black p-2 text-center">Sesi Bimbingan & Kaunseling / Amaran Pentadbiran</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="text-xs mb-4">3. Sehubungan dengan itu, pihak sekolah memohon kerjasama tuan/puan untuk memastikan anak jagaan hadir sebelum jam 7:20 pagi bagi membolehkan proses PdP berjalan lancar.</p>
+
+    <div class="mt-12 text-xs">
+      <p>Yang menurut perintah,</p>
+      <br><br><br>
+      <p class="font-bold underline">===========================</p>
+      <p>Guru Bimbingan & Kaunseling / Unit Disiplin</p>
+      <p>SK Pulau Indah</p>
+    </div>
+  </div>
+</div>
 
   <!-- TEMPLATE PASUKAN GURU -->
   <template id="teacher-team-template">
@@ -592,6 +658,56 @@
         if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
       }
     }
+    function generateSuratAmaran(nama, kelas, jumlahLewat) {
+  document.getElementById('pdf-nama-murid').innerText = nama;
+  document.getElementById('pdf-kelas-murid').innerText = kelas;
+  document.getElementById('pdf-jumlah-lewat').innerText = jumlahLewat + " Kali";
+  document.getElementById('pdf-tarikh-surat').innerText = new Date().toLocaleDateString('ms-MY');
+
+  const element = document.getElementById('surat-amaran-pdf');
+  const opt = {
+    margin:       10,
+    filename:     `Surat_Amaran_${nama.replaceAll(' ', '_')}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save();
+}
+    // Contoh Data Sahsiah Positif
+const muridStreakData = [
+  { nama: 'Ahmad Daniel', kelas: '5 Mawar', streakHari: 8 },
+  { nama: 'Siti Nurhaliza', kelas: '4 Melati', streakHari: 5 }
+];
+
+function renderStreakTracker() {
+  const container = document.getElementById('streak-container');
+  container.innerHTML = '';
+
+  muridStreakData.forEach(m => {
+    let badgeColor = m.streakHari >= 7 ? 'from-amber-500 to-orange-500' : 'from-cyan-500 to-blue-500';
+    let badgeTitle = m.streakHari >= 7 ? '🏆 Sahsiah Terpuji' : '⭐ Istiqamah Awal';
+
+    container.innerHTML += `
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <div>
+          <h4 class="text-xs font-bold text-slate-900 dark:text-white">${m.nama}</h4>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400">${m.kelas}</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs font-black text-white px-2 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm">
+            🔥 ${m.streakHari} Hari Awal
+          </span>
+          <p class="text-[9px] text-emerald-500 font-bold mt-1">${badgeTitle}</p>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// Jalankan fungsi
+renderStreakTracker();
 
     fetchLiveData();
   </script>
