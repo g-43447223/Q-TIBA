@@ -284,7 +284,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxNS88ZUyTVmw6RD5i-4macBMy6Kb9_EiHRrTqBjaUjsv4m62GAL4hCd6yVD419MkJJaQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxxT1exkWPnYOmUYOOwPz_MOTYrv3RnuKk-P7K0ngmpOkFundEGwFPt0lPKMXIZ8iISHQ/exec";
 
     let html5QrCode = null;
     let isScannerRunning = false;
@@ -593,13 +593,16 @@
       renderSessionLog();
 
       const payload = {
-        id: data.id,
-        nama: data.nama,
-        kelas: data.kelas,
-        punca: data.punca,
-        masa: timeStr,
-        tarikh: dateStr
-      };
+  id: idMurid,
+  nama: namaMurid,
+  kelas: kelasMurid,
+  punca: document.getElementById('select-punca').value // Memastikan punca dihantar
+};
+
+fetch(API_URL, {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
 
       sendDataToBackend(payload);
       speakText("Rekod kelewatan berjaya disimpan.");
