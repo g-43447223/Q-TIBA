@@ -284,7 +284,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwfR5Ai9NW74oeMwCiq0Wtcvk7mjGi2egCa6GCqCNhn1vfI5JfPYnB3XLyRzz4zdNrq/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbztQ1tkB5B6iCWhXg70UxlmHDAMltlED1X6L5XYhU0iEZYWoHSzzQCpXg3lqUtscXGL0Q/exec";
 
     let html5QrCode = null;
     let isScannerRunning = false;
@@ -604,23 +604,24 @@
 
     // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
     function sendDataToBackend(payload) {
-      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+  if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
 
-      if (navigator.onLine) {
-        fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).then(() => {
-          console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
-        }).catch(() => {
-          saveOffline(payload);
-        });
-      } else {
-        saveOffline(payload);
-      }
-    }
+  if (navigator.onLine) {
+    fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(() => {
+      console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
+    }).catch((err) => {
+      console.error("Gagal hantar data:", err);
+      saveOffline(payload);
+    });
+  } else {
+    saveOffline(payload);
+  }
+}
 
     function saveOffline(payload) {
       let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
