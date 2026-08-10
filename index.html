@@ -84,19 +84,27 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
-          <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-          <span id="sync-status" class="text-amber-600 dark:text-amber-400">Menghubungkan...</span>
-          <a href="scan.html" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-xs font-bold text-white shadow-md shadow-cyan-500/20 transition-all flex items-center gap-1.5">
-            <i class="fa-solid fa-qrcode"></i> <span class="hidden sm:inline">Pengimbas QR</span>
-          </a>
-        </div>
-
-        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
-          <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
-        </button>
-      </div>
+  <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
+    <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+    <div class="flex flex-col">
+      <span id="sync-status" class="text-amber-600 dark:text-amber-400">Menghubungkan...</span>
+      <span id="last-updated" class="text-[9px] text-slate-400 font-normal">Masa: --:--:--</span>
     </div>
+    <a href="scan.html" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-xs font-bold text-white shadow-md shadow-cyan-500/20 transition-all flex items-center gap-1.5 ml-1">
+      <i class="fa-solid fa-qrcode"></i> <span class="hidden sm:inline">Pengimbas QR</span>
+    </a>
+  </div>
+
+  <!-- BUTANG REFRESH MANUAL -->
+  <button id="refresh-btn" onclick="fetchLiveData()" title="Kemaskini Data" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+    <i id="refresh-icon" class="fa-solid fa-rotate-right text-sm"></i>
+  </button>
+
+  <!-- BUTANG TUKAR TEMA -->
+  <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+    <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+  </button>
+</div>
   </header>
 
   <!-- KANDUNGAN UTAMA DASHBOARD -->
@@ -861,104 +869,135 @@
 
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
-      const todayTableBody = document.getElementById('today-table-body');
-      const heroContainer = document.getElementById('hero-students-container');
+  const todayTableBody = document.getElementById('today-table-body');
+  const heroContainer = document.getElementById('hero-students-container');
+  const refreshIcon = document.getElementById('refresh-icon');
 
-      if (!API_URL || API_URL.includes("MASUKKAN_URL")) {
-        updateSyncStatus("URL API Belum Diset", "text-rose-500");
-        if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Sila masukkan Web App API URL di dalam fail index.html.</td></tr>`;
-        return;
+  // Putarkan ikon refresh semasa proses mengambil data
+  if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+  if (!API_URL || API_URL.includes("MASUKKAN_URL")) {
+    updateSyncStatus("URL API Belum Diset", "text-rose-500");
+    if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Sila masukkan Web App API URL di dalam fail index.html.</td></tr>`;
+    if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+    return;
+  }
+
+  try {
+    updateSyncStatus("Memuatkan Data...", "text-amber-500");
+    const response = await fetch(API_URL);
+    
+    if (!response.ok) throw new Error("Gagal menyambung ke server Google");
+
+    const data = await response.json();
+
+    if (data.status === "Success") {
+      updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
+      
+      // KEMASKINI PAPARAN MASA TERAKHIR DATA DIAMBIL
+      const masaSekarang = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setElementText('last-updated', `Masa: ${masasekarang}`);
+
+      globalMuridList = data.muridList || [];
+      globalRekodList = data.rekodList || data.logs || [];
+
+      if (globalRekodList.length === 0 && globalMuridList.length > 0) {
+        globalMuridList.forEach(m => {
+          if (m.kiraan > 0) {
+            for (let i = 0; i < m.kiraan; i++) {
+              globalRekodList.push({
+                tarikhMasa: m.waktuHariIni || "Terrekod",
+                id: m.id,
+                nama: m.nama,
+                kelas: m.kelas,
+                punca: m.punca || "Bangun Lewat",
+                kekerapan: m.kiraan
+              });
+            }
+          }
+        });
       }
 
-      try {
-        updateSyncStatus("Memuatkan Data...", "text-amber-500");
-        const response = await fetch(API_URL);
-        
-        if (!response.ok) throw new Error("Gagal menyambung ke server Google");
+      setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
+      setElementText('kpi-hari-ini', data.lewatHariIni || 0);
+      
+      let totalKesSum = 0;
+      let countBebasLewat = 0;
 
-        const data = await response.json();
+      globalMuridList.forEach(m => {
+        totalKesSum += (m.kiraan || 0);
+        if ((m.kiraan || 0) === 0) countBebasLewat++;
+      });
 
-        if (data.status === "Success") {
-          updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
-          globalMuridList = data.muridList || [];
-          globalRekodList = data.rekodList || data.logs || [];
+      setElementText('kpi-total-kes', totalKesSum);
+      setElementText('kpi-bebas-lewat', countBebasLewat);
 
-          if (globalRekodList.length === 0 && globalMuridList.length > 0) {
-            globalMuridList.forEach(m => {
-              if (m.kiraan > 0) {
-                for (let i = 0; i < m.kiraan; i++) {
-                  globalRekodList.push({
-                    tarikhMasa: m.waktuHariIni || "Terrekod",
-                    id: m.id,
-                    nama: m.nama,
-                    kelas: m.kelas,
-                    punca: m.punca || "Bangun Lewat",
-                    kekerapan: m.kiraan
-                  });
-                }
-              }
-            });
-          }
+      if (timeChart && data.slotWaktu) {
+        timeChart.data.datasets[0].data = data.slotWaktu;
+        timeChart.update();
+      }
 
-          setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
-          setElementText('kpi-hari-ini', data.lewatHariIni || 0);
+      if (trendChart && data.trendMingguan) {
+        trendChart.data.datasets[0].data = data.trendMingguan;
+        trendChart.update();
+      }
+
+      updateAnalyticsCharts(globalRekodList);
+
+      // RENDER HERO
+      if (heroContainer && globalMuridList.length > 0) {
+        const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
+        const topHeroes = sortedMurid.slice(0, 4);
+
+        heroContainer.innerHTML = '';
+        topHeroes.forEach((m, idx) => {
+          const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
+            ? m.urlGambar 
+            : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
           
-          let totalKesSum = 0;
-          let countBebasLewat = 0;
+          const rankBadge = idx === 0 ? '🏆 #1 HERO' : `#${idx + 1} TOP`;
+          const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
-          globalMuridList.forEach(m => {
-            totalKesSum += (m.kiraan || 0);
-            if ((m.kiraan || 0) === 0) countBebasLewat++;
-          });
+          heroContainer.innerHTML += `
+            <div class="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3 shadow-sm">
+              <div class="relative">
+                <img src="${avatarUrl}" 
+                     alt="${m.nama}" 
+                     class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-emerald-500 p-0.5 object-cover"
+                     onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                <span class="absolute -bottom-1 -right-1 text-[9px] font-black ${rankColor} border px-1.5 py-0.2 rounded-full code-font">${rankBadge}</span>
+              </div>
+              <div class="overflow-hidden">
+                <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">${m.nama}</h4>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${m.kelas}</p>
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                  <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
+                </p>
+              </div>
+            </div>`;
+        });
+      }
 
-          setElementText('kpi-total-kes', totalKesSum);
-          setElementText('kpi-bebas-lewat', countBebasLewat);
+      renderTodayTable();
+      renderTargetStudentTable(globalMuridList);
+      renderStreakTracker(data.streakList || globalMuridList);
+      populateClassFilter();
+      applyFilters();
 
-          if (timeChart && data.slotWaktu) {
-            timeChart.data.datasets[0].data = data.slotWaktu;
-            timeChart.update();
-          }
+    } else {
+      updateSyncStatus("Ralat Google Sheets", "text-rose-500");
+      if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Ralat Apps Script: ${data.message}</td></tr>`;
+    }
 
-          if (trendChart && data.trendMingguan) {
-            trendChart.data.datasets[0].data = data.trendMingguan;
-            trendChart.update();
-          }
-
-          updateAnalyticsCharts(globalRekodList);
-
-          // RENDER HERO
-          if (heroContainer && globalMuridList.length > 0) {
-            const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
-            const topHeroes = sortedMurid.slice(0, 4);
-
-            heroContainer.innerHTML = '';
-            topHeroes.forEach((m, idx) => {
-              const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
-                ? m.urlGambar 
-                : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
-              
-              const rankBadge = idx === 0 ? '🏆 #1 HERO' : `#${idx + 1} TOP`;
-              const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-
-              heroContainer.innerHTML += `
-                <div class="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3 shadow-sm">
-                  <div class="relative">
-                    <img src="${avatarUrl}" 
-                         alt="${m.nama}" 
-                         class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-emerald-500 p-0.5 object-cover"
-                         onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-                    <span class="absolute -bottom-1 -right-1 text-[9px] font-black ${rankColor} border px-1.5 py-0.2 rounded-full code-font">${rankBadge}</span>
-                  </div>
-                  <div class="overflow-hidden">
-                    <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">${m.nama}</h4>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${m.kelas}</p>
-                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                      <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
-                    </p>
-                  </div>
-                </div>`;
-            });
-          }
+  } catch (error) {
+    console.error("Q-TIBA Fetch Error:", error);
+    updateSyncStatus("Gagal Menyambung Data", "text-rose-500");
+    if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
+  } finally {
+    // Hentikan pusingan ikon refresh
+    if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+  }
+}
 
           // RENDER JADUAL LEWAT HARI INI
           renderTodayTable();
