@@ -132,7 +132,7 @@
       <div>
         <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 code-font">Inovasi Disiplin SK Pulau Indah</span>
         <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-0.5">
-          Q-TIBA: <span class="text-cyan-600 dark:text-cyan-400">QR Code Tracking & Intervention Behaviometric Analytics</span>
+          Q-TIBA: <span class="text-cyan-600 dark:text-cyan-400">Sistem Pengimbas QR & Dashboard Analitis Kelewatan Murid SK Pulau Indah</span>
         </h2>
         <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 italic">
           <i class="fa-solid fa-quote-left mr-1 text-cyan-500"></i> Menganalisis Data, Mengubah Budaya <i class="fa-solid fa-quote-right ml-1 text-cyan-500"></i>
@@ -294,6 +294,7 @@
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-users text-blue-500"></i> Senarai Murid Sasaran Dipantau
             </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Klik tajuk lajur untuk menyusun data.</p>
           </div>
 
           <div class="relative">
@@ -307,10 +308,10 @@
             <thead>
               <tr class="border-b border-slate-200/80 dark:border-slate-800 text-slate-400 font-semibold code-font">
                 <th class="pb-2">NO</th>
-                <th class="pb-2">ID</th>
-                <th class="pb-2">NAMA MURID</th>
-                <th class="pb-2">KELAS</th>
-                <th class="pb-2 text-center">JUMLAH KES</th>
+                <th class="pb-2 sortable" onclick="sortTargetStudentTable('id')">ID <i id="sort-icon-target-id" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
+                <th class="pb-2 sortable" onclick="sortTargetStudentTable('nama')">NAMA MURID <i id="sort-icon-target-nama" class="fa-solid fa-sort-up ml-1 text-cyan-500"></i></th>
+                <th class="pb-2 sortable" onclick="sortTargetStudentTable('kelas')">KELAS <i id="sort-icon-target-kelas" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
+                <th class="pb-2 text-center sortable" onclick="sortTargetStudentTable('kiraan')">JUMLAH KES <i id="sort-icon-target-kiraan" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
                 <th class="pb-2 text-right">STATUS</th>
               </tr>
             </thead>
@@ -557,6 +558,10 @@
     let todaySortCol = 'waktuHariIni';
     let todaySortAsc = false;
 
+    // TETAPAN SORTING JADUAL MURID SASARAN
+    let targetSortCol = 'nama';
+    let targetSortAsc = true;
+
     // SETUP TEACHER TEMPLATE
     const teacherTemplate = document.getElementById('teacher-team-template')?.content;
     const teacherContainer = document.getElementById('teacher-team-container');
@@ -713,6 +718,29 @@
       renderTargetStudentTable(filtered);
     }
 
+    // FUNGSI SORTING JADUAL MURID SASARAN
+    function sortTargetStudentTable(columnKey) {
+      if (targetSortCol === columnKey) {
+        targetSortAsc = !targetSortAsc;
+      } else {
+        targetSortCol = columnKey;
+        targetSortAsc = true;
+      }
+
+      ['id', 'nama', 'kelas', 'kiraan'].forEach(col => {
+        const icon = document.getElementById(`sort-icon-target-${col}`);
+        if (icon) {
+          if (col === targetSortCol) {
+            icon.className = targetSortAsc ? "fa-solid fa-sort-up ml-1 text-cyan-500" : "fa-solid fa-sort-down ml-1 text-cyan-500";
+          } else {
+            icon.className = "fa-solid fa-sort ml-1 opacity-40";
+          }
+        }
+      });
+
+      filterStudents();
+    }
+
     function renderTargetStudentTable(list) {
       const tableBody = document.getElementById('student-table-body');
       if (!tableBody) return;
@@ -721,6 +749,23 @@
         tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada rekod murid dijumpai.</td></tr>`;
         return;
       }
+
+      // Susun data mengikut lajur yang dipilih
+      list.sort((a, b) => {
+        let valA = a[targetSortCol] ?? '';
+        let valB = b[targetSortCol] ?? '';
+
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return targetSortAsc ? valA - valB : valB - valA;
+        }
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return targetSortAsc ? -1 : 1;
+        if (valA > valB) return targetSortAsc ? 1 : -1;
+        return 0;
+      });
 
       tableBody.innerHTML = '';
       list.forEach((m, index) => {
@@ -980,7 +1025,7 @@
           }
 
           renderTodayTable();
-          renderTargetStudentTable(globalMuridList);
+          filterStudents();
           renderStreakTracker(data.streakList || globalMuridList);
           populateClassFilter();
           applyFilters();
