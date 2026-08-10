@@ -84,27 +84,28 @@
       </div>
 
       <div class="flex items-center gap-3">
-  <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
-    <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-    <div class="flex flex-col">
-      <span id="sync-status" class="text-amber-600 dark:text-amber-400">Menghubungkan...</span>
-      <span id="last-updated" class="text-[9px] text-slate-400 font-normal">Masa: --:--:--</span>
+        <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <div class="flex flex-col">
+            <span id="sync-status" class="text-amber-600 dark:text-amber-400">Menghubungkan...</span>
+            <span id="last-updated" class="text-[9px] text-slate-400 font-normal">Masa: --:--:--</span>
+          </div>
+          <a href="scan.html" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-xs font-bold text-white shadow-md shadow-cyan-500/20 transition-all flex items-center gap-1.5 ml-1">
+            <i class="fa-solid fa-qrcode"></i> <span class="hidden sm:inline">Pengimbas QR</span>
+          </a>
+        </div>
+
+        <!-- BUTANG REFRESH MANUAL -->
+        <button id="refresh-btn" onclick="fetchLiveData()" title="Kemaskini Data" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="refresh-icon" class="fa-solid fa-rotate-right text-sm"></i>
+        </button>
+
+        <!-- BUTANG TUKAR TEMA -->
+        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+        </button>
+      </div>
     </div>
-    <a href="scan.html" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-xs font-bold text-white shadow-md shadow-cyan-500/20 transition-all flex items-center gap-1.5 ml-1">
-      <i class="fa-solid fa-qrcode"></i> <span class="hidden sm:inline">Pengimbas QR</span>
-    </a>
-  </div>
-
-  <!-- BUTANG REFRESH MANUAL -->
-  <button id="refresh-btn" onclick="fetchLiveData()" title="Kemaskini Data" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
-    <i id="refresh-icon" class="fa-solid fa-rotate-right text-sm"></i>
-  </button>
-
-  <!-- BUTANG TUKAR TEMA -->
-  <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
-    <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
-  </button>
-</div>
   </header>
 
   <!-- KANDUNGAN UTAMA DASHBOARD -->
@@ -183,7 +184,7 @@
       <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <span class="text-xl">⭐</span>
+            <i class="fa-solid fa-award text-amber-500 text-lg"></i>
             <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Pemulihan Sahsiah (Hadir Awal Konsisten)</h3>
           </div>
           <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Program Rewards</span>
@@ -194,7 +195,7 @@
         </div>
       </div>
 
-      <!-- JADUAL MURID LEWAT HARI INI (WITH SORTING) -->
+      <!-- JADUAL MURID LEWAT HARI INI -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -325,7 +326,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: SENARAI REKOD & BNK (DIKELOMPOKKAN MENGIKUT MURID) -->
+    <!-- TAB 4: SENARAI REKOD & BNK -->
     <div id="tab-records" class="tab-content hidden flex flex-col gap-6">
       
       <!-- BAR ALATAN PENAPIS & CARIAN -->
@@ -410,7 +411,7 @@
 
     </div>
 
-    <!-- PASUKAN GURU INOVASI (DIBAWAH SEKALI HANYA 1 SET) -->
+    <!-- PASUKAN GURU INOVASI -->
     <div id="teacher-team-container" class="mt-4"></div>
 
   </main>
@@ -552,14 +553,14 @@
     let globalMuridList = [];
     let globalRekodList = [];
 
-    // TENTUKAN TETAPAN SORTING JADUAL LEWAT HARI INI
+    // TETAPAN SORTING JADUAL LEWAT HARI INI
     let todaySortCol = 'waktuHariIni';
-    let todaySortAsc = false; // Default: Masa Imbas terkini di atas (Descending)
+    let todaySortAsc = false;
 
-    // SETUP TEACHER TEMPLATE (HANYA SEKALI)
-    const teacherTemplate = document.getElementById('teacher-team-template').content;
+    // SETUP TEACHER TEMPLATE
+    const teacherTemplate = document.getElementById('teacher-team-template')?.content;
     const teacherContainer = document.getElementById('teacher-team-container');
-    if (teacherContainer) {
+    if (teacherContainer && teacherTemplate) {
       teacherContainer.appendChild(teacherTemplate.cloneNode(true));
     }
 
@@ -589,31 +590,35 @@
 
     // CURSOR GLOW
     const cursorGlow = document.getElementById('cursor-glow');
-    window.addEventListener('mousemove', (e) => {
-      cursorGlow.style.left = `${e.clientX}px`;
-      cursorGlow.style.top = `${e.clientY}px`;
-    });
+    if (cursorGlow) {
+      window.addEventListener('mousemove', (e) => {
+        cursorGlow.style.left = `${e.clientX}px`;
+        cursorGlow.style.top = `${e.clientY}px`;
+      });
+    }
 
     // THEME TOGGLE
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleIcon = document.getElementById('theme-toggle-icon');
 
-    if (localStorage.getItem('theme') === 'light') {
+    if (localStorage.getItem('theme') === 'light' && themeToggleIcon) {
       document.documentElement.classList.remove('dark');
       themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
     }
 
-    themeToggleBtn.addEventListener('click', () => {
-      if (document.documentElement.classList.contains('dark')) {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-        themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
-      } else {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-        themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
-      }
-    });
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          if (themeToggleIcon) themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          if (themeToggleIcon) themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
+        }
+      });
+    }
 
     // CHARTS SETUP
     Chart.defaults.color = '#94a3b8';
@@ -621,29 +626,29 @@
 
     // 1. Time Chart
     const ctxTime = document.getElementById('timeChart')?.getContext('2d');
-    let timeChart = new Chart(ctxTime, {
+    let timeChart = ctxTime ? new Chart(ctxTime, {
       type: 'bar',
       data: {
         labels: ['<7:40', '7:41-7:50', '7:51-8:00', '>8:00'],
         datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#fbbf24', '#f97316', '#ef4444', '#991b1b'], borderRadius: 6 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    }) : null;
 
     // 2. Trend Chart
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
-    let trendChart = new Chart(ctxTrend, {
+    let trendChart = ctxTrend ? new Chart(ctxTrend, {
       type: 'line',
       data: {
         labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6 (Minggu Ini)'],
         datasets: [{ data: [0, 0, 0, 0, 0, 0], borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.15)', fill: true, tension: 0.35, borderWidth: 2 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    }) : null;
 
     // 3. Reason Chart (Punca Kelewatan)
     const ctxReason = document.getElementById('reasonChart')?.getContext('2d');
-    let reasonChart = new Chart(ctxReason, {
+    let reasonChart = ctxReason ? new Chart(ctxReason, {
       type: 'doughnut',
       data: {
         labels: ['Bangun Lewat', 'Kesesakan Trafik', 'Masalah Kenderaan', 'Cuaca / Hujan', 'Lain-lain'],
@@ -661,11 +666,11 @@
           legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } 
         } 
       }
-    });
+    }) : null;
 
     // 4. Class Chart (Mengikut Kelas)
     const ctxClass = document.getElementById('classChart')?.getContext('2d');
-    let classChart = new Chart(ctxClass, {
+    let classChart = ctxClass ? new Chart(ctxClass, {
       type: 'bar',
       data: {
         labels: [],
@@ -679,7 +684,7 @@
           y: { beginAtZero: true, ticks: { precision: 0 } }
         }
       }
-    });
+    }) : null;
 
     function setElementText(id, value) {
       const el = document.getElementById(id);
@@ -800,7 +805,6 @@
         todaySortAsc = true;
       }
 
-      // Kemaskini Ikon Sort
       ['id', 'nama', 'kelas', 'waktuHariIni', 'kiraan'].forEach(col => {
         const icon = document.getElementById(`sort-icon-${col}`);
         if (icon) {
@@ -831,7 +835,6 @@
         return;
       }
 
-      // SUSUN DATA MENGIKUT LAJUR DIPILIH
       list.sort((a, b) => {
         let valA = a[todaySortCol] ?? '';
         let valB = b[todaySortCol] ?? '';
@@ -869,139 +872,114 @@
 
     // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
-  const todayTableBody = document.getElementById('today-table-body');
-  const heroContainer = document.getElementById('hero-students-container');
-  const refreshIcon = document.getElementById('refresh-icon');
+      const todayTableBody = document.getElementById('today-table-body');
+      const heroContainer = document.getElementById('hero-students-container');
+      const refreshIcon = document.getElementById('refresh-icon');
 
-  // Putarkan ikon refresh semasa proses mengambil data
-  if (refreshIcon) refreshIcon.classList.add('fa-spin');
+      if (refreshIcon) refreshIcon.classList.add('fa-spin');
 
-  if (!API_URL || API_URL.includes("MASUKKAN_URL")) {
-    updateSyncStatus("URL API Belum Diset", "text-rose-500");
-    if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Sila masukkan Web App API URL di dalam fail index.html.</td></tr>`;
-    if (refreshIcon) refreshIcon.classList.remove('fa-spin');
-    return;
-  }
-
-  try {
-    updateSyncStatus("Memuatkan Data...", "text-amber-500");
-    const response = await fetch(API_URL);
-    
-    if (!response.ok) throw new Error("Gagal menyambung ke server Google");
-
-    const data = await response.json();
-
-    if (data.status === "Success") {
-      updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
-      
-      // KEMASKINI PAPARAN MASA TERAKHIR DATA DIAMBIL
-      const masaSekarang = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      setElementText('last-updated', `Masa: ${masasekarang}`);
-
-      globalMuridList = data.muridList || [];
-      globalRekodList = data.rekodList || data.logs || [];
-
-      if (globalRekodList.length === 0 && globalMuridList.length > 0) {
-        globalMuridList.forEach(m => {
-          if (m.kiraan > 0) {
-            for (let i = 0; i < m.kiraan; i++) {
-              globalRekodList.push({
-                tarikhMasa: m.waktuHariIni || "Terrekod",
-                id: m.id,
-                nama: m.nama,
-                kelas: m.kelas,
-                punca: m.punca || "Bangun Lewat",
-                kekerapan: m.kiraan
-              });
-            }
-          }
-        });
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) {
+        updateSyncStatus("URL API Belum Diset", "text-rose-500");
+        if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Sila masukkan Web App API URL.</td></tr>`;
+        if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+        return;
       }
 
-      setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
-      setElementText('kpi-hari-ini', data.lewatHariIni || 0);
-      
-      let totalKesSum = 0;
-      let countBebasLewat = 0;
+      try {
+        updateSyncStatus("Memuatkan Data...", "text-amber-500");
+        const response = await fetch(API_URL);
+        
+        if (!response.ok) throw new Error("Gagal menyambung ke server Google");
 
-      globalMuridList.forEach(m => {
-        totalKesSum += (m.kiraan || 0);
-        if ((m.kiraan || 0) === 0) countBebasLewat++;
-      });
+        const data = await response.json();
 
-      setElementText('kpi-total-kes', totalKesSum);
-      setElementText('kpi-bebas-lewat', countBebasLewat);
-
-      if (timeChart && data.slotWaktu) {
-        timeChart.data.datasets[0].data = data.slotWaktu;
-        timeChart.update();
-      }
-
-      if (trendChart && data.trendMingguan) {
-        trendChart.data.datasets[0].data = data.trendMingguan;
-        trendChart.update();
-      }
-
-      updateAnalyticsCharts(globalRekodList);
-
-      // RENDER HERO
-      if (heroContainer && globalMuridList.length > 0) {
-        const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
-        const topHeroes = sortedMurid.slice(0, 4);
-
-        heroContainer.innerHTML = '';
-        topHeroes.forEach((m, idx) => {
-          const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
-            ? m.urlGambar 
-            : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+        if (data.status === "Success") {
+          updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
           
-          const rankBadge = idx === 0 ? '🏆 #1 HERO' : `#${idx + 1} TOP`;
-          const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+          const masaSekarang = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          setElementText('last-updated', `Masa: ${masaSekarang}`);
 
-          heroContainer.innerHTML += `
-            <div class="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3 shadow-sm">
-              <div class="relative">
-                <img src="${avatarUrl}" 
-                     alt="${m.nama}" 
-                     class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-emerald-500 p-0.5 object-cover"
-                     onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-                <span class="absolute -bottom-1 -right-1 text-[9px] font-black ${rankColor} border px-1.5 py-0.2 rounded-full code-font">${rankBadge}</span>
-              </div>
-              <div class="overflow-hidden">
-                <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">${m.nama}</h4>
-                <p class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${m.kelas}</p>
-                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                  <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
-                </p>
-              </div>
-            </div>`;
-        });
-      }
+          globalMuridList = data.muridList || [];
+          globalRekodList = data.rekodList || data.logs || [];
 
-      renderTodayTable();
-      renderTargetStudentTable(globalMuridList);
-      renderStreakTracker(data.streakList || globalMuridList);
-      populateClassFilter();
-      applyFilters();
+          if (globalRekodList.length === 0 && globalMuridList.length > 0) {
+            globalMuridList.forEach(m => {
+              if (m.kiraan > 0) {
+                for (let i = 0; i < m.kiraan; i++) {
+                  globalRekodList.push({
+                    tarikhMasa: m.waktuHariIni || "Terrekod",
+                    id: m.id,
+                    nama: m.nama,
+                    kelas: m.kelas,
+                    punca: m.punca || "Bangun Lewat",
+                    kekerapan: m.kiraan
+                  });
+                }
+              }
+            });
+          }
 
-    } else {
-      updateSyncStatus("Ralat Google Sheets", "text-rose-500");
-      if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Ralat Apps Script: ${data.message}</td></tr>`;
-    }
+          setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
+          setElementText('kpi-hari-ini', data.lewatHariIni || 0);
+          
+          let totalKesSum = 0;
+          let countBebasLewat = 0;
 
-  } catch (error) {
-    console.error("Q-TIBA Fetch Error:", error);
-    updateSyncStatus("Gagal Menyambung Data", "text-rose-500");
-    if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
-  } finally {
-    // Hentikan pusingan ikon refresh
-    if (refreshIcon) refreshIcon.classList.remove('fa-spin');
-  }
-}
+          globalMuridList.forEach(m => {
+            totalKesSum += (m.kiraan || 0);
+            if ((m.kiraan || 0) === 0) countBebasLewat++;
+          });
 
-          // RENDER JADUAL LEWAT HARI INI
+          setElementText('kpi-total-kes', totalKesSum);
+          setElementText('kpi-bebas-lewat', countBebasLewat);
+
+          if (timeChart && data.slotWaktu) {
+            timeChart.data.datasets[0].data = data.slotWaktu;
+            timeChart.update();
+          }
+
+          if (trendChart && data.trendMingguan) {
+            trendChart.data.datasets[0].data = data.trendMingguan;
+            trendChart.update();
+          }
+
+          updateAnalyticsCharts(globalRekodList);
+
+          // RENDER HERO
+          if (heroContainer && globalMuridList.length > 0) {
+            const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
+            const topHeroes = sortedMurid.slice(0, 4);
+
+            heroContainer.innerHTML = '';
+            topHeroes.forEach((m, idx) => {
+              const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
+                ? m.urlGambar 
+                : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+              
+              const rankBadge = idx === 0 ? '🏆 #1 HERO' : `#${idx + 1} TOP`;
+              const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+
+              heroContainer.innerHTML += `
+                <div class="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center gap-3 shadow-sm">
+                  <div class="relative">
+                    <img src="${avatarUrl}" 
+                         alt="${m.nama}" 
+                         class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-emerald-500 p-0.5 object-cover"
+                         onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                    <span class="absolute -bottom-1 -right-1 text-[9px] font-black ${rankColor} border px-1.5 py-0.2 rounded-full code-font">${rankBadge}</span>
+                  </div>
+                  <div class="overflow-hidden">
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">${m.nama}</h4>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${m.kelas}</p>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                      <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
+                    </p>
+                  </div>
+                </div>`;
+            });
+          }
+
           renderTodayTable();
-
           renderTargetStudentTable(globalMuridList);
           renderStreakTracker(data.streakList || globalMuridList);
           populateClassFilter();
@@ -1015,7 +993,9 @@
       } catch (error) {
         console.error("Q-TIBA Fetch Error:", error);
         updateSyncStatus("Gagal Menyambung Data", "text-rose-500");
-        if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL dan kebenaran akses deployment Apps Script.</td></tr>`;
+        if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-wifi mr-2"></i>Gagal memuatkan data dari Google Sheet. Sila semak Web App URL.</td></tr>`;
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('fa-spin');
       }
     }
 
@@ -1033,11 +1013,9 @@
       });
     }
 
-    // MEMBINA REKOD DIKELOMPOKKAN MENGIKUT MURID (GROUP BY STUDENT)
     function getGroupedStudentRecords() {
       const map = new Map();
 
-      // Utamakan gabungan dari globalMuridList
       globalMuridList.forEach(m => {
         map.set(m.id || m.nama, {
           id: m.id || 'N/A',
@@ -1048,7 +1026,6 @@
         });
       });
 
-      // Tambah punca-punca kelewatan dari log rekod
       globalRekodList.forEach(r => {
         const key = r.id || r.nama;
         if (!map.has(key)) {
@@ -1069,7 +1046,6 @@
       return Array.from(map.values()).filter(item => item.jumlahKes > 0);
     }
 
-    // PENAPIS TAB 4 (BNK)
     function applyFilters() {
       const search = (document.getElementById('filter-search')?.value || '').toLowerCase();
       const selectedClass = document.getElementById('filter-class')?.value || '';
@@ -1110,7 +1086,6 @@
         return;
       }
 
-      // Susun murid mengikut jumlah kes kelewatan tertinggi di atas
       list.sort((a, b) => b.jumlahKes - a.jumlahKes);
 
       tbody.innerHTML = '';
@@ -1144,7 +1119,6 @@
       });
     }
 
-    // EKSPORT JADUAL RINGKASAN REKOD KE CSV
     function exportToCSV() {
       const list = getGroupedStudentRecords();
       if (list.length === 0) {
@@ -1167,7 +1141,6 @@
       document.body.removeChild(link);
     }
 
-    // FUNGSI JANA SURAT AMARAN PDF
     function generateSuratAmaran(nama, kelas, jumlahLewat) {
       document.getElementById('pdf-nama-murid').innerText = nama;
       document.getElementById('pdf-kelas-murid').innerText = kelas;
@@ -1224,14 +1197,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-  fetchLiveData(); // Muat data kali pertama sebaik sahaja halaman dibuka
+      fetchLiveData();
 
-  // Muat semula data secara automatik setiap 10 saat (10000 ms)
-  setInterval(() => {
-    fetchLiveData();
-  }, 10000);
-});
-    
+      // Semak dan kemaskini data secara automatik setiap 10 saat
+      setInterval(() => {
+        fetchLiveData();
+      }, 10000);
+    });
   </script>
 </body>
 </html>
