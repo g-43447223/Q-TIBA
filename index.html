@@ -1187,6 +1187,41 @@
     document.addEventListener('DOMContentLoaded', () => {
       fetchLiveData();
     });
+
+    // Fungsi utama untuk mengambil data dari Google Apps Script
+function fetchDashboardData() {
+  if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+
+  fetch(API_URL)
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "Success") {
+        // Kemaskini elemen-elemen UI pada dashboard
+        renderDashboard(data); 
+
+        // Tunjukkan masa kemaskini terakhir pada skrin (pilihan)
+        const masaSekarang = new Date().toLocaleTimeString();
+        document.getElementById("lastUpdated").innerText = `Dikemaskini terakhir: ${masasekarang}`;
+      } else {
+        console.error("Ralat data:", data.message);
+      }
+    })
+    .catch(error => {
+      console.error("Gagal mengambil data automatik:", error);
+    });
+}
+
+// Jalankan fungsi semasa laman dibuka & tetapkan selang masa auto-update
+document.addEventListener("DOMContentLoaded", function() {
+  // 1. Ambil data terus sebaik sahaja laman dimuatkan
+  fetchDashboardData();
+
+  // 2. AUTO-UPDATE: Panggil semula fungsi di atas setiap 15 saat (15000 ms)
+  setInterval(() => {
+    fetchDashboardData();
+  }, 15000); 
+});
+    
   </script>
 </body>
 </html>
