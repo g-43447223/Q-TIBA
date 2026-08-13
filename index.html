@@ -180,20 +180,20 @@
         </div>
       </div>
 
-      <!-- KAD PENJEJAK SAHSIAH POSITIF -->
-      <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-award text-amber-500 text-lg"></i>
-            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Pemulihan Sahsiah (Hadir Awal Konsisten)</h3>
-          </div>
-          <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Program Rewards</span>
-        </div>
+      <!-- KAD PENJEJAK SAHSIAH POSITIF (MINGGUAN) -->
+<div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-award text-amber-500 text-lg"></i>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Penghargaan Sahsiah Mingguan (Bebas Lewat)</h3>
+    </div>
+    <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Carta Minggu Ini</span>
+  </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="streak-container">
-          <!-- Senarai murid ber-streak dipaparkan menerusi JS -->
-        </div>
-      </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="streak-container">
+    <!-- Senarai murid dipaparkan menerusi JS -->
+  </div>
+</div>
 
       <!-- JADUAL MURID LEWAT HARI INI -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
@@ -549,7 +549,7 @@
   </footer>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbztQ1tkB5B6iCWhXg70UxlmHDAMltlED1X6L5XYhU0iEZYWoHSzzQCpXg3lqUtscXGL0Q/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbxM7e8tGjH70hnftqFROytDcG4qBwmVcYz4hrKWRXPnYZcfZRNwQz1J-BcmQZq7MdVuOQ/exec"; 
 
     let globalMuridList = [];
     let globalRekodList = [];
@@ -1206,40 +1206,55 @@
     }
 
     function renderStreakTracker(list) {
-      const container = document.getElementById('streak-container');
-      if (!container) return;
+  const container = document.getElementById('streak-container');
+  if (!container) return;
 
-      const streakList = (list || []).filter(m => m.streakHari && m.streakHari > 0);
+  // Tapis murid sasaran yang ada rekod hadir awal / tiada kes kelewatan
+  const weeklyHeroes = (list || []).filter(m => (m.streakHari && m.streakHari > 0) || (m.kiraan === 0));
 
-      if (streakList.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
-            Tiada rekod pemulihan sahsiah / streak hadir awal buat masa ini.
-          </div>`;
-        return;
-      }
+  if (weeklyHeroes.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
+        <i class="fa-solid fa-info-circle mr-1"></i> Tiada penerima Penghargaan Mingguan buat masa ini.
+      </div>`;
+    return;
+  }
 
-      container.innerHTML = '';
-      streakList.forEach(m => {
-        let badgeColor = m.streakHari >= 7 ? 'from-amber-500 to-orange-500' : 'from-cyan-500 to-blue-500';
-        let badgeTitle = m.streakHari >= 7 ? '🌟 Sahsiah Terpuji' : '🔥 Istiqamah Awal';
+  container.innerHTML = '';
+  
+  weeklyHeroes.forEach(m => {
+    // Hadkan paparan maksimum 5 hari persekolahan seminggu
+    const streakSemasa = m.streakHari || 0;
+    const daysInWeek = streakSemasa > 5 ? 5 : streakSemasa;
+    const isFullWeek = daysInWeek === 5 || m.kiraan === 0;
 
-        container.innerHTML += `
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-            <div>
-              <h4 class="text-xs font-bold text-slate-900 dark:text-white">${m.nama}</h4>
-              <p class="text-[10px] text-slate-500 dark:text-slate-400">${m.kelas}</p>
-            </div>
-            <div class="text-right">
-              <span class="text-xs font-black text-white px-2 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm">
-                🔥 ${m.streakHari} Hari Awal
-              </span>
-              <p class="text-[9px] text-emerald-500 font-bold mt-1">${badgeTitle}</p>
-            </div>
+    let badgeColor = isFullWeek ? 'from-amber-500 to-orange-500' : 'from-emerald-500 to-teal-500';
+    let badgeTitle = isFullWeek ? '🏆 Bintang Mingguan (Lengkap 5 Hari)' : '⭐ Istiqamah Minggu Ini';
+    let statusText = isFullWeek ? '5/5 Hari Awal' : `${daysInWeek}/5 Hari Awal`;
+
+    const userImg = (m.urlGambar && m.urlGambar !== '') 
+      ? m.urlGambar 
+      : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
+    container.innerHTML += `
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all">
+        <div class="flex items-center gap-2.5">
+          <img src="${userImg}" class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 object-cover" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">${m.nama}</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${m.kelas}</p>
           </div>
-        `;
-      });
-    }
+        </div>
+        <div class="text-right">
+          <span class="text-[11px] font-black text-white px-2 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font">
+            ✨ ${statusText}
+          </span>
+          <p class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">${badgeTitle}</p>
+        </div>
+      </div>
+    `;
+  });
+}
 
     document.addEventListener('DOMContentLoaded', () => {
       fetchLiveData();
