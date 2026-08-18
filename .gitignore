@@ -1,18 +1,8 @@
-# Environment / Keys
+# Abaikan fail environment variables (rahsia)
 .env
 .env.local
-.env.production
+.env*.local
 
-# Dependencies
+# Abaikan folder kebiasaan jika ada
 node_modules/
-
-# Build & Cache
-dist/
-build/
-.cache/
-
-# System & IDE files
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+.vercel
