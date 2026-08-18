@@ -550,6 +550,11 @@
   </footer>
 
   <script>
+    // Semak jika pengawas/guru belum log masuk
+if (sessionStorage.getItem('qtiba_auth') !== 'true') {
+  alert('Sila log masuk terlebih dahulu!');
+  window.location.href = 'login.html'; // Halakan ke halaman login
+}
     const API_URL = "https://script.google.com/macros/s/AKfycbxM7e8tGjH70hnftqFROytDcG4qBwmVcYz4hrKWRXPnYZcfZRNwQz1J-BcmQZq7MdVuOQ/exec"; 
 
     let globalMuridList = [];
