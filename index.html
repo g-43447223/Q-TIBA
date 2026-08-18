@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="ms" class="dark">
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; img-src 'self' data: https://api.dicebear.com;">
+  <!-- Ikon khas untuk iPhone / iPad (Safari) -->
   <link rel="apple-touch-icon" sizes="180x180" href="q-tibalogo.png">
+
+  <!-- Ikon asas pelayar web -->
   <link rel="icon" type="image/png" sizes="32x32" href="q-tibalogo.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Q-TIBA - Analytics Dashboard</title>
-  
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -93,10 +95,12 @@
           </a>
         </div>
 
+        <!-- BUTANG REFRESH MANUAL -->
         <button id="refresh-btn" onclick="fetchLiveData()" title="Kemaskini Data" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
           <i id="refresh-icon" class="fa-solid fa-rotate-right text-sm"></i>
         </button>
 
+        <!-- BUTANG TUKAR TEMA -->
         <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
           <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
         </button>
@@ -107,6 +111,7 @@
   <!-- KANDUNGAN UTAMA DASHBOARD -->
   <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5 z-10 relative">
 
+    <!-- TAB NAVIGATION -->
     <div class="glass-card p-1.5 rounded-2xl flex items-center justify-between gap-1 sm:gap-2">
       <button onclick="switchTab('utama')" id="tab-btn-utama" class="tab-btn-active flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2">
         <i class="fa-solid fa-house"></i> <span class="hidden sm:inline">Dashboard</span> Utama
@@ -122,6 +127,7 @@
       </button>
     </div>
 
+    <!-- BANNER HERO -->
     <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-l-cyan-500">
       <div>
         <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 code-font">Inovasi Disiplin SK Pulau Indah</span>
@@ -136,6 +142,7 @@
 
     <!-- TAB 1: DASHBOARD UTAMA -->
     <div id="tab-utama" class="tab-content flex flex-col gap-5">
+      <!-- KPI CARDS -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="glass-card rounded-2xl p-4">
           <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Murid Sasaran</p>
@@ -155,6 +162,7 @@
         </div>
       </div>
 
+      <!-- HERO DISIPLIN -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -172,17 +180,22 @@
         </div>
       </div>
 
-      <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-award text-amber-500 text-lg"></i>
-            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Penghargaan Sahsiah Mingguan (Bebas Lewat)</h3>
-          </div>
-          <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Carta Minggu Ini</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="streak-container"></div>
-      </div>
+      <!-- KAD PENJEJAK SAHSIAH POSITIF (MINGGUAN) -->
+<div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10 mb-2">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-award text-amber-500 text-lg"></i>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Penghargaan Sahsiah Mingguan (Bebas Lewat)</h3>
+    </div>
+    <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">Carta Minggu Ini</span>
+  </div>
 
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="streak-container">
+    <!-- Senarai murid dipaparkan menerusi JS -->
+  </div>
+</div>
+
+      <!-- JADUAL MURID LEWAT HARI INI -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -241,6 +254,7 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- CARTA PIE: AGIHAN PUNCA KELEWATAN -->
         <div class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -255,6 +269,7 @@
           </div>
         </div>
 
+        <!-- CARTA BAR: KELEWATAN MENGIKUT KELAS -->
         <div class="lg:col-span-7 glass-card rounded-2xl p-5 flex flex-col justify-between">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -314,8 +329,11 @@
 
     <!-- TAB 4: SENARAI REKOD & BNK -->
     <div id="tab-records" class="tab-content hidden flex flex-col gap-6">
+
+      <!-- BAR ALATAN PENAPIS & CARIAN -->
       <section class="glass-card rounded-2xl p-4 no-print">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
             <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Cari nama atau ID..." class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
@@ -349,9 +367,11 @@
           <button onclick="exportToCSV()" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-excel"></i> Eksport CSV
           </button>
+
         </div>
       </section>
 
+      <!-- JADUAL REKOD DIKELOMPOKKAN -->
       <section class="glass-card rounded-2xl p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -389,14 +409,19 @@
           </table>
         </div>
       </section>
+
     </div>
 
+    <!-- PASUKAN GURU INOVASI -->
     <div id="teacher-team-container" class="mt-4"></div>
+
   </main>
 
   <!-- TEMPLAT SURAT AMARAN (TERSEMBUNYI) -->
   <div class="hidden">
     <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 11pt;" class="p-2">
+
+      <!-- KEPALA SURAT (HEADER RASMI) -->
       <div class="flex items-center justify-between border-b-2 border-black pb-3 mb-4 gap-4">
         <img src="logo.png" alt="Logo Sekolah" class="w-20 h-20 object-contain" onerror="this.src='q-tibalogo.png'">
         <div class="text-center flex-1">
@@ -407,6 +432,7 @@
         <div class="w-20"></div>
       </div>
 
+      <!-- RUJUKAN & TARIKH -->
       <div class="flex justify-between text-xs font-semibold mb-4">
         <div>
           <p>Ruj. Kami : SKPI/UBK/2026/AMARAN</p>
@@ -414,20 +440,25 @@
         </div>
       </div>
 
+      <!-- PENERIMA -->
       <div class="text-xs mb-4 leading-normal">
         <p class="font-bold">Kepada Ibu Bapa / Penjaga:</p>
         <p class="font-bold uppercase text-sm text-black"><span id="pdf-nama-murid"></span> (<span id="pdf-kelas-murid"></span>)</p>
         <p class="mt-1">Tuan / Puan,</p>
       </div>
 
+      <!-- TAJUK SURAT -->
       <h3 class="text-xs font-bold uppercase underline mb-3 tracking-wide">
         SURAT AMARAN KELEWATAN HADIR KE SEKOLAH
       </h3>
 
+      <!-- ISI KANDUNGAN -->
       <div class="text-xs space-y-2.5 leading-relaxed text-justify">
         <p>Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
+
         <p>2. Dukacita dimaklumkan bahawa anak / jagaan tuan/puan telah mendaftar masuk lewat ke sekolah menerusi rekod imbasan digital <strong>Q-TIBA</strong> dengan butiran seperti berikut:</p>
 
+        <!-- JADUAL REKOD LEWAT -->
         <table class="w-full text-xs border-collapse border border-black my-3">
           <thead>
             <tr class="bg-gray-100 font-bold">
@@ -444,21 +475,24 @@
         </table>
 
         <p>3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:20 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
+
         <p>4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
       </div>
 
       <p class="text-xs mt-3">Sekian, terima kasih.</p>
 
+      <!-- SLOGAN & TANDATANGAN -->
       <div class="mt-4 text-xs leading-relaxed">
         <p class="font-bold italic">"BERKHIDMAT UNTUK NEGARA"</p>
         <p class="mt-2">Saya yang menjalankan amanah,</p>
-        
+
         <div class="h-14"></div>
 
         <p class="font-bold uppercase text-xs">___________________________________</p>
         <p class="font-bold uppercase mt-1">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
         <p>Sekolah Kebangsaan Pulau Indah</p>
       </div>
+
     </div>
   </div>
 
@@ -515,28 +549,27 @@
   </footer>
 
   <script>
-    if (sessionStorage.getItem('qtiba_auth') !== 'true') {
-      alert('Sila log masuk terlebih dahulu!');
-      window.location.href = 'login.html';
-    }
-
-    const API_URL = "https://script.google.com/macros/s/AKfycbwDPkVY89RfwAbPmYiOWSd8qfcB6vqcRnjaCgNyGmsRZqDF_WsQaX_205UoN8wtpwsZag/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbyNARvkh0d3RZVIlYEjPhr_uPYhvvW4AJ56YnSJhwDVtyzaIymaaZqwb5mf8aBmjrnsng/exec"; 
 
     let globalMuridList = [];
     let globalRekodList = [];
 
+    // TETAPAN SORTING JADUAL LEWAT HARI INI
     let todaySortCol = 'waktuHariIni';
     let todaySortAsc = false;
 
+    // TETAPAN SORTING JADUAL MURID SASARAN
     let targetSortCol = 'nama';
     let targetSortAsc = true;
 
+    // SETUP TEACHER TEMPLATE
     const teacherTemplate = document.getElementById('teacher-team-template')?.content;
     const teacherContainer = document.getElementById('teacher-team-container');
     if (teacherContainer && teacherTemplate) {
       teacherContainer.appendChild(teacherTemplate.cloneNode(true));
     }
 
+    // TAB SWITCHER
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       const target = document.getElementById(`tab-${tabName}`);
@@ -560,6 +593,7 @@
       }
     }
 
+    // CURSOR GLOW
     const cursorGlow = document.getElementById('cursor-glow');
     if (cursorGlow) {
       window.addEventListener('mousemove', (e) => {
@@ -568,6 +602,7 @@
       });
     }
 
+    // THEME TOGGLE
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleIcon = document.getElementById('theme-toggle-icon');
 
@@ -590,9 +625,11 @@
       });
     }
 
+    // CHARTS SETUP
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
+    // 1. Time Chart
     const ctxTime = document.getElementById('timeChart')?.getContext('2d');
     let timeChart = ctxTime ? new Chart(ctxTime, {
       type: 'bar',
@@ -603,6 +640,7 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     }) : null;
 
+    // 2. Trend Chart
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
     let trendChart = ctxTrend ? new Chart(ctxTrend, {
       type: 'line',
@@ -613,6 +651,7 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     }) : null;
 
+    // 3. Reason Chart (Punca Kelewatan)
     const ctxReason = document.getElementById('reasonChart')?.getContext('2d');
     let reasonChart = ctxReason ? new Chart(ctxReason, {
       type: 'doughnut',
@@ -628,10 +667,13 @@
       options: { 
         responsive: true, 
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } 
+        plugins: { 
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } 
+        } 
       }
     }) : null;
 
+    // 4. Class Chart (Mengikut Kelas)
     const ctxClass = document.getElementById('classChart')?.getContext('2d');
     let classChart = ctxClass ? new Chart(ctxClass, {
       type: 'bar',
@@ -643,7 +685,9 @@
         responsive: true, 
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
       }
     }) : null;
 
@@ -674,6 +718,7 @@
       renderTargetStudentTable(filtered);
     }
 
+    // FUNGSI SORTING JADUAL MURID SASARAN
     function sortTargetStudentTable(columnKey) {
       if (targetSortCol === columnKey) {
         targetSortAsc = !targetSortAsc;
@@ -705,6 +750,7 @@
         return;
       }
 
+      // Susun data mengikut lajur yang dipilih
       list.sort((a, b) => {
         let valA = a[targetSortCol] ?? '';
         let valB = b[targetSortCol] ?? '';
@@ -757,6 +803,7 @@
       });
     }
 
+    // UPDATE DATA PUNCA & KELAS PADA CARTA ANALITIK
     function updateAnalyticsCharts(rekodList) {
       if (!rekodList || rekodList.length === 0) return;
 
@@ -794,6 +841,7 @@
       }
     }
 
+    // FUNGSI SORTING JADUAL LEWAT HARI INI
     function sortTodayTable(columnKey) {
       if (todaySortCol === columnKey) {
         todaySortAsc = !todaySortAsc;
@@ -867,6 +915,7 @@
       });
     }
 
+    // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
       const todayTableBody = document.getElementById('today-table-body');
       const heroContainer = document.getElementById('hero-students-container');
@@ -884,14 +933,14 @@
       try {
         updateSyncStatus("Memuatkan Data...", "text-amber-500");
         const response = await fetch(API_URL);
-        
+
         if (!response.ok) throw new Error("Gagal menyambung ke server Google");
 
         const data = await response.json();
 
         if (data.status === "Success") {
           updateSyncStatus("Live Analytics", "text-emerald-500 dark:text-emerald-400");
-          
+
           const masaSekarang = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           setElementText('last-updated', `Masa: ${masaSekarang}`);
 
@@ -917,7 +966,7 @@
 
           setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
           setElementText('kpi-hari-ini', data.lewatHariIni || 0);
-          
+
           let totalKesSum = 0;
           let countBebasLewat = 0;
 
@@ -941,6 +990,7 @@
 
           updateAnalyticsCharts(globalRekodList);
 
+          // RENDER HERO
           if (heroContainer && globalMuridList.length > 0) {
             const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
             const topHeroes = sortedMurid.slice(0, 4);
@@ -950,7 +1000,7 @@
               const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
                 ? m.urlGambar 
                 : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
-              
+
               const rankBadge = idx === 0 ? '🏆 #1 HERO' : `#${idx + 1} TOP`;
               const rankColor = idx === 0 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
@@ -976,6 +1026,7 @@
 
           renderTodayTable();
           filterStudents();
+          renderStreakTracker(data.streakList || globalMuridList);
           populateClassFilter();
           applyFilters();
 
@@ -1052,12 +1103,12 @@
         const matchSearch = !search || 
           (student.nama && student.nama.toLowerCase().includes(search)) || 
           (student.id && String(student.id).toLowerCase().includes(search));
-        
+
         const matchClass = !selectedClass || student.kelas === selectedClass;
 
         const puncasArray = Array.from(student.puncas);
         const matchReason = !selectedReason || puncasArray.some(p => p === selectedReason) || (puncasArray.length === 0 && selectedReason === 'Lain-lain');
-        
+
         let matchStatus = true;
         if (selectedStatus === 'tegar') matchStatus = student.jumlahKes >= 3;
         if (selectedStatus === 'normal') matchStatus = student.jumlahKes < 3;
@@ -1085,7 +1136,7 @@
       tbody.innerHTML = '';
       list.forEach((s, index) => {
         const isTegar = s.jumlahKes >= 3;
-        
+
         const statusBadge = isTegar 
           ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Kes Tegar (Sesi BNK)</span>`
           : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">Kelewatan Biasa</span>`;
@@ -1154,7 +1205,72 @@
       html2pdf().set(opt).from(element).save();
     }
 
-    fetchLiveData();
+    function renderStreakTracker(list) {
+  const container = document.getElementById('streak-container');
+  if (!container) return;
+
+
+
+  // Tapis murid sasaran yang ada rekod hadir awal / tiada kes kelewatan
+  const weeklyHeroes = (list || []).filter(m => (m.streakHari && m.streakHari > 0) || (m.kiraan === 0));
+
+
+
+
+
+
+  if (weeklyHeroes.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
+        <i class="fa-solid fa-info-circle mr-1"></i> Tiada penerima Penghargaan Mingguan buat masa ini.
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  
+  weeklyHeroes.forEach(m => {
+    // Hadkan paparan maksimum 5 hari persekolahan seminggu
+    const streakSemasa = m.streakHari || 0;
+    const daysInWeek = streakSemasa > 5 ? 5 : streakSemasa;
+    const isFullWeek = daysInWeek === 5 || m.kiraan === 0;
+
+    let badgeColor = isFullWeek ? 'from-amber-500 to-orange-500' : 'from-emerald-500 to-teal-500';
+    let badgeTitle = isFullWeek ? '🏆 Bintang Mingguan (Lengkap 5 Hari)' : '⭐ Istiqamah Minggu Ini';
+    let statusText = isFullWeek ? '5/5 Hari Awal' : `${daysInWeek}/5 Hari Awal`;
+
+    const userImg = (m.urlGambar && m.urlGambar !== '') 
+      ? m.urlGambar 
+      : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
+    container.innerHTML += `
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all">
+        <div class="flex items-center gap-2.5">
+          <img src="${userImg}" class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 object-cover" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">${m.nama}</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${m.kelas}</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-[11px] font-black text-white px-2 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font">
+            ✨ ${statusText}
+          </span>
+          <p class="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">${badgeTitle}</p>
+        </div>
+      </div>
+    `;
+  });
+}
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchLiveData();
+
+      // Semak dan kemaskini data secara automatik setiap 10 saat
+      setInterval(() => {
+        fetchLiveData();
+      }, 10000);
+    });
   </script>
 </body>
 </html>
