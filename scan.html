@@ -89,6 +89,7 @@
       100% { transform: scale(1); opacity: 1; }
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 
 <body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative overflow-x-hidden">
@@ -285,6 +286,11 @@
   </div>
 
   <script>
+    // Semak jika pengawas/guru belum log masuk
+if (sessionStorage.getItem('qtiba_auth') !== 'true') {
+  alert('Sila log masuk terlebih dahulu!');
+  window.location.href = 'login.html'; // Halakan ke halaman login
+}
     const API_URL = "https://script.google.com/macros/s/AKfycbxM7e8tGjH70hnftqFROytDcG4qBwmVcYz4hrKWRXPnYZcfZRNwQz1J-BcmQZq7MdVuOQ/exec";
 
     let html5QrCode = null;
@@ -362,6 +368,19 @@
       }
     });
 
+    // --- KOD BARU (Selepas dibetulkan) ---
+const SECRET_KEY = "KunciRahsiaSekolah123!"; // 1. Isikan kunci rahsia anda
+
+fetch(API_URL, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    secret_key: SECRET_KEY, // 2. Tambah baris ini di dalam objek data!
+    student_id: studentId,
+    timestamp: new Date().toISOString()
+  })
+});
+    
     // PRELOAD DATA MURID
     async function preloadStudentData() {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
@@ -732,6 +751,27 @@
     // INISIALISASI
     initCameraDevices();
     preloadStudentData();
+  const LOCAL_ENC_KEY = "KunciEncryptLokal456";
+
+// Fungsi simpan data offline
+function saveOfflineData(dataArray) {
+  const encrypted = CryptoJS.AES.encrypt(JSON.stringify(dataArray), LOCAL_ENC_KEY).toString();
+  localStorage.setItem('qtiba_offline_queue', encrypted);
+}
+
+// Fungsi baca data offline
+function getOfflineData() {
+  const rawData = localStorage.getItem('qtiba_offline_queue');
+  if (!rawData) return [];
+  
+  try {
+    const bytes = CryptoJS.AES.decrypt(rawData, LOCAL_ENC_KEY);
+    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+  } catch (e) {
+    console.error("Data terjejas atau kunci salah");
+    return [];
+  }
+}
   </script>
 </body>
 </html>
