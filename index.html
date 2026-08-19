@@ -549,35 +549,7 @@
   </footer>
 
   <script>
-    const API_URL = "/api/submit"; 
-
-    async function submitForm(event) {
-    event.preventDefault();
-
-    const formData = {
-      nama: document.getElementById('nama').value,
-      email: document.getElementById('email').value
-    };
-
-    // SEBELUM INI (BAHAYA): 
-    // await fetch('https://script.google.com/macros/s/AKfycb.../exec', ...)
-
-    // SEKARANG (SELAMAT): Hantar ke API Proxy sahaja
-    try {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-      alert('Berjaya dihantar!');
-    } catch (error) {
-      console.error('Ralat:', error);
-    }
-  }
+    const API_URL = "https://script.google.com/macros/s/AKfycbxnHCD8pLppc3-2hZEZ8VZZRFGhb-mWhMl2dumr0Bvql9UAgN28JGggkjmOWUHPu8PK-Q/exec"; 
 
     let globalMuridList = [];
     let globalRekodList = [];
