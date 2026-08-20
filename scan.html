@@ -436,50 +436,47 @@
       }
     }
 
-    // KAMERA SETUP (PEMBAIKAN DENGAN RELEASE STREAM)
-    async function initCameraDevices() {
-      const cameraSelect = document.getElementById('camera-select');
-      if (!cameraSelect) return;
+    // KAMERA SETUP (MENGGUNAKAN NAMA ASAL PERANTI)
+async function initCameraDevices() {
+  const cameraSelect = document.getElementById('camera-select');
+  if (!cameraSelect) return;
 
-      try {
-        // 1. Minta kebenaran kamera dahulu dan lepaskan stream supaya kamera tidak locked
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          stream.getTracks().forEach(track => track.stop());
-        }
-
-        // 2. Ambil senarai peranti kamera
-        const devices = await Html5Qrcode.getCameras();
-        cameraSelect.innerHTML = '';
-
-        if (devices && devices.length > 0) {
-          devices.forEach((cam, index) => {
-            const opt = document.createElement('option');
-            opt.value = cam.id;
-
-            let label = cam.label || `Kamera ${index + 1}`;
-            if (label.toLowerCase().includes('back') || label.toLowerCase().includes('environment')) {
-              label = `📸 Kamera Belakang (${index + 1})`;
-            } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('user')) {
-              label = `🤳 Kamera Depan (${index + 1})`;
-            }
-
-            opt.innerText = label;
-            cameraSelect.appendChild(opt);
-          });
-
-          // Pilih kamera belakang secara automatik jika wujud
-          const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
-          if (backCam) cameraSelect.value = backCam.id;
-
-        } else {
-          cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
-        }
-      } catch (err) {
-        console.error("Gagal mendapatkan senarai kamera:", err);
-        cameraSelect.innerHTML = '<option value="">Kamera disekat / Sila Benarkan Akses</option>';
-      }
+  try {
+    // 1. Minta kebenaran kamera dahulu untuk dapatkan kebenaran peranti
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
     }
+
+    // 2. Ambil senarai peranti kamera dari sistem pelayar
+    const devices = await Html5Qrcode.getCameras();
+    cameraSelect.innerHTML = '';
+
+    if (devices && devices.length > 0) {
+      devices.forEach((cam, index) => {
+        const opt = document.createElement('option');
+        opt.value = cam.id;
+        // Papar nama asal sistem/fon terus tanpa sebarang emoji atau ubah suai
+        opt.innerText = cam.label || `Kamera ${index + 1}`;
+        cameraSelect.appendChild(opt);
+      });
+
+      // Pilih kamera belakang automatik jika dikesan dalam nama asal
+      const backCam = devices.find(d => 
+        d.label.toLowerCase().includes('back') || 
+        d.label.toLowerCase().includes('environment') ||
+        d.label.toLowerCase().includes('rear')
+      );
+      if (backCam) cameraSelect.value = backCam.id;
+
+    } else {
+      cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
+    }
+  } catch (err) {
+    console.error("Gagal mendapatkan senarai kamera:", err);
+    cameraSelect.innerHTML = '<option value="">Kamera disekat / Sila Benarkan Akses</option>';
+  }
+}
 
     function startScanner() {
       const selectedCamId = document.getElementById('camera-select').value;
