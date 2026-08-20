@@ -162,12 +162,12 @@
         </div>
       </div>
 
-      <!-- WIDGET MURID TERAWAL HARI INI (< 7:20 AM) -->
+      <!-- WIDGET MURID TERAWAL HARI INI (<= 7:20 AM) -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-emerald-500 text-base"></i> 🏆 Murid Terawal Hari Ini (&lt; 7:20 AM)
+              <i class="fa-solid fa-bolt text-emerald-500 text-base"></i> 🏆 Murid Terawal Hari Ini (≤ 7:20 AM)
             </h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Senarai imbasan terawal mengikut susunan tiba (First Come, First Serve).</p>
           </div>
@@ -213,12 +213,12 @@
         </div>
       </div>
 
-      <!-- JADUAL MURID LEWAT HARI INI -->
+      <!-- JADUAL MURID LEWAT HARI INI (> 7:20 AM) -->
       <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-user-clock text-amber-500"></i> Rekod Murid Lewat Hari Ini
+              <i class="fa-solid fa-user-clock text-amber-500"></i> Rekod Murid Lewat Hari Ini (> 7:20 AM)
             </h3>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Klik tajuk lajur untuk menyusun data.</p>
           </div>
@@ -820,7 +820,9 @@
       });
     }
 
-    // RENDER SENARAI MURID TERAWAL (< 7:20 AM) FIRST COME FIRST SERVE
+    // =========================================================
+    // RENDER SENARAI MURID TERAWAL (HANYA SCAN <= 7:20 AM)
+    // =========================================================
     function renderEarlyStudents(dataList) {
       const earlyListEl = document.getElementById('early-student-list');
       const countEl = document.getElementById('early-count');
@@ -828,17 +830,24 @@
 
       const listToFilter = dataList || globalRekodList || [];
 
-      // Tapis murid berpangkat HADIR atau imbasan sebelum 7:20 AM
+      // Tapis: Mesti ADA masa imbasan DAN masa imbas <= 7:20 AM
       const earlyStudents = listToFilter.filter(item => {
-        if (item.status === "HADIR" || item.punca === "Tepat Masa") return true;
         const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
+
+        // Tapis jika tiada masa imbasan yang sah
+        if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A' || timeStr === 'Terrekod') {
+          return false;
+        }
+
         const match = timeStr.match(/(\d{1,2}):(\d{2})/);
         if (match) {
           const hours = parseInt(match[1], 10);
           const minutes = parseInt(match[2], 10);
-          if (hours < 7 || (hours === 7 && minutes <= 20)) return true;
+          // Sahkan imbasan berlaku sebelum atau tepat 7:20 AM
+          return (hours < 7 || (hours === 7 && minutes <= 20));
         }
-        return false;
+
+        return item.punca === "Tepat Masa" || item.status === "HADIR";
       });
 
       countEl.innerText = `${earlyStudents.length} Orang`;
@@ -942,11 +951,32 @@
       renderTodayTable();
     }
 
+    // =========================================================
+    // RENDER JADUAL MURID LEWAT HARI INI (HANYA SCAN > 7:20 AM)
+    // =========================================================
     function renderTodayTable() {
       const todayTableBody = document.getElementById('today-table-body');
       if (!todayTableBody) return;
 
-      let list = globalMuridList.filter(m => m.lewatHariIni);
+      // Tapis: Mesti murid yang lewat DAN imbas selepas 7:20 AM
+      let list = globalMuridList.filter(m => {
+        if (!m.lewatHariIni) return false;
+        if (m.punca === "Tepat Masa" || m.status === "HADIR") return false;
+
+        const timeStr = m.waktuHariIni || '';
+        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          const hours = parseInt(match[1], 10);
+          const minutes = parseInt(match[2], 10);
+          
+          // Jika scan <= 7:20 AM, jangan masukkan dalam senarai lewat!
+          if (hours < 7 || (hours === 7 && minutes <= 20)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
 
       if (list.length === 0) {
         todayTableBody.innerHTML = `
