@@ -549,7 +549,7 @@
   </footer>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwW5-frPmgcCygXXc4bHvNjqctuxRidl5-yzzaHY6gXD3xeOoW-U_F6fs6dv3ZUm-rVVA/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbyqSL6slU1gQlk3NWi6ldT5patE1cS3ii2Uzr6E6YYsQdBRpZTat13SYZnVBjIRcO1Vew/exec"; 
 
     let globalMuridList = [];
     let globalRekodList = [];
@@ -804,6 +804,7 @@
     }
 
     // UPDATE DATA PUNCA & KELAS PADA CARTA ANALITIK
+    // UPDATE DATA PUNCA & KELAS PADA CARTA ANALITIK
     function updateAnalyticsCharts(rekodList) {
       if (!rekodList || rekodList.length === 0) return;
 
@@ -818,6 +819,9 @@
       const classCounts = {};
 
       rekodList.forEach(r => {
+        // Abaikan rekod yang hadir tepat masa
+        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+
         const reason = r.punca || r.sebab || "Lain-lain";
         if (reasonCounts[reason] !== undefined) {
           reasonCounts[reason]++;
@@ -1072,6 +1076,9 @@
       });
 
       globalRekodList.forEach(r => {
+        // Abaikan imbasan hadir tepat masa dari pengiraan kelewatan
+        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+
         const key = r.id || r.nama;
         if (!map.has(key)) {
           map.set(key, {
