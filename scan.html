@@ -327,7 +327,7 @@
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
+        utterance.lang = 'ms-MY';
         utterance.rate = 1.0;
         window.speechSynthesis.speak(utterance);
       }
@@ -533,10 +533,79 @@
         img: userImg
       };
 
-      speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
-      document.getElementById('modal-student-name').innerText = matchedStudent.nama;
-      document.getElementById('reason-modal').classList.remove('hidden');
-    }
+      function initiateScanProcess(scannedId) {
+  const matchedStudent = studentCacheMap[scannedId] || {
+    id: scannedId,
+    nama: "MURID DIIMBAS",
+    kelas: "SASARAN",
+    urlGambar: ""
+  };
+
+  const userImg = (matchedStudent.urlGambar && matchedStudent.urlGambar !== "") 
+    ? matchedStudent.urlGambar 
+    : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}`;
+
+  const resultBox = document.getElementById('scanned-result-box');
+
+  // 1. Semak Jika Sudah Diimbas Hari Ini
+  if (scannedTodaySet.has(scannedId)) {
+    playAudioBeep('error');
+    speakText(`Amaran. ${matchedStudent.nama} telah diimbas hari ini.`);
+
+    resultBox.innerHTML = `
+      <div class="pop-in flex flex-col items-center w-full">
+        <div class="relative my-2">
+          <img src="${userImg}" 
+               class="w-20 h-20 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
+               onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
+          <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1 text-[10px]">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </span>
+        </div>
+        <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
+        <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
+        <div class="mt-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
+          <i class="fa-solid fa-ban"></i> SUDAH DIIMBAS HARI INI!
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // 2. SEMAK MASA CUTOFF (Tepat masa vs Lewat)
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+
+  // Tetapkan cutoff: 7:20 AM (7.20 AM dan ke atas = LEWAT)
+  const isLate = (hours > 7) || (hours === 7 && minutes >= 20);
+
+  if (!isLate) {
+    // JIKA TEPAT MASA (Sebelum 7:20 AM)
+    speakText(`Terima kasih ${matchedStudent.nama}. Hadir tepat masa.`);
+    finalizeScanProcess({
+      id: scannedId,
+      nama: matchedStudent.nama,
+      kelas: matchedStudent.kelas,
+      img: userImg,
+      status: "HADIR",
+      punca: "Tepat Masa"
+    });
+  } else {
+    // JIKA LEWAT (7:20 AM ke atas)
+    pendingScanData = {
+      id: scannedId,
+      nama: matchedStudent.nama,
+      kelas: matchedStudent.kelas,
+      img: userImg,
+      status: "LEWAT"
+    };
+
+    speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
+    document.getElementById('modal-student-name').innerText = matchedStudent.nama;
+    document.getElementById('reason-modal').classList.remove('hidden');
+  }
+}
 
     // DIPANGGIL APABILA BUTANG PUNCA DITEKAN
     function submitReason(reason) {
@@ -555,52 +624,66 @@
 
     // SIMPAN REKOD & HANTAR KE BACKEND
     function finalizeScanProcess(data) {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      playAudioBeep('success');
-      scannedTodaySet.add(data.id);
+  playAudioBeep('success');
+  scannedTodaySet.add(data.id);
 
-      const resultBox = document.getElementById('scanned-result-box');
-      resultBox.innerHTML = `
-        <div class="pop-in flex flex-col items-center w-full">
-          <div class="relative my-2">
-            <img src="${data.img}" 
-                 class="w-20 h-20 rounded-full object-cover border-4 border-amber-500 shadow-md bg-slate-200 dark:bg-slate-800"
-                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
-            <span class="absolute bottom-0 right-0 bg-emerald-500 text-white rounded-full p-1 text-[10px]">
-              <i class="fa-solid fa-check"></i>
-            </span>
-          </div>
-          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
-          <p class="text-xs font-bold text-amber-600 dark:text-amber-400 code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
-          <div class="mt-2 text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-3 py-1 rounded-full font-bold code-font">
-            <i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}
-          </div>
-        </div>
-      `;
+  // Bezakan warna UI berdasarkan status
+  const isHadir = data.status === "HADIR";
+  const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
+  const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
+  const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
+  const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}`;
 
-      sessionScannedList.unshift({
-        id: data.id,
-        nama: data.nama,
-        kelas: data.kelas,
-        masa: timeStr,
-        punca: data.punca,
-        img: data.img
-      });
+  const resultBox = document.getElementById('scanned-result-box');
+  resultBox.innerHTML = `
+    <div class="pop-in flex flex-col items-center w-full">
+      <div class="relative my-2">
+        <img src="${data.img}" 
+             class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
+             onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+        <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
+          <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
+        </span>
+      </div>
+      <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
+      <p class="text-xs font-bold ${textColor} code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
+      <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
+        ${statusBadge}
+      </div>
+    </div>
+  `;
 
-      renderSessionLog();
+  sessionScannedList.unshift({
+    id: data.id,
+    nama: data.nama,
+    kelas: data.kelas,
+    masa: timeStr,
+    punca: data.punca || "Tepat Masa",
+    status: data.status || "HADIR",
+    img: data.img
+  });
 
-      const payload = {
-        id: data.id,
-        nama: data.nama,
-        kelas: data.kelas,
-        punca: data.punca
-      };
+  renderSessionLog();
 
-      sendDataToBackend(payload);
-      speakText("Rekod kelewatan berjaya disimpan.");
-    }
+  const payload = {
+    id: data.id,
+    nama: data.nama,
+    kelas: data.kelas,
+    status: data.status || "HADIR",
+    punca: data.punca || "Tepat Masa",
+    masa: timeStr
+  };
+
+  sendDataToBackend(payload);
+  if (isHadir) {
+    speakText("Kehadiran berjaya direkodkan.");
+  } else {
+    speakText("Rekod kelewatan berjaya disimpan.");
+  }
+}
 
     // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
     function sendDataToBackend(payload) {
