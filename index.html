@@ -830,61 +830,95 @@
 
       const listToFilter = dataList || globalRekodList || [];
 
-      // Tapis: Mesti ADA masa imbasan DAN masa imbas <= 7:20 AM
-      const earlyStudents = listToFilter.filter(item => {
-        const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
+      // =========================================================
+// RENDER SENARAI MURID TERAWAL (DENGAN NAMA, KELAS & FILTER TARIKH HARI INI)
+// =========================================================
+function renderEarlyStudents(dataList) {
+  const earlyListEl = document.getElementById('early-student-list');
+  const countEl = document.getElementById('early-count');
+  if (!earlyListEl || !countEl) return;
 
-        if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A' || timeStr === 'Terrekod') {
-          return false;
-        }
+  const listToFilter = dataList || globalRekodList || [];
 
-        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-        if (match) {
-          const hours = parseInt(match[1], 10);
-          const minutes = parseInt(match[2], 10);
-          return (hours < 7 || (hours === 7 && minutes <= 20));
-        }
+  // 1. Dapatkan tarikh hari ini mengikut format YYYY-MM-DD (Waktu Tempatan)
+  const todayStr = new Date().toLocaleDateString('en-CA'); 
 
-        return item.punca === "Tepat Masa" || item.status === "HADIR";
-      });
+  // 2. Tapis HANYA rekod tarikh HARI INI dan waktu imbas <= 7:20 AM
+  const earlyStudents = listToFilter.filter(item => {
+    const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
 
-      countEl.innerText = `${earlyStudents.length} Orang`;
+    if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A') return false;
 
-      if (earlyStudents.length === 0) {
-        earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum 7:20 AM hari ini.</div>`;
-        return;
-      }
-
-      earlyListEl.innerHTML = '';
-      earlyStudents.forEach((item, index) => {
-        let rankBadge = `<span class="text-[10px] font-bold text-slate-400 code-font">#${index + 1}</span>`;
-        if (index === 0) rankBadge = `<span class="text-xs font-bold text-amber-500">🥇 #1</span>`;
-        else if (index === 1) rankBadge = `<span class="text-xs font-bold text-slate-400">🥈 #2</span>`;
-        else if (index === 2) rankBadge = `<span class="text-xs font-bold text-amber-700">🥉 #3</span>`;
-
-        const userImg = (item.urlGambar && item.urlGambar !== '') 
-          ? item.urlGambar 
-          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id || item.nama)}`;
-
-        const timeDisplay = item.waktuHariIni || item.masa || item.tarikhMasa || '< 7:20 AM';
-
-        earlyListEl.innerHTML += `
-          <div class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform">
-            <div class="flex items-center gap-3 overflow-hidden">
-              <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
-              <div class="truncate">
-                <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide">${item.nama || 'Murid'}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${item.id || ''} &bull; ${item.kelas || ''}</p>
-              </div>
-            </div>
-            <div class="flex flex-col items-end gap-1 flex-shrink-0">
-              <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 code-font bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full whitespace-nowrap">${timeDisplay}</span>
-              ${rankBadge}
-            </div>
-          </div>
-        `;
-      });
+    // Semak dan buang data tarikh lama
+    if (timeStr.includes('-')) {
+      const datePart = timeStr.split(' ')[0]; // Ambil bahagian YYYY-MM-DD
+      if (datePart !== todayStr) return false; // Abai jika bukan tarikh hari ini
     }
+
+    // Semak waktu imbasan (<= 7:20 AM)
+    const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+    if (match) {
+      const hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      return (hours < 7 || (hours === 7 && minutes <= 20));
+    }
+
+    return false;
+  });
+
+  // 3. Silang rujuk ID dengan globalMuridList jika rekod imbasan tiada nama/kelas
+  const enrichedStudents = earlyStudents.map(item => {
+    const matchedMurid = globalMuridList.find(m => String(m.id) === String(item.id)) || {};
+    return {
+      ...item,
+      nama: item.nama || matchedMurid.nama || `Murid (${item.id || 'Tanpa ID'})`,
+      kelas: item.kelas || matchedMurid.kelas || 'Tiada Kelas',
+      urlGambar: item.urlGambar || matchedMurid.urlGambar || ''
+    };
+  });
+
+  countEl.innerText = `${enrichedStudents.length} Orang`;
+
+  if (enrichedStudents.length === 0) {
+    earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum 7:20 AM hari ini.</div>`;
+    return;
+  }
+
+  // 4. Paparkan kad murid lengkap dengan Nama, Kelas, Masa Imbas & Kedudukan
+  earlyListEl.innerHTML = '';
+  enrichedStudents.forEach((item, index) => {
+    let rankBadge = `<span class="text-[10px] font-bold text-slate-400 code-font">#${index + 1}</span>`;
+    if (index === 0) rankBadge = `<span class="text-xs font-bold text-amber-500">🥇 #1</span>`;
+    else if (index === 1) rankBadge = `<span class="text-xs font-bold text-slate-400">🥈 #2</span>`;
+    else if (index === 2) rankBadge = `<span class="text-xs font-bold text-amber-700">🥉 #3</span>`;
+
+    const userImg = (item.urlGambar && item.urlGambar !== '') 
+      ? item.urlGambar 
+      : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id || item.nama)}`;
+
+    // Potong string tarikh, ambil masa imbasan sahaja (contoh: 07:05:29)
+    let timeDisplay = item.waktuHariIni || item.masa || item.tarikhMasa || '< 7:20 AM';
+    if (timeDisplay.includes(' ')) {
+      timeDisplay = timeDisplay.split(' ')[1];
+    }
+
+    earlyListEl.innerHTML += `
+      <div class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform">
+        <div class="flex items-center gap-3 overflow-hidden min-w-0">
+          <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
+          <div class="truncate">
+            <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide">${item.nama}</h4>
+            <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5">${item.kelas}</p>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+          <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 code-font bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">${timeDisplay}</span>
+          ${rankBadge}
+        </div>
+      </div>
+    `;
+  });
+}
 
     // UPDATE DATA PUNCA & KELAS PADA CARTA ANALITIK
     function updateAnalyticsCharts(rekodList) {
