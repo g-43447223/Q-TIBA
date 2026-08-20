@@ -222,7 +222,55 @@
     </div>
 
   </main>
+<!-- PASUKAN GURU INOVASI Q-TIBA -->
+  <section class="max-w-5xl w-full mx-auto px-4 sm:px-6 mb-6 z-10 relative">
+    <div class="glass-card rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-amber-500"></i> Pasukan Inovasi Q-TIBA
+        </h3>
+        <span class="text-[10px] text-slate-500 code-font">SK Pulau Indah</span>
+      </div>
 
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <!-- Ustaz Ismail -->
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover" alt="Ustaz Ismail">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
+            <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+              "<span class="italic">Disiplin yang kukuh adalah asas pembentukan insan cemerlang.</span>"
+            </p>
+          </div>
+        </div>
+
+        <!-- Ustaz Fahmi -->
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover" alt="Ustaz Fahmi">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
+            <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem &amp; Data</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+              "<span class="italic">Analisis data tepat memandu keputusan intervensi berkesan.</span>"
+            </p>
+          </div>
+        </div>
+
+        <!-- Ustaz Hafifi -->
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover" alt="Ustaz Hafifi">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
+            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin &amp; Intervensi</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+              "<span class="italic">Mendidik dengan empati, memimpin dengan ketegasan positif.</span>"
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
   <!-- FOOTER -->
   <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
     <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH</div>
@@ -284,6 +332,7 @@
   </div>
 
   <script>
+    <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyqSL6slU1gQlk3NWi6ldT5patE1cS3ii2Uzr6E6YYsQdBRpZTat13SYZnVBjIRcO1Vew/exec";
 
     let html5QrCode = null;
@@ -292,7 +341,7 @@
     let studentCacheMap = {};
     let scannedTodaySet = new Set();
     let sessionScannedList = [];
-    let pendingScanData = null; // Menyimpan data sementara sebelum punca dipilih
+    let pendingScanData = null;
 
     // AUDIO BEEP GENERATOR
     function playAudioBeep(type = 'success') {
@@ -336,8 +385,10 @@
     // CURSOR GLOW
     const cursorGlow = document.getElementById('cursor-glow');
     window.addEventListener('mousemove', (e) => {
-      cursorGlow.style.left = `${e.clientX}px`;
-      cursorGlow.style.top = `${e.clientY}px`;
+      if(cursorGlow) {
+        cursorGlow.style.left = `${e.clientX}px`;
+        cursorGlow.style.top = `${e.clientY}px`;
+      }
     });
 
     // THEME TOGGLE
@@ -346,20 +397,22 @@
 
     if (localStorage.getItem('theme') === 'light') {
       document.documentElement.classList.remove('dark');
-      themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+      if (themeToggleIcon) themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
     }
 
-    themeToggleBtn.addEventListener('click', () => {
-      if (document.documentElement.classList.contains('dark')) {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-        themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
-      } else {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-        themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
-      }
-    });
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
+        }
+      });
+    }
 
     // PRELOAD DATA MURID
     async function preloadStudentData() {
@@ -382,9 +435,14 @@
       }
     }
 
-    // KAMERA SETUP
+    // KAMERA SETUP (DIBETULKAN UNTUK MINTA KEBENARAN PERANTI)
     async function initCameraDevices() {
       try {
+        // Minta kebenaran kamera terlebih dahulu dari pelayar
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          await navigator.mediaDevices.getUserMedia({ video: true }).catch(() => {});
+        }
+
         const devices = await Html5Qrcode.getCameras();
         const cameraSelect = document.getElementById('camera-select');
         cameraSelect.innerHTML = '<option value="">Pilih Kamera...</option>';
@@ -399,9 +457,13 @@
           const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
           if (backCam) cameraSelect.value = backCam.id;
           else cameraSelect.value = devices[0].id;
+        } else {
+          cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
         }
       } catch (err) {
         console.error("Gagal mendapatkan senarai kamera:", err);
+        const cameraSelect = document.getElementById('camera-select');
+        if (cameraSelect) cameraSelect.innerHTML = '<option value="">Kamera disekat / Tiada</option>';
       }
     }
 
@@ -427,7 +489,7 @@
         document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
       }).catch(err => {
         console.error("Gagal menjalankan kamera:", err);
-        alert("Gagal membuka kamera. Pastikan kebenaran kamera dibenarkan.");
+        alert("Gagal membuka kamera. Pastikan kebenaran 'Allow Camera' telah diberikan pada pelayar web.");
         document.getElementById('camera-placeholder').style.display = 'flex';
         document.getElementById('scan-laser').style.display = 'none';
       });
@@ -485,7 +547,7 @@
       }
     }
 
-    // MEMULA PROSES IMBASAN (SEMAK DUPLIKAT & BUKA MODAL)
+    // MEMULA PROSES IMBASAN (SEMAK CUTOFF & BUKA MODAL JIKA LEWAT)
     function initiateScanProcess(scannedId) {
       const matchedStudent = studentCacheMap[scannedId] || {
         id: scannedId,
@@ -525,87 +587,38 @@
         return;
       }
 
-      // 2. Simpan Data Sementara & Buka Modal Punca
-      pendingScanData = {
-        id: scannedId,
-        nama: matchedStudent.nama,
-        kelas: matchedStudent.kelas,
-        img: userImg
-      };
+      // 2. Semak Masa Cutoff (7:20 AM)
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const isLate = (hours > 7) || (hours === 7 && minutes >= 20);
 
-      function initiateScanProcess(scannedId) {
-  const matchedStudent = studentCacheMap[scannedId] || {
-    id: scannedId,
-    nama: "MURID DIIMBAS",
-    kelas: "SASARAN",
-    urlGambar: ""
-  };
+      if (!isLate) {
+        // Tepat masa (Sebelum 7:20 AM)
+        speakText(`Terima kasih ${matchedStudent.nama}. Hadir tepat masa.`);
+        finalizeScanProcess({
+          id: scannedId,
+          nama: matchedStudent.nama,
+          kelas: matchedStudent.kelas,
+          img: userImg,
+          status: "HADIR",
+          punca: "Tepat Masa"
+        });
+      } else {
+        // Lewat (7:20 AM ke atas)
+        pendingScanData = {
+          id: scannedId,
+          nama: matchedStudent.nama,
+          kelas: matchedStudent.kelas,
+          img: userImg,
+          status: "LEWAT"
+        };
 
-  const userImg = (matchedStudent.urlGambar && matchedStudent.urlGambar !== "") 
-    ? matchedStudent.urlGambar 
-    : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}`;
-
-  const resultBox = document.getElementById('scanned-result-box');
-
-  // 1. Semak Jika Sudah Diimbas Hari Ini
-  if (scannedTodaySet.has(scannedId)) {
-    playAudioBeep('error');
-    speakText(`Amaran. ${matchedStudent.nama} telah diimbas hari ini.`);
-
-    resultBox.innerHTML = `
-      <div class="pop-in flex flex-col items-center w-full">
-        <div class="relative my-2">
-          <img src="${userImg}" 
-               class="w-20 h-20 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
-               onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
-          <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1 text-[10px]">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-          </span>
-        </div>
-        <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
-        <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
-        <div class="mt-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
-          <i class="fa-solid fa-ban"></i> SUDAH DIIMBAS HARI INI!
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  // 2. SEMAK MASA CUTOFF (Tepat masa vs Lewat)
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-
-  // Tetapkan cutoff: 7:20 AM (7.20 AM dan ke atas = LEWAT)
-  const isLate = (hours > 7) || (hours === 7 && minutes >= 20);
-
-  if (!isLate) {
-    // JIKA TEPAT MASA (Sebelum 7:20 AM)
-    speakText(`Terima kasih ${matchedStudent.nama}. Hadir tepat masa.`);
-    finalizeScanProcess({
-      id: scannedId,
-      nama: matchedStudent.nama,
-      kelas: matchedStudent.kelas,
-      img: userImg,
-      status: "HADIR",
-      punca: "Tepat Masa"
-    });
-  } else {
-    // JIKA LEWAT (7:20 AM ke atas)
-    pendingScanData = {
-      id: scannedId,
-      nama: matchedStudent.nama,
-      kelas: matchedStudent.kelas,
-      img: userImg,
-      status: "LEWAT"
-    };
-
-    speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
-    document.getElementById('modal-student-name').innerText = matchedStudent.nama;
-    document.getElementById('reason-modal').classList.remove('hidden');
-  }
-}
+        speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
+        document.getElementById('modal-student-name').innerText = matchedStudent.nama;
+        document.getElementById('reason-modal').classList.remove('hidden');
+      }
+    }
 
     // DIPANGGIL APABILA BUTANG PUNCA DITEKAN
     function submitReason(reason) {
@@ -624,87 +637,86 @@
 
     // SIMPAN REKOD & HANTAR KE BACKEND
     function finalizeScanProcess(data) {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  playAudioBeep('success');
-  scannedTodaySet.add(data.id);
+      playAudioBeep('success');
+      scannedTodaySet.add(data.id);
 
-  // Bezakan warna UI berdasarkan status
-  const isHadir = data.status === "HADIR";
-  const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
-  const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
-  const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
-  const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}`;
+      const isHadir = data.status === "HADIR";
+      const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
+      const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
+      const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
+      const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}`;
 
-  const resultBox = document.getElementById('scanned-result-box');
-  resultBox.innerHTML = `
-    <div class="pop-in flex flex-col items-center w-full">
-      <div class="relative my-2">
-        <img src="${data.img}" 
-             class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
-             onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
-        <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
-          <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
-        </span>
-      </div>
-      <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
-      <p class="text-xs font-bold ${textColor} code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
-      <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
-        ${statusBadge}
-      </div>
-    </div>
-  `;
+      const resultBox = document.getElementById('scanned-result-box');
+      resultBox.innerHTML = `
+        <div class="pop-in flex flex-col items-center w-full">
+          <div class="relative my-2">
+            <img src="${data.img}" 
+                 class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
+                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+            <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
+              <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
+            </span>
+          </div>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
+          <p class="text-xs font-bold ${textColor} code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
+          <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
+            ${statusBadge}
+          </div>
+        </div>
+      `;
 
-  sessionScannedList.unshift({
-    id: data.id,
-    nama: data.nama,
-    kelas: data.kelas,
-    masa: timeStr,
-    punca: data.punca || "Tepat Masa",
-    status: data.status || "HADIR",
-    img: data.img
-  });
+      sessionScannedList.unshift({
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        masa: timeStr,
+        punca: data.punca || "Tepat Masa",
+        status: data.status || "HADIR",
+        img: data.img
+      });
 
-  renderSessionLog();
+      renderSessionLog();
 
-  const payload = {
-    id: data.id,
-    nama: data.nama,
-    kelas: data.kelas,
-    status: data.status || "HADIR",
-    punca: data.punca || "Tepat Masa",
-    masa: timeStr
-  };
+      const payload = {
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        status: data.status || "HADIR",
+        punca: data.punca || "Tepat Masa",
+        masa: timeStr
+      };
 
-  sendDataToBackend(payload);
-  if (isHadir) {
-    speakText("Kehadiran berjaya direkodkan.");
-  } else {
-    speakText("Rekod kelewatan berjaya disimpan.");
-  }
-}
+      sendDataToBackend(payload);
+      if (isHadir) {
+        speakText("Kehadiran berjaya direkodkan.");
+      } else {
+        speakText("Rekod kelewatan berjaya disimpan.");
+      }
+    }
 
     // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
     function sendDataToBackend(payload) {
-  if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
 
-  if (navigator.onLine) {
-    fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    }).then(() => {
-      console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
-    }).catch((err) => {
-      console.error("Gagal hantar data:", err);
-      saveOffline(payload);
-    });
-  } else {
-    saveOffline(payload);
-  }
-}
+      if (navigator.onLine) {
+        fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        }).then(() => {
+          console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
+        }).catch((err) => {
+          console.error("Gagal hantar data:", err);
+          saveOffline(payload);
+        });
+      } else {
+        saveOffline(payload);
+      }
+    }
 
     function saveOffline(payload) {
       let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
@@ -713,7 +725,7 @@
       console.log('Talian terputus. Data disimpan secara tempatan (Offline).');
     }
 
-    // SINKRONISASI AUTOMATIK APABILA TALIAN ONLINE RECOVER
+    // SINKRONISASI AUTOMATIK
     window.addEventListener('online', () => {
       let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
       if (offlineQueue.length > 0 && API_URL && !API_URL.includes("MASUKKAN_URL")) {
