@@ -7,13 +7,22 @@
   <!-- Ikon asas pelayar web -->
   <link rel="icon" type="image/png" sizes="32x32" href="q-tibalogo.png">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Q-TIBA - Analytics Dashboard</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { darkMode: 'class' }
+    tailwind.config = { 
+      darkMode: 'class',
+      theme: {
+        extend: {
+          screens: {
+            'xs': '475px'
+          }
+        }
+      }
+    }
   </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -23,20 +32,21 @@
   <meta name="theme-color" content="#0f172a">
 
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
     .code-font { font-family: 'JetBrains Mono', monospace; }
 
     .glass-card {
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.8);
       box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     .dark .glass-card {
-      background: rgba(15, 23, 42, 0.65);
+      background: rgba(15, 23, 42, 0.7);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -44,9 +54,7 @@
     }
 
     .glass-card:hover {
-      transform: translateY(-2px);
       border-color: rgba(56, 189, 248, 0.4);
-      box-shadow: 0 12px 30px -10px rgba(56, 189, 248, 0.2);
     }
 
     .tab-btn-active {
@@ -65,73 +73,75 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative overflow-x-hidden">
+<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative">
 
   <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
 
   <!-- HEADER -->
-  <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" onerror="this.src='q-tibalogo.png'">
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Q-TIBA</h1>
-            <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">LIVE</span>
+  <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-3 sm:px-6 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 sm:w-10 sm:h-10 object-contain flex-shrink-0" onerror="this.src='q-tibalogo.png'">
+        <div class="truncate">
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-sm sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">Q-TIBA</h1>
+            <span class="text-[9px] sm:text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">LIVE</span>
           </div>
-          <p class="text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide">"Menganalisis Data, Mengubah Budaya"</p>
+          <p class="text-[9px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide truncate">"Menganalisis Data, Mengubah Budaya"</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold code-font">
-          <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="hidden lg:flex items-center gap-2 text-xs font-semibold code-font mr-2">
+          <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
           <div class="flex flex-col">
             <span id="sync-status" class="text-amber-600 dark:text-amber-400">Menghubungkan...</span>
             <span id="last-updated" class="text-[9px] text-slate-400 font-normal">Masa: --:--:--</span>
           </div>
-          <a href="scan.html" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-xs font-bold text-white shadow-md shadow-cyan-500/20 transition-all flex items-center gap-1.5 ml-1">
-            <i class="fa-solid fa-qrcode"></i> <span class="hidden sm:inline">Pengimbas QR</span>
-          </a>
         </div>
 
-        <!-- BUTANG REFRESH MANUAL -->
-        <button id="refresh-btn" onclick="fetchLiveData()" title="Kemaskini Data" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
-          <i id="refresh-icon" class="fa-solid fa-rotate-right text-sm"></i>
+        <a href="scan.html" class="px-2.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-xs font-bold text-white shadow-md shadow-cyan-500/20 transition-all flex items-center gap-1.5">
+          <i class="fa-solid fa-qrcode text-sm"></i>
+          <span class="hidden sm:inline">Pengimbas QR</span>
+        </a>
+
+        <!-- BUTANG REFRESH -->
+        <button id="refresh-btn" onclick="fetchLiveData()" title="Kemaskini Data" class="p-2 sm:p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-105 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="refresh-icon" class="fa-solid fa-rotate-right text-xs sm:text-sm"></i>
         </button>
 
-        <!-- BUTANG TUKAR TEMA -->
-        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
-          <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+        <!-- BUTANG TEMA -->
+        <button id="theme-toggle" class="p-2 sm:p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="theme-toggle-icon" class="fa-solid fa-sun text-xs sm:text-sm"></i>
         </button>
       </div>
     </div>
   </header>
 
   <!-- KANDUNGAN UTAMA DASHBOARD -->
-  <main class="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5 z-10 relative">
+  <main class="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col gap-4 sm:gap-6 z-10 relative">
 
     <!-- TAB NAVIGATION -->
-    <div class="glass-card p-1.5 rounded-2xl flex items-center justify-between gap-1 sm:gap-2">
-      <button onclick="switchTab('utama')" id="tab-btn-utama" class="tab-btn-active flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2">
-        <i class="fa-solid fa-house"></i> <span class="hidden sm:inline">Dashboard</span> Utama
+    <div class="glass-card p-1.5 rounded-2xl flex items-center justify-between gap-1 overflow-x-auto">
+      <button onclick="switchTab('utama')" id="tab-btn-utama" class="tab-btn-active flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
+        <i class="fa-solid fa-house text-xs"></i> <span>Dashboard</span>
       </button>
-      <button onclick="switchTab('analitik')" id="tab-btn-analitik" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
-        <i class="fa-solid fa-chart-pie"></i> Analitik <span class="hidden sm:inline">& Graf</span>
+      <button onclick="switchTab('analitik')" id="tab-btn-analitik" class="flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+        <i class="fa-solid fa-chart-pie text-xs"></i> <span>Analitik</span>
       </button>
-      <button onclick="switchTab('murid')" id="tab-btn-murid" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
-        <i class="fa-solid fa-users"></i> Murid Sasaran
+      <button onclick="switchTab('murid')" id="tab-btn-murid" class="flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+        <i class="fa-solid fa-users text-xs"></i> <span>Murid Sasaran</span>
       </button>
-      <button onclick="switchTab('records')" id="tab-btn-records" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
-        <i class="fa-solid fa-clipboard-list"></i> <span class="hidden sm:inline">Senarai Rekod</span> & BNK
+      <button onclick="switchTab('records')" id="tab-btn-records" class="flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+        <i class="fa-solid fa-clipboard-list text-xs"></i> <span>Rekod BNK</span>
       </button>
     </div>
 
     <!-- BANNER HERO -->
-    <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-l-cyan-500">
+    <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-l-4 border-l-cyan-500">
       <div>
         <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 code-font">Inovasi Disiplin SK Pulau Indah</span>
-        <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-0.5">
+        <h2 class="text-base sm:text-xl font-black text-slate-900 dark:text-white mt-0.5 leading-tight">
           Q-TIBA: <span class="text-cyan-600 dark:text-cyan-400">QR Code Tracking & Intervention Behaviometric Analytics</span>
         </h2>
         <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 italic">
@@ -141,57 +151,57 @@
     </div>
 
     <!-- TAB 1: DASHBOARD UTAMA -->
-    <div id="tab-utama" class="tab-content flex flex-col gap-5">
+    <div id="tab-utama" class="tab-content flex flex-col gap-4 sm:gap-6">
       <!-- KPI CARDS -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div class="glass-card rounded-2xl p-4">
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Murid Sasaran</p>
-          <h3 id="kpi-sasaran" class="text-2xl font-bold code-font text-slate-900 dark:text-white mt-1">0</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Murid Sasaran</p>
+          <h3 id="kpi-sasaran" class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-4">
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Lewat Hari Ini</p>
-          <h3 id="kpi-hari-ini" class="text-2xl font-bold code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Lewat Hari Ini</p>
+          <h3 id="kpi-hari-ini" class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-4">
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Jumlah Kes Keseluruhan</p>
-          <h3 id="kpi-total-kes" class="text-2xl font-bold code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Jumlah Kes</p>
+          <h3 id="kpi-total-kes" class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-4">
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Bebas Lewat (0 Kes)</p>
-          <h3 id="kpi-bebas-lewat" class="text-2xl font-bold code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Bebas Lewat (0 Kes)</p>
+          <h3 id="kpi-bebas-lewat" class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
         </div>
       </div>
 
-      <!-- HERO DISIPLIN (DITONJOLKAN: GAMBAR KAD PROFIL BESAR) -->
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
-        <div class="flex items-center justify-between mb-5">
+      <!-- HERO DISIPLIN (PERUBAHAN PROFIL BESAR) -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
-            <h3 class="text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <i class="fa-solid fa-trophy text-amber-500 text-lg"></i> Hero Disiplin & Peningkatan Prestasi
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Murid sasaran dengan rekod kehadiran paling cemerlang.</p>
           </div>
-          <span class="text-[11px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full font-bold code-font">TOP RECORD</span>
+          <span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-bold code-font">TOP RECORD</span>
         </div>
-        <div id="hero-students-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div id="hero-students-container" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div class="col-span-full py-6 text-center text-slate-400 text-xs code-font">
             <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Memuatkan data hero...
           </div>
         </div>
       </div>
 
-      <!-- WIDGET MURID TERAWAL HARI INI (<= 7:20 AM) -->
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500">
-        <div class="flex items-center justify-between mb-4">
+      <!-- WIDGET MURID TERAWAL HARI INI (DIBAIKI DENGAN FILTER TARIKH & NAMA/KELAS LENGKAP) -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-emerald-500">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-emerald-500 text-lg"></i> 🏆 Murid Terawal Hari Ini (≤ 7:20 AM)
+              <i class="fa-solid fa-bolt text-emerald-500 text-lg"></i> 🏆 Murid Terawal Hari Ini (&le; 7:20 AM)
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Senarai imbasan terawal mengikut susunan tiba (First Come, First Serve).</p>
           </div>
           <span id="early-count" class="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-bold code-font">0 Orang</span>
         </div>
-        <div id="early-student-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div id="early-student-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
             Belum ada murid imbas sebelum 7:20 AM hari ini.
           </div>
@@ -199,23 +209,23 @@
       </div>
 
       <!-- KAD PENJEJAK SAHSIAH POSITIF (MINGGUAN) -->
-      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-white/10 mb-2">
-        <div class="flex items-center justify-between mb-4">
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-white/10">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div class="flex items-center gap-2">
-            <i class="fa-solid fa-award text-amber-500 text-xl"></i>
+            <i class="fa-solid fa-award text-amber-500 text-lg"></i>
             <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Penghargaan Sahsiah Mingguan (Bebas Lewat)</h3>
           </div>
-          <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2.5 py-1 rounded-full font-bold border border-emerald-500/20">Carta Minggu Ini</span>
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/20">Carta Minggu Ini</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" id="streak-container">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="streak-container">
           <!-- Senarai murid dipaparkan menerusi JS -->
         </div>
       </div>
 
       <!-- JADUAL MURID LEWAT HARI INI (> 7:20 AM) -->
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500">
-        <div class="flex items-center justify-between mb-4">
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <i class="fa-solid fa-user-clock text-amber-500"></i> Rekod Murid Lewat Hari Ini (> 7:20 AM)
@@ -225,16 +235,16 @@
           <span class="text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full font-bold code-font">HARI INI</span>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs sm:text-sm min-w-[600px]">
             <thead>
               <tr class="border-b border-slate-200/80 dark:border-slate-800 text-slate-400 font-semibold code-font text-xs">
-                <th class="pb-2">NO</th>
-                <th class="pb-2 sortable" onclick="sortTodayTable('id')">ID <i id="sort-icon-id" class="fa-solid fa-sort ml-1"></i></th>
-                <th class="pb-2 sortable" onclick="sortTodayTable('nama')">NAMA MURID <i id="sort-icon-nama" class="fa-solid fa-sort ml-1"></i></th>
-                <th class="pb-2 sortable" onclick="sortTodayTable('kelas')">KELAS <i id="sort-icon-kelas" class="fa-solid fa-sort ml-1"></i></th>
-                <th class="pb-2 text-center sortable" onclick="sortTodayTable('waktuHariIni')">MASA IMBAS <i id="sort-icon-waktuHariIni" class="fa-solid fa-sort-down ml-1 text-cyan-500"></i></th>
-                <th class="pb-2 text-right sortable" onclick="sortTodayTable('kiraan')">STATUS / KES <i id="sort-icon-kiraan" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2.5 w-12">NO</th>
+                <th class="pb-2.5 sortable" onclick="sortTodayTable('id')">ID <i id="sort-icon-id" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2.5 sortable" onclick="sortTodayTable('nama')">NAMA MURID <i id="sort-icon-nama" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2.5 sortable" onclick="sortTodayTable('kelas')">KELAS <i id="sort-icon-kelas" class="fa-solid fa-sort ml-1"></i></th>
+                <th class="pb-2.5 text-center sortable" onclick="sortTodayTable('waktuHariIni')">MASA IMBAS <i id="sort-icon-waktuHariIni" class="fa-solid fa-sort-down ml-1 text-cyan-500"></i></th>
+                <th class="pb-2.5 text-right sortable" onclick="sortTodayTable('kiraan')">STATUS / KES <i id="sort-icon-kiraan" class="fa-solid fa-sort ml-1"></i></th>
               </tr>
             </thead>
             <tbody id="today-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60">
@@ -250,54 +260,48 @@
     </div>
 
     <!-- TAB 2: ANALITIK & GRAF -->
-    <div id="tab-analitik" class="tab-content hidden flex flex-col gap-5">
+    <div id="tab-analitik" class="tab-content hidden flex flex-col gap-4 sm:gap-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
           <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
             <i class="fa-solid fa-clock mr-1.5 text-cyan-500"></i> Taburan Masa Imbasan
           </h3>
-          <div class="h-64 relative">
+          <div class="h-60 sm:h-64 relative w-full">
             <canvas id="timeChart"></canvas>
           </div>
         </div>
 
-        <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
           <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
             <i class="fa-solid fa-chart-line mr-1.5 text-indigo-500"></i> Trend Kelewatan (6 Minggu)
           </h3>
-          <div class="h-64 relative">
+          <div class="h-60 sm:h-64 relative w-full">
             <canvas id="trendChart"></canvas>
           </div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <!-- CARTA PIE: AGIHAN PUNCA KELEWATAN -->
-        <div class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-amber-500"></i> Agihan Punca Kelewatan
-              </h3>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Pecahan sebab murid lewat untuk intervensi BNK</p>
-            </div>
+        <div class="lg:col-span-5 glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div class="mb-3">
+            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-amber-500"></i> Agihan Punca Kelewatan
+            </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pecahan sebab murid lewat untuk intervensi BNK</p>
           </div>
-          <div class="relative w-full h-64 flex items-center justify-center mx-auto">
+          <div class="relative w-full h-60 sm:h-64 flex items-center justify-center">
             <canvas id="reasonChart"></canvas>
           </div>
         </div>
 
-        <!-- CARTA BAR: KELEWATAN MENGIKUT KELAS -->
-        <div class="lg:col-span-7 glass-card rounded-2xl p-5 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                <i class="fa-solid fa-chart-column text-cyan-500"></i> Analisis Kelewatan Mengikut Kelas
-              </h3>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelas yang mencatatkan bilangan kelewatan tertinggi</p>
-            </div>
+        <div class="lg:col-span-7 glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div class="mb-3">
+            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-column text-cyan-500"></i> Analisis Kelewatan Mengikut Kelas
+            </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelas yang mencatatkan bilangan kelewatan tertinggi</p>
           </div>
-          <div class="relative w-full h-64 flex items-center justify-center">
+          <div class="relative w-full h-60 sm:h-64 flex items-center justify-center">
             <canvas id="classChart"></canvas>
           </div>
         </div>
@@ -305,8 +309,8 @@
     </div>
 
     <!-- TAB 3: SENARAI MURID SASARAN -->
-    <div id="tab-murid" class="tab-content hidden flex flex-col gap-5">
-      <div class="glass-card rounded-2xl p-5">
+    <div id="tab-murid" class="tab-content hidden flex flex-col gap-4 sm:gap-6">
+      <div class="glass-card rounded-2xl p-4 sm:p-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -315,22 +319,22 @@
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Klik tajuk lajur untuk menyusun data.</p>
           </div>
 
-          <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="search-input" onkeyup="filterStudents()" placeholder="Cari Nama / ID / Kelas..." class="w-full sm:w-64 pl-8 pr-3 py-2 text-xs sm:text-sm rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500">
+          <div class="relative w-full sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="search-input" onkeyup="filterStudents()" placeholder="Cari Nama / ID / Kelas..." class="w-full pl-8 pr-3 py-2 text-xs sm:text-sm rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500">
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs sm:text-sm min-w-[650px]">
             <thead>
               <tr class="border-b border-slate-200/80 dark:border-slate-800 text-slate-400 font-semibold code-font text-xs">
-                <th class="pb-2">NO</th>
-                <th class="pb-2 sortable" onclick="sortTargetStudentTable('id')">ID <i id="sort-icon-target-id" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
-                <th class="pb-2 sortable" onclick="sortTargetStudentTable('nama')">NAMA MURID <i id="sort-icon-target-nama" class="fa-solid fa-sort-up ml-1 text-cyan-500"></i></th>
-                <th class="pb-2 sortable" onclick="sortTargetStudentTable('kelas')">KELAS <i id="sort-icon-target-kelas" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
-                <th class="pb-2 text-center sortable" onclick="sortTargetStudentTable('kiraan')">JUMLAH KES <i id="sort-icon-target-kiraan" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
-                <th class="pb-2 text-right">STATUS</th>
+                <th class="pb-2.5 w-12">NO</th>
+                <th class="pb-2.5 sortable" onclick="sortTargetStudentTable('id')">ID <i id="sort-icon-target-id" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
+                <th class="pb-2.5 sortable" onclick="sortTargetStudentTable('nama')">NAMA MURID <i id="sort-icon-target-nama" class="fa-solid fa-sort-up ml-1 text-cyan-500"></i></th>
+                <th class="pb-2.5 sortable" onclick="sortTargetStudentTable('kelas')">KELAS <i id="sort-icon-target-kelas" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
+                <th class="pb-2.5 text-center sortable" onclick="sortTargetStudentTable('kiraan')">JUMLAH KES <i id="sort-icon-target-kiraan" class="fa-solid fa-sort ml-1 opacity-40"></i></th>
+                <th class="pb-2.5 text-right">STATUS</th>
               </tr>
             </thead>
             <tbody id="student-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/60">
@@ -346,15 +350,14 @@
     </div>
 
     <!-- TAB 4: SENARAI REKOD & BNK -->
-    <div id="tab-records" class="tab-content hidden flex flex-col gap-6">
+    <div id="tab-records" class="tab-content hidden flex flex-col gap-4 sm:gap-6">
 
-      <!-- BAR ALATAN PENAPIS & CARIAN -->
-      <section class="glass-card rounded-2xl p-4 no-print">
+      <!-- BAR PENAPIS -->
+      <section class="glass-card rounded-2xl p-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-
           <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Cari nama atau ID..." class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Cari nama atau ID..." class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
           </div>
 
           <div>
@@ -385,13 +388,12 @@
           <button onclick="exportToCSV()" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-excel"></i> Eksport CSV
           </button>
-
         </div>
       </section>
 
-      <!-- JADUAL REKOD DIKELOMPOKKAN -->
-      <section class="glass-card rounded-2xl p-5">
-        <div class="flex items-center justify-between mb-4">
+      <!-- JADUAL REKOD BNK -->
+      <section class="glass-card rounded-2xl p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-address-book text-indigo-500"></i> Ringkasan Rekod Murid & Tindakan BNK
@@ -403,11 +405,11 @@
           </span>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-left text-xs sm:text-sm min-w-[700px]">
             <thead>
               <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                <th class="py-3 px-3">NO</th>
+                <th class="py-3 px-3 w-10">NO</th>
                 <th class="py-3 px-3">ID Murid</th>
                 <th class="py-3 px-3">Nama Murid</th>
                 <th class="py-3 px-3">Kelas</th>
@@ -431,15 +433,13 @@
     </div>
 
     <!-- PASUKAN GURU INOVASI -->
-    <div id="teacher-team-container" class="mt-4"></div>
+    <div id="teacher-team-container" class="mt-2"></div>
 
   </main>
 
   <!-- TEMPLAT SURAT AMARAN (TERSEMBUNYI) -->
   <div class="hidden">
     <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 11pt;" class="p-2">
-
-      <!-- KEPALA SURAT (HEADER RASMI) -->
       <div class="flex items-center justify-between border-b-2 border-black pb-3 mb-4 gap-4">
         <img src="logo.png" alt="Logo Sekolah" class="w-20 h-20 object-contain" onerror="this.src='q-tibalogo.png'">
         <div class="text-center flex-1">
@@ -450,7 +450,6 @@
         <div class="w-20"></div>
       </div>
 
-      <!-- RUJUKAN & TARIKH -->
       <div class="flex justify-between text-xs font-semibold mb-4">
         <div>
           <p>Ruj. Kami : SKPI/UBK/2026/AMARAN</p>
@@ -458,25 +457,20 @@
         </div>
       </div>
 
-      <!-- PENERIMA -->
       <div class="text-xs mb-4 leading-normal">
         <p class="font-bold">Kepada Ibu Bapa / Penjaga:</p>
         <p class="font-bold uppercase text-sm text-black"><span id="pdf-nama-murid"></span> (<span id="pdf-kelas-murid"></span>)</p>
         <p class="mt-1">Tuan / Puan,</p>
       </div>
 
-      <!-- TAJUK SURAT -->
       <h3 class="text-xs font-bold uppercase underline mb-3 tracking-wide">
         SURAT AMARAN KELEWATAN HADIR KE SEKOLAH
       </h3>
 
-      <!-- ISI KANDUNGAN -->
       <div class="text-xs space-y-2.5 leading-relaxed text-justify">
         <p>Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
-
         <p>2. Dukacita dimaklumkan bahawa anak / jagaan tuan/puan telah mendaftar masuk lewat ke sekolah menerusi rekod imbasan digital <strong>Q-TIBA</strong> dengan butiran seperti berikut:</p>
 
-        <!-- JADUAL REKOD LEWAT -->
         <table class="w-full text-xs border-collapse border border-black my-3">
           <thead>
             <tr class="bg-gray-100 font-bold">
@@ -493,66 +487,61 @@
         </table>
 
         <p>3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:20 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
-
         <p>4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
       </div>
 
       <p class="text-xs mt-3">Sekian, terima kasih.</p>
 
-      <!-- SLOGAN & TANDATANGAN -->
       <div class="mt-4 text-xs leading-relaxed">
         <p class="font-bold italic">"BERKHIDMAT UNTUK NEGARA"</p>
         <p class="mt-2">Saya yang menjalankan amanah,</p>
-
         <div class="h-14"></div>
-
         <p class="font-bold uppercase text-xs">___________________________________________</p>
         <p class="font-bold uppercase mt-1">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
         <p>Sekolah Kebangsaan Pulau Indah</p>
       </div>
-
     </div>
   </div>
 
   <!-- TEMPLATE PASUKAN GURU -->
   <template id="teacher-team-template">
-    <div class="glass-card rounded-2xl p-5">
-      <div class="flex items-center justify-between mb-5">
-        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+    <div class="glass-card rounded-2xl p-4 sm:p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-lightbulb text-amber-500"></i> Pasukan Inovasi Q-TIBA
         </h3>
         <span class="text-[10px] text-slate-500 code-font">SK Pulau Indah</span>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-2.5">
+          <img src="cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-14 h-14 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
             <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2 bg-slate-200/50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-300/30 dark:border-slate-800">
             "<span class="italic">Disiplin yang kukuh adalah asas pembentukan insan cemerlang.</span>"
             </p>
           </div>
         </div>
 
-        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
+        <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-2.5">
+          <img src="cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-14 h-14 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
             <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem & Data</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2 bg-slate-200/50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-300/30 dark:border-slate-800">
             "<span class="italic">Analisis data tepat memandu keputusan intervensi berkesan.</span>"
             </p>
           </div>
         </div>
 
-        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
+        <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-2.5">
+          <img src="cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-14 h-14 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
             <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin & Intervensi</p>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2 bg-slate-200/50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-300/30 dark:border-slate-800">
             "<span class="italic">Mendidik dengan empati, memimpin dengan ketegasan positif.</span>"
             </p>
           </div>
@@ -572,11 +561,9 @@
     let globalMuridList = [];
     let globalRekodList = [];
 
-    // TETAPAN SORTING JADUAL LEWAT HARI INI
     let todaySortCol = 'waktuHariIni';
     let todaySortAsc = false;
 
-    // TETAPAN SORTING JADUAL MURID SASARAN
     let targetSortCol = 'nama';
     let targetSortAsc = true;
 
@@ -647,7 +634,6 @@
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
-    // 1. Time Chart
     const ctxTime = document.getElementById('timeChart')?.getContext('2d');
     let timeChart = ctxTime ? new Chart(ctxTime, {
       type: 'bar',
@@ -658,7 +644,6 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     }) : null;
 
-    // 2. Trend Chart
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
     let trendChart = ctxTrend ? new Chart(ctxTrend, {
       type: 'line',
@@ -669,7 +654,6 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     }) : null;
 
-    // 3. Reason Chart (Punca Kelewatan)
     const ctxReason = document.getElementById('reasonChart')?.getContext('2d');
     let reasonChart = ctxReason ? new Chart(ctxReason, {
       type: 'doughnut',
@@ -685,13 +669,10 @@
       options: { 
         responsive: true, 
         maintainAspectRatio: false,
-        plugins: { 
-          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } 
-        } 
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } 
       }
     }) : null;
 
-    // 4. Class Chart (Mengikut Kelas)
     const ctxClass = document.getElementById('classChart')?.getContext('2d');
     let classChart = ctxClass ? new Chart(ctxClass, {
       type: 'bar',
@@ -703,9 +684,7 @@
         responsive: true, 
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, ticks: { precision: 0 } }
-        }
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     }) : null;
 
@@ -722,7 +701,7 @@
         syncStatus.className = colorClass;
       }
       if (syncDot) {
-        syncDot.className = `w-2 h-2 rounded-full ${colorClass.includes('emerald') ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`;
+        syncDot.className = `w-2.5 h-2.5 rounded-full ${colorClass.includes('emerald') ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`;
       }
     }
 
@@ -736,7 +715,6 @@
       renderTargetStudentTable(filtered);
     }
 
-    // FUNGSI SORTING JADUAL MURID SASARAN
     function sortTargetStudentTable(columnKey) {
       if (targetSortCol === columnKey) {
         targetSortAsc = !targetSortAsc;
@@ -787,8 +765,8 @@
       tableBody.innerHTML = '';
       list.forEach((m, index) => {
         let statusBadge = m.kiraan === 0 
-          ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
-          : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Dipantau (${m.kiraan} Kes)</span>`;
+          ? `<span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium whitespace-nowrap"><i class="fa-solid fa-check mr-1"></i>Cemerlang</span>`
+          : `<span class="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">Dipantau (${m.kiraan} Kes)</span>`;
 
         const userImg = (m.urlGambar && m.urlGambar !== '') 
           ? m.urlGambar 
@@ -796,7 +774,7 @@
 
         const btnSurat = m.kiraan > 0 
           ? `<button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', ${m.kiraan})" 
-                     class="ml-2 px-2.5 py-1 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-lg shadow-sm transition-all flex items-center gap-1 inline-flex">
+                     class="ml-1.5 px-2 py-1 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-lg shadow-sm transition-all flex items-center gap-1 inline-flex whitespace-nowrap">
                <i class="fa-solid fa-file-pdf"></i> Surat
              </button>`
           : '';
@@ -805,12 +783,12 @@
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 code-font">${index + 1}</td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-            <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
               <img src="${userImg}" 
                    alt="${m.nama}" 
-                   class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-cyan-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
+                   class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-cyan-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <span class="text-xs sm:text-sm tracking-wide">${m.nama}</span>
+              <span class="text-xs sm:text-sm tracking-wide truncate">${m.nama}</span>
             </td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
             <td class="py-3 text-center text-blue-600 dark:text-cyan-400 font-bold code-font">${m.kiraan}</td>
@@ -821,7 +799,7 @@
     }
 
     // =========================================================
-    // RENDER SENARAI MURID TERAWAL (HANYA SCAN <= 7:20 AM)
+    // RENDER SENARAI MURID TERAWAL (DENGAN NAMA, KELAS & FITER TARIKH HARI INI)
     // =========================================================
     function renderEarlyStudents(dataList) {
       const earlyListEl = document.getElementById('early-student-list');
@@ -830,97 +808,89 @@
 
       const listToFilter = dataList || globalRekodList || [];
 
-      // =========================================================
-// RENDER SENARAI MURID TERAWAL (DENGAN NAMA, KELAS & FILTER TARIKH HARI INI)
-// =========================================================
-function renderEarlyStudents(dataList) {
-  const earlyListEl = document.getElementById('early-student-list');
-  const countEl = document.getElementById('early-count');
-  if (!earlyListEl || !countEl) return;
+      // Dapatkan tarikh hari ini mengikut format YYYY-MM-DD
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
 
-  const listToFilter = dataList || globalRekodList || [];
+      // Tapis HANYA tarikh hari ini DAN waktu imbas <= 7:20 AM
+      const earlyStudents = listToFilter.filter(item => {
+        const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
 
-  // 1. Dapatkan tarikh hari ini mengikut format YYYY-MM-DD (Waktu Tempatan)
-  const todayStr = new Date().toLocaleDateString('en-CA'); 
+        if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A') return false;
 
-  // 2. Tapis HANYA rekod tarikh HARI INI dan waktu imbas <= 7:20 AM
-  const earlyStudents = listToFilter.filter(item => {
-    const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
+        // Semak tarikh jika ada padanan tarikhYYYY-MM-DD
+        if (timeStr.includes('-')) {
+          const datePart = timeStr.split(' ')[0];
+          if (datePart !== todayStr) return false; // Abaikan rekod lama seperti 2026-08-18
+        }
 
-    if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A') return false;
+        // Semak masa imbasan (<= 7:20 AM)
+        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          const hours = parseInt(match[1], 10);
+          const minutes = parseInt(match[2], 10);
+          return (hours < 7 || (hours === 7 && minutes <= 20));
+        }
 
-    // Semak dan buang data tarikh lama
-    if (timeStr.includes('-')) {
-      const datePart = timeStr.split(' ')[0]; // Ambil bahagian YYYY-MM-DD
-      if (datePart !== todayStr) return false; // Abai jika bukan tarikh hari ini
-    }
+        return false;
+      });
 
-    // Semak waktu imbasan (<= 7:20 AM)
-    const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-    if (match) {
-      const hours = parseInt(match[1], 10);
-      const minutes = parseInt(match[2], 10);
-      return (hours < 7 || (hours === 7 && minutes <= 20));
-    }
+      // Silang rujuk ID dengan globalMuridList supaya nama & kelas SENTIASA ADA
+      const enrichedStudents = earlyStudents.map(item => {
+        const matchedMurid = globalMuridList.find(m => String(m.id) === String(item.id)) || {};
+        return {
+          ...item,
+          nama: item.nama || matchedMurid.nama || `Murid (${item.id || 'Tanpa ID'})`,
+          kelas: item.kelas || matchedMurid.kelas || 'Tiada Kelas',
+          urlGambar: item.urlGambar || matchedMurid.urlGambar || ''
+        };
+      });
 
-    return false;
-  });
+      countEl.innerText = `${enrichedStudents.length} Orang`;
 
-  // 3. Silang rujuk ID dengan globalMuridList jika rekod imbasan tiada nama/kelas
-  const enrichedStudents = earlyStudents.map(item => {
-    const matchedMurid = globalMuridList.find(m => String(m.id) === String(item.id)) || {};
-    return {
-      ...item,
-      nama: item.nama || matchedMurid.nama || `Murid (${item.id || 'Tanpa ID'})`,
-      kelas: item.kelas || matchedMurid.kelas || 'Tiada Kelas',
-      urlGambar: item.urlGambar || matchedMurid.urlGambar || ''
-    };
-  });
+      if (enrichedStudents.length === 0) {
+        earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum 7:20 AM hari ini.</div>`;
+        return;
+      }
 
-  countEl.innerText = `${enrichedStudents.length} Orang`;
+      earlyListEl.innerHTML = '';
+      enrichedStudents.forEach((item, index) => {
+        let rankBadge = `<span class="text-[10px] font-bold text-slate-400 code-font">#${index + 1}</span>`;
+        if (index === 0) rankBadge = `<span class="text-xs font-bold text-amber-500">🥇 #1</span>`;
+        else if (index === 1) rankBadge = `<span class="text-xs font-bold text-slate-400">🥈 #2</span>`;
+        else if (index === 2) rankBadge = `<span class="text-xs font-bold text-amber-700">🥉 #3</span>`;
 
-  if (enrichedStudents.length === 0) {
-    earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum 7:20 AM hari ini.</div>`;
-    return;
-  }
+        const userImg = (item.urlGambar && item.urlGambar !== '') 
+          ? item.urlGambar 
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id || item.nama)}`;
 
-  // 4. Paparkan kad murid lengkap dengan Nama, Kelas, Masa Imbas & Kedudukan
-  earlyListEl.innerHTML = '';
-  enrichedStudents.forEach((item, index) => {
-    let rankBadge = `<span class="text-[10px] font-bold text-slate-400 code-font">#${index + 1}</span>`;
-    if (index === 0) rankBadge = `<span class="text-xs font-bold text-amber-500">🥇 #1</span>`;
-    else if (index === 1) rankBadge = `<span class="text-xs font-bold text-slate-400">🥈 #2</span>`;
-    else if (index === 2) rankBadge = `<span class="text-xs font-bold text-amber-700">🥉 #3</span>`;
+        // Ekstrak waktu imbasan sahaja (cth: 07:05:29)
+        let timeDisplay = item.waktuHariIni || item.masa || item.tarikhMasa || '< 7:20 AM';
+        if (timeDisplay.includes(' ')) {
+          timeDisplay = timeDisplay.split(' ')[1];
+        }
 
-    const userImg = (item.urlGambar && item.urlGambar !== '') 
-      ? item.urlGambar 
-      : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id || item.nama)}`;
-
-    // Potong string tarikh, ambil masa imbasan sahaja (contoh: 07:05:29)
-    let timeDisplay = item.waktuHariIni || item.masa || item.tarikhMasa || '< 7:20 AM';
-    if (timeDisplay.includes(' ')) {
-      timeDisplay = timeDisplay.split(' ')[1];
-    }
-
-    earlyListEl.innerHTML += `
-      <div class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform">
-        <div class="flex items-center gap-3 overflow-hidden min-w-0">
-          <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
-          <div class="truncate">
-            <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide">${item.nama}</h4>
-            <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5">${item.kelas}</p>
+        earlyListEl.innerHTML += `
+          <div class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform">
+            <div class="flex items-center gap-3 overflow-hidden min-w-0">
+              <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
+              <div class="truncate min-w-0">
+                <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide leading-snug">${item.nama}</h4>
+                <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5 truncate">${item.kelas}</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+              <span class="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 code-font bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">${timeDisplay}</span>
+              ${rankBadge}
+            </div>
           </div>
-        </div>
-        <div class="flex flex-col items-end gap-1 flex-shrink-0">
-          <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 code-font bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">${timeDisplay}</span>
-          ${rankBadge}
-        </div>
-      </div>
-    `;
-  });
-}
+        `;
+      });
+    }
 
-    // UPDATE DATA PUNCA & KELAS PADA CARTA ANALITIK
     function updateAnalyticsCharts(rekodList) {
       if (!rekodList || rekodList.length === 0) return;
 
@@ -960,7 +930,6 @@ function renderEarlyStudents(dataList) {
       }
     }
 
-    // FUNGSI SORTING JADUAL LEWAT HARI INI
     function sortTodayTable(columnKey) {
       if (todaySortCol === columnKey) {
         todaySortAsc = !todaySortAsc;
@@ -983,9 +952,6 @@ function renderEarlyStudents(dataList) {
       renderTodayTable();
     }
 
-    // =========================================================
-    // RENDER JADUAL MURID LEWAT HARI INI (HANYA SCAN > 7:20 AM)
-    // =========================================================
     function renderTodayTable() {
       const todayTableBody = document.getElementById('today-table-body');
       if (!todayTableBody) return;
@@ -1040,11 +1006,11 @@ function renderEarlyStudents(dataList) {
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 code-font">${idx + 1}</td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
-            <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
               <img src="${userImg}" 
-                   class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
+                   class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <span class="text-xs sm:text-sm tracking-wide">${m.nama}</span>
+              <span class="text-xs sm:text-sm tracking-wide truncate">${m.nama}</span>
             </td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
             <td class="py-3 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${m.waktuHariIni || 'Terrekod'}</td>
@@ -1053,7 +1019,6 @@ function renderEarlyStudents(dataList) {
       });
     }
 
-    // MEMANGGIL DATA LIVE DARI APPS SCRIPT
     async function fetchLiveData() {
       const todayTableBody = document.getElementById('today-table-body');
       const heroContainer = document.getElementById('hero-students-container');
@@ -1128,7 +1093,7 @@ function renderEarlyStudents(dataList) {
 
           updateAnalyticsCharts(globalRekodList);
 
-          // RENDER HERO (PERUBAHAN SAIZ PROFIL MENONJOL/HERO CARD)
+          // HERO DISIPLIN (DENGAN GAMBAR BESAR W-20 / W-24)
           if (heroContainer && globalMuridList.length > 0) {
             const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
             const topHeroes = sortedMurid.slice(0, 4);
@@ -1143,17 +1108,17 @@ function renderEarlyStudents(dataList) {
               const rankColor = idx === 0 ? 'bg-amber-500 text-slate-950 font-black border-amber-300' : 'bg-emerald-500 text-white font-bold border-emerald-300';
 
               heroContainer.innerHTML += `
-                <div class="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform">
+                <div class="p-3 sm:p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform">
                   <div class="relative mb-2">
                     <img src="${avatarUrl}" 
                          alt="${m.nama}" 
-                         class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-200 dark:bg-slate-900 border-4 border-amber-400 ring-4 ring-amber-400/20 object-cover shadow-md"
+                         class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-slate-200 dark:bg-slate-900 border-4 border-amber-400 ring-4 ring-amber-400/20 object-cover shadow-md"
                          onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-                    <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] ${rankColor} border px-2.5 py-0.5 rounded-full code-font whitespace-nowrap shadow-md">${rankBadge}</span>
+                    <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] sm:text-[10px] ${rankColor} border px-2 py-0.5 rounded-full code-font whitespace-nowrap shadow-md">${rankBadge}</span>
                   </div>
                   <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${m.nama}</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${m.kelas}</p>
-                  <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-1.5 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate w-full">${m.kelas}</p>
+                  <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
                     <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
                   </p>
                 </div>`;
@@ -1277,12 +1242,12 @@ function renderEarlyStudents(dataList) {
         const isTegar = s.jumlahKes >= 3;
 
         const statusBadge = isTegar 
-          ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Kes Tegar (Sesi BNK)</span>`
-          : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">Kelewatan Biasa</span>`;
+          ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20 whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Kes Tegar (Sesi BNK)</span>`
+          : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 whitespace-nowrap">Kelewatan Biasa</span>`;
 
         const btnSurat = isTegar 
           ? `<button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', ${s.jumlahKes})" 
-                     class="ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all inline-flex items-center gap-1">
+                     class="ml-1.5 px-2 py-0.5 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all inline-flex items-center gap-1 whitespace-nowrap">
                <i class="fa-solid fa-file-pdf"></i> Surat
              </button>`
           : '';
@@ -1293,11 +1258,11 @@ function renderEarlyStudents(dataList) {
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 px-3 code-font text-slate-400">${index + 1}</td>
             <td class="py-3 px-3 code-font font-bold text-slate-700 dark:text-slate-300">${s.id}</td>
-            <td class="py-3 px-3 font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm tracking-wide">${s.nama}</td>
+            <td class="py-3 px-3 font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm tracking-wide truncate max-w-[180px]">${s.nama}</td>
             <td class="py-3 px-3 code-font text-slate-500 dark:text-slate-400">${s.kelas}</td>
             <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px]">${puncasStr}</td>
             <td class="py-3 px-3 text-center code-font font-extrabold ${isTegar ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}">${s.jumlahKes} Kes</td>
-            <td class="py-3 px-3 text-center">${statusBadge} ${btnSurat}</td>
+            <td class="py-3 px-3 text-center whitespace-nowrap">${statusBadge} ${btnSurat}</td>
           </tr>
         `;
       });
@@ -1359,7 +1324,7 @@ function renderEarlyStudents(dataList) {
       }
 
       container.innerHTML = '';
-      
+
       weeklyHeroes.forEach(m => {
         const streakSemasa = m.streakHari || 0;
         const daysInWeek = streakSemasa > 5 ? 5 : streakSemasa;
@@ -1375,18 +1340,18 @@ function renderEarlyStudents(dataList) {
 
         container.innerHTML += `
           <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all">
-            <div class="flex items-center gap-3 overflow-hidden">
+            <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <div class="truncate">
+              <div class="truncate min-w-0">
                 <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide">${m.nama}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${m.kelas}</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${m.kelas}</p>
               </div>
             </div>
-            <div class="text-right flex-shrink-0">
-              <span class="text-[11px] font-black text-white px-2.5 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font">
+            <div class="text-right flex-shrink-0 ml-2">
+              <span class="text-[10px] sm:text-[11px] font-black text-white px-2.5 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font whitespace-nowrap">
                 ✨ ${statusText}
               </span>
-              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">${badgeTitle}</p>
+              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 whitespace-nowrap">${badgeTitle}</p>
             </div>
           </div>
         `;
@@ -1396,7 +1361,7 @@ function renderEarlyStudents(dataList) {
     document.addEventListener('DOMContentLoaded', () => {
       fetchLiveData();
 
-      // Semak dan kemaskini data secara automatik setiap 10 saat
+      // Kemaskini automatik setiap 10 saat
       setInterval(() => {
         fetchLiveData();
       }, 10000);
