@@ -447,9 +447,9 @@
 
   </main>
 
-  <!-- TEMPLAT SURAT AMARAN (TERSEMBUNYI) -->
-  <div style="position: absolute; left: -9999px; top: -9999px;">
-    <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 11pt;" class="p-2">
+  <!-- TEMPLAT SURAT AMARAN (DIFUNGSIKAN LUAR SKRIN SUPAYA BOLEH DIJANA SEBAGAI PDF) -->
+  <div style="position: absolute; left: -9999px; top: -9999px; width: 190mm; overflow: hidden;">
+    <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 11pt;" class="p-4">
       <div class="flex items-center justify-between border-b-2 border-black pb-3 mb-4 gap-4">
         <img src="admin/logo.png" alt="Logo Sekolah" class="w-20 h-20 object-contain" onerror="this.src='q-tibalogo.png'">
         <div class="text-center flex-1">
@@ -1427,13 +1427,14 @@
       document.body.removeChild(link);
     }
 
-    function generateSuratAmaran(nama, kelas, jumlahLewat) {
+    async function generateSuratAmaran(nama, kelas, jumlahLewat) {
       document.getElementById('pdf-nama-murid').innerText = nama;
       document.getElementById('pdf-kelas-murid').innerText = kelas;
       document.getElementById('pdf-jumlah-lewat').innerText = jumlahLewat + " Kali";
       document.getElementById('pdf-tarikh-surat').innerText = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
 
       const element = document.getElementById('surat-amaran-pdf');
+      
       const opt = {
         margin:       10,
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
@@ -1443,7 +1444,12 @@
         pagebreak:    { mode: 'avoid-all' }
       };
 
-      html2pdf().set(opt).from(element).save();
+      try {
+        await html2pdf().set(opt).from(element).save();
+      } catch (err) {
+        console.error("Ralat penjanaan PDF:", err);
+        alert("Gagal menjana PDF. Sila cuba lagi.");
+      }
     }
 
     function renderStreakTracker(list) {
