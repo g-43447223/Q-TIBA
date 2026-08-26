@@ -114,6 +114,11 @@
         <button id="theme-toggle" class="p-2 sm:p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
           <i id="theme-toggle-icon" class="fa-solid fa-sun text-xs sm:text-sm"></i>
         </button>
+
+        <!-- BUTANG LOG KELUAR -->
+        <button onclick="logoutAdmin()" title="Log Keluar" class="p-2 sm:p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 hover:scale-105 active:scale-95 transition-all border border-rose-500/20">
+          <i class="fa-solid fa-right-from-bracket text-xs sm:text-sm"></i>
+        </button>
       </div>
     </div>
   </header>
@@ -172,7 +177,7 @@
         </div>
       </div>
 
-      <!-- HERO DISIPLIN (PERUBAHAN PROFIL BESAR) -->
+      <!-- HERO DISIPLIN -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-amber-500">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
@@ -190,7 +195,7 @@
         </div>
       </div>
 
-      <!-- WIDGET MURID TERAWAL HARI INI (DIBAIKI DENGAN FILTER TARIKH & NAMA/KELAS LENGKAP) -->
+      <!-- WIDGET MURID TERAWAL HARI INI -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-emerald-500">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
@@ -550,55 +555,54 @@
     </div>
   </template>
 
+  <!-- MODAL LOG MASUK ADMIN -->
+  <div id="login-modal" class="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-3xl border border-cyan-500/30 shadow-2xl bg-slate-900/90 text-white relative">
+      
+      <div class="text-center mb-6">
+        <img src="q-tibalogo.png" class="w-16 h-16 mx-auto mb-3 object-contain" alt="Logo">
+        <h2 class="text-xl font-black text-cyan-400">AKSES PENTADBIR Q-TIBA</h2>
+        <p class="text-xs text-slate-400 mt-1">Sila log masuk menggunakan emel guru & PIN sah.</p>
+      </div>
+
+      <form id="login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1 code-font">EMEL GURU</label>
+          <input type="email" id="login-email" required placeholder="cikgu@moe-dl.edu.my" 
+            class="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500 transition-all">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1 code-font">PIN KESELAMATAN</label>
+          <input type="password" id="login-pin" required placeholder="••••" maxlength="6"
+            class="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500 transition-all code-font">
+        </div>
+
+        <div id="login-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl text-center font-semibold">
+          Emel atau PIN tidak sah!
+        </div>
+
+        <button type="submit" id="login-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-bold text-sm text-slate-950 transition-all shadow-lg shadow-cyan-500/20">
+          <span id="login-btn-text">Log Masuk Sistem</span>
+          <i id="login-spinner" class="fa-solid fa-circle-notch fa-spin hidden ml-2"></i>
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <a href="parent.html" class="text-xs text-slate-400 hover:text-cyan-400 underline transition-colors">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Portal Ibu Bapa
+        </a>
+      </div>
+
+    </div>
+  </div>
+
   <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
     <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
     <div>HAK CIPTA TERPELIHARA.</div>
   </footer>
 
   <script>
-    // Semak status login sebaik sahaja halaman dibuka
-document.addEventListener('DOMContentLoaded', () => {
-  checkAdminAuth();
-});
-
-async function checkAdminAuth() {
-  const isAuth = localStorage.getItem('qtiba_admin_auth');
-  
-  if (isAuth !== 'true') {
-    // Jika belum login, minta Email & PIN
-    const userEmail = prompt("Sila masukkan Emel Admin:");
-    const userPin = prompt("Sila masukkan PIN Admin:");
-    
-    if (!userEmail || !userPin) {
-      alert("Akses ditolak. Mengalihkan ke Portal Ibu Bapa.");
-      window.location.href = "parent.html";
-      return;
-    }
-    
-    // Hantar semakan ke Google Apps Script
-    try {
-      const response = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(userEmail)}&pin=${encodeURIComponent(userPin)}`);
-      const data = await response.json();
-      
-      if (data.status === "Success" && data.authorized) {
-        alert("Akses Berjaya!");
-        localStorage.setItem('qtiba_admin_auth', 'true'); // Simpan status log masuk di peranti
-      } else {
-        alert("Emel atau PIN tidak sah! Anda tiada kebenaran.");
-        window.location.href = "parent.html";
-      }
-    } catch (err) {
-      alert("Gagal mengesahkan peranan admin.");
-      window.location.href = "parent.html";
-    }
-  }
-}
-
-// Butang Log Keluar (jika guru nak keluar dari akaun)
-function logoutAdmin() {
-  localStorage.removeItem('qtiba_admin_auth');
-  window.location.href = "parent.html";
-}
     const API_URL = "https://script.google.com/macros/s/AKfycbwx9LEvuHPaj3cRB6IGXBfK3AGwWJvT0NQM5xmRuFNlW0uw9AVg5BhRoEFlezHPMiGs8w/exec"; 
 
     let globalMuridList = [];
@@ -615,6 +619,49 @@ function logoutAdmin() {
     const teacherContainer = document.getElementById('teacher-team-container');
     if (teacherContainer && teacherTemplate) {
       teacherContainer.appendChild(teacherTemplate.cloneNode(true));
+    }
+
+    // LOG MASUK & PENGESAHAN ADMIN
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('login-email').value.trim();
+      const pin = document.getElementById('login-pin').value.trim();
+      const errorBox = document.getElementById('login-error');
+      const btnText = document.getElementById('login-btn-text');
+      const spinner = document.getElementById('login-spinner');
+      
+      errorBox.classList.add('hidden');
+      btnText.innerText = "Mengesahkan...";
+      spinner.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(email)}&pin=${encodeURIComponent(pin)}`);
+        const data = await res.json();
+
+        if (data.status === "Success" && data.authorized) {
+          localStorage.setItem('qtiba_admin_auth', 'true');
+          localStorage.setItem('qtiba_admin_user', email);
+          
+          document.getElementById('login-modal').classList.add('hidden');
+          fetchLiveData();
+        } else {
+          errorBox.innerText = "Akses ditolak! Emel atau PIN tidak padan.";
+          errorBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorBox.innerText = "Ralat Rangkaian. Sila cuba lagi.";
+        errorBox.classList.remove('hidden');
+      } finally {
+        btnText.innerText = "Log Masuk Sistem";
+        spinner.classList.add('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem('qtiba_admin_auth');
+      localStorage.removeItem('qtiba_admin_user');
+      window.location.href = "parent.html";
     }
 
     // TAB SWITCHER
@@ -841,9 +888,6 @@ function logoutAdmin() {
       });
     }
 
-    // =========================================================
-    // RENDER SENARAI MURID TERAWAL (DENGAN NAMA, KELAS & FITER TARIKH HARI INI)
-    // =========================================================
     function renderEarlyStudents(dataList) {
       const earlyListEl = document.getElementById('early-student-list');
       const countEl = document.getElementById('early-count');
@@ -851,26 +895,22 @@ function logoutAdmin() {
 
       const listToFilter = dataList || globalRekodList || [];
 
-      // Dapatkan tarikh hari ini mengikut format YYYY-MM-DD
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       const todayStr = `${year}-${month}-${day}`;
 
-      // Tapis HANYA tarikh hari ini DAN waktu imbas <= 7:20 AM
       const earlyStudents = listToFilter.filter(item => {
         const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
 
         if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A') return false;
 
-        // Semak tarikh jika ada padanan tarikhYYYY-MM-DD
         if (timeStr.includes('-')) {
           const datePart = timeStr.split(' ')[0];
-          if (datePart !== todayStr) return false; // Abaikan rekod lama seperti 2026-08-18
+          if (datePart !== todayStr) return false; 
         }
 
-        // Semak masa imbasan (<= 7:20 AM)
         const match = timeStr.match(/(\d{1,2}):(\d{2})/);
         if (match) {
           const hours = parseInt(match[1], 10);
@@ -881,7 +921,6 @@ function logoutAdmin() {
         return false;
       });
 
-      // Silang rujuk ID dengan globalMuridList supaya nama & kelas SENTIASA ADA
       const enrichedStudents = earlyStudents.map(item => {
         const matchedMurid = globalMuridList.find(m => String(m.id) === String(item.id)) || {};
         return {
@@ -910,7 +949,6 @@ function logoutAdmin() {
           ? item.urlGambar 
           : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id || item.nama)}`;
 
-        // Ekstrak waktu imbasan sahaja (cth: 07:05:29)
         let timeDisplay = item.waktuHariIni || item.masa || item.tarikhMasa || '< 7:20 AM';
         if (timeDisplay.includes(' ')) {
           timeDisplay = timeDisplay.split(' ')[1];
@@ -1136,7 +1174,6 @@ function logoutAdmin() {
 
           updateAnalyticsCharts(globalRekodList);
 
-          // HERO DISIPLIN (DENGAN GAMBAR BESAR W-20 / W-24)
           if (heroContainer && globalMuridList.length > 0) {
             const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
             const topHeroes = sortedMurid.slice(0, 4);
@@ -1401,105 +1438,22 @@ function logoutAdmin() {
       });
     }
 
+    // INSISIALISASI APLIKASI
     document.addEventListener('DOMContentLoaded', () => {
-      fetchLiveData();
-
-      // Kemaskini automatik setiap 10 saat
-      setInterval(() => {
+      // Semak status pendaftaran masuk admin
+      if (localStorage.getItem('qtiba_admin_auth') !== 'true') {
+        document.getElementById('login-modal').classList.remove('hidden');
+      } else {
         fetchLiveData();
+      }
+
+      // Kemaskini automatik data setiap 10 saat
+      setInterval(() => {
+        if (localStorage.getItem('qtiba_admin_auth') === 'true') {
+          fetchLiveData();
+        }
       }, 10000);
     });
-
-    document.addEventListener('DOMContentLoaded', () => {
-  // Semak jika sudah authenticated
-  if (localStorage.getItem('qtiba_admin_auth') !== 'true') {
-    document.getElementById('login-modal').classList.remove('hidden');
-  }
-});
-
-async function handleAdminLogin(e) {
-  e.preventDefault();
-  
-  const email = document.getElementById('login-email').value.trim();
-  const pin = document.getElementById('login-pin').value.trim();
-  const errorBox = document.getElementById('login-error');
-  const btnText = document.getElementById('login-btn-text');
-  const spinner = document.getElementById('login-spinner');
-  
-  errorBox.classList.add('hidden');
-  btnText.innerText = "Mengesahkan...";
-  spinner.classList.remove('hidden');
-
-  try {
-    const res = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(email)}&pin=${encodeURIComponent(pin)}`);
-    const data = await res.json();
-
-    if (data.status === "Success" && data.authorized) {
-      localStorage.setItem('qtiba_admin_auth', 'true');
-      localStorage.setItem('qtiba_admin_user', email);
-      
-      document.getElementById('login-modal').classList.add('hidden');
-      if (typeof fetchLiveData === 'function') fetchLiveData(); // Kemaskini data dashboard
-    } else {
-      errorBox.innerText = "Akses ditolak! Emel atau PIN tidak padan.";
-      errorBox.classList.remove('hidden');
-    }
-  } catch (err) {
-    errorBox.innerText = "Ralat Rangkaian. Sila cuba lagi.";
-    errorBox.classList.remove('hidden');
-  } finally {
-    btnText.innerText = "Log Masuk Sistem";
-    spinner.classList.add('hidden');
-  }
-}
-
-// Guna fungsi ini kalau nak buat butang Log Keluar dalam dashboard
-function logoutAdmin() {
-  localStorage.removeItem('qtiba_admin_auth');
-  localStorage.removeItem('qtiba_admin_user');
-  window.location.reload();
-}
   </script>
-  <!-- MODAL LOG MASUK ADMIN -->
-<div id="login-modal" class="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
-  <div class="glass-card max-w-md w-full p-6 sm:p-8 rounded-3xl border border-cyan-500/30 shadow-2xl bg-slate-900/90 text-white relative">
-    
-    <div class="text-center mb-6">
-      <img src="q-tibalogo.png" class="w-16 h-16 mx-auto mb-3 object-contain" alt="Logo">
-      <h2 class="text-xl font-black text-cyan-400">AKSES PENTADBIR Q-TIBA</h2>
-      <p class="text-xs text-slate-400 mt-1">Sila log masuk menggunakan emel guru & PIN sah.</p>
-    </div>
-
-    <form id="login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1 code-font">EMEL GURU</label>
-        <input type="email" id="login-email" required placeholder="cikgu@moe-dl.edu.my" 
-          class="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500 transition-all">
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1 code-font">PIN KESELAMATAN</label>
-        <input type="password" id="login-pin" required placeholder="••••" maxlength="6"
-          class="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500 transition-all code-font">
-      </div>
-
-      <div id="login-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl text-center font-semibold">
-        Emel atau PIN tidak sah!
-      </div>
-
-      <button type="submit" id="login-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-bold text-sm text-slate-950 transition-all shadow-lg shadow-cyan-500/20">
-        <span id="login-btn-text">Log Masuk Sistem</span>
-        <i id="login-spinner" class="fa-solid fa-circle-notch fa-spin hidden ml-2"></i>
-      </button>
-    </form>
-
-    <div class="mt-6 text-center">
-      <a href="parent.html" class="text-xs text-slate-400 hover:text-cyan-400 underline transition-colors">
-        <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Portal Ibu Bapa
-      </a>
-    </div>
-
-  </div>
-</div>
 </body>
 </html>
