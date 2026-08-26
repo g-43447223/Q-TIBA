@@ -447,68 +447,77 @@
 
   </main>
 
-  <!-- TEMPLAT SURAT AMARAN (DIFUNGSIKAN LUAR SKRIN SUPAYA BOLEH DIJANA SEBAGAI PDF) -->
-  <div style="position: absolute; left: -9999px; top: -9999px; width: 190mm; overflow: hidden;">
-    <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 11pt;" class="p-4">
-      <div class="flex items-center justify-between border-b-2 border-black pb-3 mb-4 gap-4">
-        <img src="admin/logo.png" alt="Logo Sekolah" class="w-20 h-20 object-contain" onerror="this.src='q-tibalogo.png'">
-        <div class="text-center flex-1">
-          <h2 class="text-base font-bold uppercase tracking-wide">SEKOLAH KEBANGSAAN PULAU INDAH</h2>
-          <p class="text-xs">42920 PELABUHAN KLANG, SELANGOR DARUL EHSAN</p>
-          <p class="text-[10px] mt-0.5">Kod Sekolah: BBA0013 | No. Tel: 03-31012139 | Emel: BBA0013@moe.edu.my</p>
-        </div>
-        <div class="w-20"></div>
+  <!-- TEMPLAT SURAT AMARAN PDF (DIUBAHSUAI UNTUK KESTABILAN HTML2PDF) -->
+  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 190mm; background: #ffffff;">
+    <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.5; font-size: 11pt; padding: 15px;">
+      
+      <!-- HEADER SEKOLAH -->
+      <table style="width: 100%; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 20%; text-align: left; vertical-align: middle;">
+            <img src="logo.png" alt="Logo Sekolah" style="width: 75px; height: 75px; object-fit: contain;" onerror="this.src='q-tibalogo.png'">
+          </td>
+          <td style="width: 80%; text-align: center; vertical-align: middle;">
+            <h2 style="font-size: 14pt; font-weight: bold; margin: 0; text-transform: uppercase;">SEKOLAH KEBANGSAAN PULAU INDAH</h2>
+            <p style="font-size: 10pt; margin: 2px 0;">42920 PELABUHAN KLANG, SELANGOR DARUL EHSAN</p>
+            <p style="font-size: 9pt; margin: 0;">Kod Sekolah: BBA0013 | No. Tel: 03-31012139 | Emel: BBA0013@moe.edu.my</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- RUJUKAN & TARIKH -->
+      <table style="width: 100%; font-size: 10pt; font-weight: bold; margin-bottom: 15px;">
+        <tr>
+          <td style="text-align: left;">Ruj. Kami : SKPI/UBK/2026/AMARAN</td>
+          <td style="text-align: right;">Tarikh : <span id="pdf-tarikh-surat"></span></td>
+        </tr>
+      </table>
+
+      <!-- PENERIMA -->
+      <div style="font-size: 10pt; margin-bottom: 15px;">
+        <p style="font-weight: bold; margin: 0;">Kepada Ibu Bapa / Penjaga:</p>
+        <p style="font-weight: bold; text-transform: uppercase; font-size: 11pt; margin: 2px 0;"><span id="pdf-nama-murid"></span> (<span id="pdf-kelas-murid"></span>)</p>
+        <p style="margin: 5px 0 0 0;">Tuan / Puan,</p>
       </div>
 
-      <div class="flex justify-between text-xs font-semibold mb-4">
-        <div>
-          <p>Ruj. Kami : SKPI/UBK/2026/AMARAN</p>
-          <p>Tarikh : <span id="pdf-tarikh-surat"></span></p>
-        </div>
-      </div>
-
-      <div class="text-xs mb-4 leading-normal">
-        <p class="font-bold">Kepada Ibu Bapa / Penjaga:</p>
-        <p class="font-bold uppercase text-sm text-black"><span id="pdf-nama-murid"></span> (<span id="pdf-kelas-murid"></span>)</p>
-        <p class="mt-1">Tuan / Puan,</p>
-      </div>
-
-      <h3 class="text-xs font-bold uppercase underline mb-3 tracking-wide">
+      <!-- TAJUK SURAT -->
+      <h3 style="font-size: 11pt; font-weight: bold; text-transform: uppercase; text-decoration: underline; margin-bottom: 15px; letter-spacing: 0.5px;">
         SURAT AMARAN KELEWATAN HADIR KE SEKOLAH
       </h3>
 
-      <div class="text-xs space-y-2.5 leading-relaxed text-justify">
-        <p>Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
-        <p>2. Dukacita dimaklumkan bahawa anak / jagaan tuan/puan telah mendaftar masuk lewat ke sekolah menerusi rekod imbasan digital <strong>Q-TIBA</strong> dengan butiran seperti berikut:</p>
+      <!-- ISI KANDUNGAN -->
+      <div style="font-size: 10pt; text-align: justify; line-height: 1.6;">
+        <p style="margin-bottom: 10px;">Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
+        <p style="margin-bottom: 10px;">2. Dukacita dimaklumkan bahawa anak / jagaan tuan/puan telah mendaftar masuk lewat ke sekolah menerusi rekod imbasan digital <strong>Q-TIBA</strong> dengan butiran seperti berikut:</p>
 
-        <table class="w-full text-xs border-collapse border border-black my-3">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin: 15px 0;">
           <thead>
-            <tr class="bg-gray-100 font-bold">
-              <th class="border border-black p-2 text-center w-1/3">Jumlah Kelewatan</th>
-              <th class="border border-black p-2 text-center">Status / Tindakan Intervensi</th>
+            <tr style="background-color: #f2f2f2; font-weight: bold;">
+              <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 35%;">Jumlah Kelewatan</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">Status / Tindakan Intervensi</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="border border-black p-2 text-center font-bold text-red-700 text-sm" id="pdf-jumlah-lewat">0 Kali</td>
-              <td class="border border-black p-2 text-center">Sesi Bimbingan & Kaunseling / Amaran Unit Disiplin</td>
+              <td style="border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold; color: #b91c1c; font-size: 12pt;" id="pdf-jumlah-lewat">0 Kali</td>
+              <td style="border: 1px solid #000; padding: 10px; text-align: center;">Sesi Bimbingan & Kaunseling / Amaran Unit Disiplin</td>
             </tr>
           </tbody>
         </table>
 
-        <p>3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:20 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
-        <p>4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
+        <p style="margin-bottom: 10px;">3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:20 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
+        <p style="margin-bottom: 15px;">4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
       </div>
 
-      <p class="text-xs mt-3">Sekian, terima kasih.</p>
+      <p style="font-size: 10pt; margin-top: 15px; margin-bottom: 15px;">Sekian, terima kasih.</p>
 
-      <div class="mt-4 text-xs leading-relaxed">
-        <p class="font-bold italic">"BERKHIDMAT UNTUK NEGARA"</p>
-        <p class="mt-2">Saya yang menjalankan amanah,</p>
-        <div class="h-14"></div>
-        <p class="font-bold uppercase text-xs">___________________________________________</p>
-        <p class="font-bold uppercase mt-1">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
-        <p>Sekolah Kebangsaan Pulau Indah</p>
+      <!-- TANDATANGAN -->
+      <div style="font-size: 10pt; line-height: 1.4; margin-top: 20px;">
+        <p style="font-weight: bold; font-style: italic; margin-bottom: 5px;">"BERKHIDMAT UNTUK NEGARA"</p>
+        <p style="margin-bottom: 40px;">Saya yang menjalankan amanah,</p>
+        <p style="font-weight: bold; text-transform: uppercase; margin: 0;">___________________________________________</p>
+        <p style="font-weight: bold; text-transform: uppercase; margin: 3px 0 0 0;">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
+        <p style="margin: 0;">Sekolah Kebangsaan Pulau Indah</p>
       </div>
     </div>
   </div>
@@ -1427,6 +1436,7 @@
       document.body.removeChild(link);
     }
 
+    // FUNGSI PENJANAAN PDF YANG DIBETULKAN
     async function generateSuratAmaran(nama, kelas, jumlahLewat) {
       document.getElementById('pdf-nama-murid').innerText = nama;
       document.getElementById('pdf-kelas-murid').innerText = kelas;
@@ -1434,12 +1444,20 @@
       document.getElementById('pdf-tarikh-surat').innerText = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
 
       const element = document.getElementById('surat-amaran-pdf');
+      const wrapper = document.getElementById('pdf-wrapper');
       
+      // Paparkan seketika di posisi atas untuk tangkapan html2canvas
+      wrapper.style.position = 'fixed';
+      wrapper.style.left = '0';
+      wrapper.style.top = '0';
+      wrapper.style.zIndex = '9999';
+      wrapper.style.background = '#ffffff';
+
       const opt = {
-        margin:       10,
+        margin:       [10, 10, 10, 10],
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        html2canvas:  { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak:    { mode: 'avoid-all' }
       };
@@ -1449,6 +1467,12 @@
       } catch (err) {
         console.error("Ralat penjanaan PDF:", err);
         alert("Gagal menjana PDF. Sila cuba lagi.");
+      } finally {
+        // Sembunyikan semula ke luar skrin selepas siap render
+        wrapper.style.position = 'absolute';
+        wrapper.style.left = '-9999px';
+        wrapper.style.top = '-9999px';
+        wrapper.style.zIndex = '-9999';
       }
     }
 
