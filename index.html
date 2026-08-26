@@ -556,7 +556,50 @@
   </footer>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyqSL6slU1gQlk3NWi6ldT5patE1cS3ii2Uzr6E6YYsQdBRpZTat13SYZnVBjIRcO1Vew/exec"; 
+    // Semak status login sebaik sahaja halaman dibuka
+document.addEventListener('DOMContentLoaded', () => {
+  checkAdminAuth();
+});
+
+async function checkAdminAuth() {
+  const isAuth = localStorage.getItem('qtiba_admin_auth');
+  
+  if (isAuth !== 'true') {
+    // Jika belum login, minta Email & PIN
+    const userEmail = prompt("Sila masukkan Emel Admin:");
+    const userPin = prompt("Sila masukkan PIN Admin:");
+    
+    if (!userEmail || !userPin) {
+      alert("Akses ditolak. Mengalihkan ke Portal Ibu Bapa.");
+      window.location.href = "parent.html";
+      return;
+    }
+    
+    // Hantar semakan ke Google Apps Script
+    try {
+      const response = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(userEmail)}&pin=${encodeURIComponent(userPin)}`);
+      const data = await response.json();
+      
+      if (data.status === "Success" && data.authorized) {
+        alert("Akses Berjaya!");
+        localStorage.setItem('qtiba_admin_auth', 'true'); // Simpan status log masuk di peranti
+      } else {
+        alert("Emel atau PIN tidak sah! Anda tiada kebenaran.");
+        window.location.href = "parent.html";
+      }
+    } catch (err) {
+      alert("Gagal mengesahkan peranan admin.");
+      window.location.href = "parent.html";
+    }
+  }
+}
+
+// Butang Log Keluar (jika guru nak keluar dari akaun)
+function logoutAdmin() {
+  localStorage.removeItem('qtiba_admin_auth');
+  window.location.href = "parent.html";
+}
+    const API_URL = "https://script.google.com/macros/s/AKfycbwUJ_naL7a9gWhXleAP5KTLhmcCNnMexT-6A6Lea7XhzCl6rXq443JL59XS0XoZ6qm7OA/exec"; 
 
     let globalMuridList = [];
     let globalRekodList = [];
