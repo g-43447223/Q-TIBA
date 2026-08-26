@@ -96,7 +96,7 @@
   <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
 
   <!-- HEADER -->
-  <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
+  <header class="sticky top-0 z-40 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" onerror="this.style.display='none'">
@@ -109,17 +109,38 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Dashboard Link -->
         <a href="index.html" class="px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-cyan-500 hover:text-white transition-all border border-slate-300/50 dark:border-slate-700 flex items-center gap-1.5">
           <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Dashboard</span>
         </a>
 
-        <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+        <!-- Sound Audio Toggle Button -->
+        <button id="sound-toggle" onclick="toggleAudioMute()" title="Tukar Suara Audio" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="sound-toggle-icon" class="fa-solid fa-volume-high text-sm"></i>
+        </button>
+
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle" title="Tukar Tema" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
           <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+        </button>
+
+        <!-- Logout Admin Button -->
+        <button onclick="logoutAdmin()" title="Log Keluar Admin" class="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white transition-all border border-rose-500/20">
+          <i class="fa-solid fa-right-from-bracket text-sm"></i>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- AMARAN OFFLINE STATUS BAR -->
+  <div id="offline-bar" class="hidden bg-amber-500/90 text-slate-900 font-bold text-xs py-1.5 px-4 text-center z-30 shadow-md flex items-center justify-center gap-2">
+    <i class="fa-solid fa-wifi"></i>
+    <span>Talian terputus. Data imbasan disimpan dalam peranti secara selamat.</span>
+    <button onclick="syncOfflineQueue()" class="ml-2 px-2 py-0.5 bg-slate-900 text-white rounded-md text-[10px] hover:bg-slate-800">
+      Kemaskini Sekarang (<span id="offline-count">0</span>)
+    </button>
+  </div>
 
   <!-- KANDUNGAN UTAMA -->
   <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 z-10 relative">
@@ -144,7 +165,7 @@
         <!-- BOX KAMERA -->
         <div class="relative w-full aspect-square sm:aspect-video md:aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-inner flex items-center justify-center scanner-overlay">
 
-          <div id="scan-laser" class="scan-laser"></div>
+          <div id="scan-laser" class="scan-laser hidden"></div>
 
           <div id="reader" class="w-full h-full"></div>
 
@@ -159,13 +180,20 @@
           </div>
         </div>
 
-        <!-- KAWALAN KAMERA & INPUT MANUAL -->
+        <!-- KAWALAN KAMERA, FLASHLIGHT & INPUT MANUAL -->
         <div class="mt-4 flex flex-col gap-3">
           <div class="flex items-center gap-2">
             <button id="btn-toggle-cam" onclick="toggleCameraState()" class="flex-1 py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
               <i class="fa-solid fa-video"></i> <span id="lbl-toggle-cam">Mula Kamera</span>
             </button>
-            <select id="camera-select" onchange="onCameraChange()" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 focus:outline-none code-font">
+
+            <!-- Torch / Flashlight Toggle Button -->
+            <button id="btn-torch" onclick="toggleTorch()" disabled title="Lampu Suluh Kamera" class="py-2.5 px-3.5 rounded-xl bg-slate-200 dark:bg-slate-800 opacity-50 cursor-not-allowed text-slate-600 dark:text-slate-300 font-bold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5">
+              <i id="torch-icon" class="fa-solid fa-bolt"></i>
+            </button>
+
+            <!-- Camera Selector Dropdown -->
+            <select id="camera-select" onchange="onCameraChange()" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 focus:outline-none code-font max-w-[140px] sm:max-w-xs truncate">
               <option value="">Pilih Kamera...</option>
             </select>
           </div>
@@ -207,9 +235,18 @@
           <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
             <i class="fa-solid fa-list-check text-cyan-500"></i> Sesi Imbasan Ini (<span id="session-count">0</span>)
           </h3>
-          <button onclick="clearSessionLog()" class="text-[10px] text-slate-400 hover:text-rose-500 transition-colors code-font">
-            <i class="fa-solid fa-trash-can mr-1"></i>Reset
-          </button>
+
+          <div class="flex items-center gap-2">
+            <!-- Eksport CSV Sesi -->
+            <button onclick="exportSessionCSV()" title="Muat Turun Rekod Sesi" class="text-[10px] text-cyan-600 hover:text-cyan-500 dark:text-cyan-400 code-font font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+            <span class="text-slate-300 dark:text-slate-700">|</span>
+            <!-- Reset Button -->
+            <button onclick="clearSessionLog()" title="Kosongkan Senarai Sesi" class="text-[10px] text-slate-400 hover:text-rose-500 transition-colors code-font">
+              <i class="fa-solid fa-trash-can mr-1"></i>Reset
+            </button>
+          </div>
         </div>
 
         <div class="overflow-y-auto max-h-64 sm:max-h-80 pr-1">
@@ -222,7 +259,8 @@
     </div>
 
   </main>
-<!-- PASUKAN GURU INOVASI Q-TIBA -->
+
+  <!-- PASUKAN GURU INOVASI Q-TIBA -->
   <section class="max-w-5xl w-full mx-auto px-4 sm:px-6 mb-6 z-10 relative">
     <div class="glass-card rounded-2xl p-5">
       <div class="flex items-center justify-between mb-5">
@@ -271,14 +309,50 @@
       </div>
     </div>
   </section>
+
   <!-- FOOTER -->
   <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
     <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH</div>
   </footer>
 
+  <!-- MODAL ADMIN LOGIN (MENGGANTIKAN PROMPT NATIVE) -->
+  <div id="admin-auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl relative">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-full bg-cyan-500/10 text-cyan-500 flex items-center justify-center mx-auto mb-3 text-2xl border border-cyan-500/20">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pengesahan Admin Q-TIBA</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Sila masukkan Emel dan PIN Admin untuk mengakses pengimbas.</p>
+      </div>
+
+      <form onsubmit="handleAdminLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Emel Admin</label>
+          <input type="email" id="auth-email" required placeholder="admin@skpulauindah.edu.my" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">PIN Keselamatan</label>
+          <input type="password" id="auth-pin" required placeholder="••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white code-font focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <div id="auth-error-msg" class="hidden text-[11px] text-rose-500 font-semibold text-center"></div>
+
+        <div class="pt-2 flex gap-2">
+          <button type="button" onclick="cancelAdminLogin()" class="w-1/3 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-300 transition-all">
+            Batal
+          </button>
+          <button type="submit" id="btn-auth-submit" class="w-2/3 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-key"></i> Pengesahan Akses
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- POP-UP INSTALL PWA -->
   <div id="pwa-install-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
-    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative animate-bounce-short">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative">
       <button onclick="closePwaModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white text-sm p-1 transition-colors">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -311,10 +385,10 @@
     </div>
   </div>
 
-  <!-- MODAL PUNCA KELEWATAN -->
+  <!-- MODAL PUNCA KELEWATAN (TERMASUK INPUT KUSTOM) -->
   <div id="reason-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl text-center">
-      <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 text-xl">
+      <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 text-xl border border-amber-500/20">
         <i class="fa-solid fa-clipboard-question"></i>
       </div>
       <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modal-student-name">Nama Murid</h3>
@@ -327,66 +401,110 @@
         <button onclick="submitReason('Cuaca / Hujan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🌧️ Faktor Cuaca</button>
       </div>
 
-      <button onclick="submitReason('Lain-lain')" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl">Lain-lain / Tiada</button>
+      <!-- Custom Reason Textfield Toggle -->
+      <div id="custom-reason-box" class="hidden mb-3">
+        <input type="text" id="custom-reason-input" placeholder="Taip alasan khas di sini..." class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-white mb-2 focus:outline-none focus:border-cyan-500">
+        <button onclick="submitCustomReason()" class="w-full py-2 bg-cyan-500 text-white font-bold text-xs rounded-xl shadow">Hantar Alasan Kustom</button>
+      </div>
+
+      <button id="btn-toggle-custom-reason" onclick="toggleCustomReasonInput()" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl hover:bg-slate-300 transition-all">
+        Lain-lain / Taip Sendiri
+      </button>
     </div>
   </div>
 
-<script>
-  // Semak status login sebaik sahaja halaman dibuka
-document.addEventListener('DOMContentLoaded', () => {
-  checkAdminAuth();
-});
-
-async function checkAdminAuth() {
-  const isAuth = localStorage.getItem('qtiba_admin_auth');
-  
-  if (isAuth !== 'true') {
-    // Jika belum login, minta Email & PIN
-    const userEmail = prompt("Sila masukkan Emel Admin:");
-    const userPin = prompt("Sila masukkan PIN Admin:");
-    
-    if (!userEmail || !userPin) {
-      alert("Akses ditolak. Mengalihkan ke Portal Ibu Bapa.");
-      window.location.href = "parent.html";
-      return;
-    }
-    
-    // Hantar semakan ke Google Apps Script
-    try {
-      const response = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(userEmail)}&pin=${encodeURIComponent(userPin)}`);
-      const data = await response.json();
-      
-      if (data.status === "Success" && data.authorized) {
-        alert("Akses Berjaya!");
-        localStorage.setItem('qtiba_admin_auth', 'true'); // Simpan status log masuk di peranti
-      } else {
-        alert("Emel atau PIN tidak sah! Anda tiada kebenaran.");
-        window.location.href = "parent.html";
-      }
-    } catch (err) {
-      alert("Gagal mengesahkan peranan admin.");
-      window.location.href = "parent.html";
-    }
-  }
-}
-
-// Butang Log Keluar (jika guru nak keluar dari akaun)
-function logoutAdmin() {
-  localStorage.removeItem('qtiba_admin_auth');
-  window.location.href = "parent.html";
-}
-    const API_URL = "https://script.google.com/macros/s/AKfycbwUJ_naL7a9gWhXleAP5KTLhmcCNnMexT-6A6Lea7XhzCl6rXq443JL59XS0XoZ6qm7OA/exec";
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwx9LEvuHPaj3cRB6IGXBfK3AGwWJvT0NQM5xmRuFNlW0uw9AVg5BhRoEFlezHPMiGs8w/exec";
 
     let html5QrCode = null;
     let isScannerRunning = false;
     let isProcessingScan = false;
+    let isTorchOn = false;
+    let isAudioMuted = localStorage.getItem('qtiba_audio_muted') === 'true';
+    
     let studentCacheMap = {};
     let scannedTodaySet = new Set();
     let sessionScannedList = [];
     let pendingScanData = null;
 
+    // SEMAK LOG MASUK ADMIN PADA PERMULAAN
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAdminAuth();
+      updateAudioToggleUI();
+      checkNetworkStatus();
+    });
+
+    function checkAdminAuth() {
+      const isAuth = localStorage.getItem('qtiba_admin_auth');
+      if (isAuth !== 'true') {
+        document.getElementById('admin-auth-modal').classList.remove('hidden');
+      }
+    }
+
+    async function handleAdminLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const pin = document.getElementById('auth-pin').value.trim();
+      const errEl = document.getElementById('auth-error-msg');
+      const submitBtn = document.getElementById('btn-auth-submit');
+
+      errEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Menyemak...`;
+
+      try {
+        const response = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(email)}&pin=${encodeURIComponent(pin)}`);
+        const data = await response.json();
+
+        if (data.status === "Success" && data.authorized) {
+          localStorage.setItem('qtiba_admin_auth', 'true');
+          document.getElementById('admin-auth-modal').classList.add('hidden');
+          playAudioBeep('success');
+        } else {
+          errEl.innerText = "Emel atau PIN tidak sah! Akses ditolak.";
+          errEl.classList.remove('hidden');
+          playAudioBeep('error');
+        }
+      } catch (err) {
+        errEl.innerText = "Gagal menyemak peranan admin. Semak rangkaian.";
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-key"></i> Pengesahan Akses`;
+      }
+    }
+
+    function cancelAdminLogin() {
+      alert("Akses ditolak. Mengalihkan ke Portal Ibu Bapa.");
+      window.location.href = "parent.html";
+    }
+
+    function logoutAdmin() {
+      if (confirm("Adakah anda pasti untuk log keluar daripada mod Pengimbas?")) {
+        localStorage.removeItem('qtiba_admin_auth');
+        window.location.href = "parent.html";
+      }
+    }
+
+    // TOGGLE AUDIO SOUND / TEXT-TO-SPEECH
+    function toggleAudioMute() {
+      isAudioMuted = !isAudioMuted;
+      localStorage.setItem('qtiba_audio_muted', isAudioMuted);
+      updateAudioToggleUI();
+    }
+
+    function updateAudioToggleUI() {
+      const icon = document.getElementById('sound-toggle-icon');
+      if (isAudioMuted) {
+        icon.className = 'fa-solid fa-volume-xmark text-rose-500';
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-cyan-600 dark:text-cyan-400';
+      }
+    }
+
     // AUDIO BEEP GENERATOR
     function playAudioBeep(type = 'success') {
+      if (isAudioMuted) return;
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
@@ -417,6 +535,7 @@ function logoutAdmin() {
 
     // TEXT-TO-SPEECH (SEBUTAN SUARA)
     function speakText(text) {
+      if (isAudioMuted) return;
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
@@ -479,47 +598,43 @@ function logoutAdmin() {
       }
     }
 
-    // KAMERA SETUP (MENGGUNAKAN NAMA ASAL PERANTI)
-async function initCameraDevices() {
-  const cameraSelect = document.getElementById('camera-select');
-  if (!cameraSelect) return;
+    // KAMERA SETUP
+    async function initCameraDevices() {
+      const cameraSelect = document.getElementById('camera-select');
+      if (!cameraSelect) return;
 
-  try {
-    // 1. Minta kebenaran kamera dahulu untuk dapatkan kebenaran peranti
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach(track => track.stop());
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        const devices = await Html5Qrcode.getCameras();
+        cameraSelect.innerHTML = '';
+
+        if (devices && devices.length > 0) {
+          devices.forEach((cam, index) => {
+            const opt = document.createElement('option');
+            opt.value = cam.id;
+            opt.innerText = cam.label || `Kamera ${index + 1}`;
+            cameraSelect.appendChild(opt);
+          });
+
+          const backCam = devices.find(d => 
+            d.label.toLowerCase().includes('back') || 
+            d.label.toLowerCase().includes('environment') ||
+            d.label.toLowerCase().includes('rear')
+          );
+          if (backCam) cameraSelect.value = backCam.id;
+
+        } else {
+          cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
+        }
+      } catch (err) {
+        console.error("Gagal mendapatkan senarai kamera:", err);
+        cameraSelect.innerHTML = '<option value="">Kamera disekat / Akses Ditolak</option>';
+      }
     }
-
-    // 2. Ambil senarai peranti kamera dari sistem pelayar
-    const devices = await Html5Qrcode.getCameras();
-    cameraSelect.innerHTML = '';
-
-    if (devices && devices.length > 0) {
-      devices.forEach((cam, index) => {
-        const opt = document.createElement('option');
-        opt.value = cam.id;
-        // Papar nama asal sistem/fon terus tanpa sebarang emoji atau ubah suai
-        opt.innerText = cam.label || `Kamera ${index + 1}`;
-        cameraSelect.appendChild(opt);
-      });
-
-      // Pilih kamera belakang automatik jika dikesan dalam nama asal
-      const backCam = devices.find(d => 
-        d.label.toLowerCase().includes('back') || 
-        d.label.toLowerCase().includes('environment') ||
-        d.label.toLowerCase().includes('rear')
-      );
-      if (backCam) cameraSelect.value = backCam.id;
-
-    } else {
-      cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
-    }
-  } catch (err) {
-    console.error("Gagal mendapatkan senarai kamera:", err);
-    cameraSelect.innerHTML = '<option value="">Kamera disekat / Sila Benarkan Akses</option>';
-  }
-}
 
     function startScanner() {
       const selectedCamId = document.getElementById('camera-select').value;
@@ -530,7 +645,7 @@ async function initCameraDevices() {
       }
 
       document.getElementById('camera-placeholder').style.display = 'none';
-      document.getElementById('scan-laser').style.display = 'block';
+      document.getElementById('scan-laser').classList.remove('hidden');
 
       html5QrCode.start(
         cameraConfig,
@@ -541,11 +656,16 @@ async function initCameraDevices() {
         isScannerRunning = true;
         document.getElementById('lbl-toggle-cam').innerText = "Hentikan Kamera";
         document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
+        
+        // Aktifkan Butang Torch / Lampu
+        const torchBtn = document.getElementById('btn-torch');
+        torchBtn.disabled = false;
+        torchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
       }).catch(err => {
         console.error("Gagal menjalankan kamera:", err);
         alert("Gagal membuka kamera. Pastikan kebenaran 'Allow Camera' telah diberikan pada pelayar web.");
         document.getElementById('camera-placeholder').style.display = 'flex';
-        document.getElementById('scan-laser').style.display = 'none';
+        document.getElementById('scan-laser').classList.add('hidden');
       });
     }
 
@@ -553,10 +673,16 @@ async function initCameraDevices() {
       if (html5QrCode && isScannerRunning) {
         html5QrCode.stop().then(() => {
           isScannerRunning = false;
+          isTorchOn = false;
           document.getElementById('camera-placeholder').style.display = 'flex';
-          document.getElementById('scan-laser').style.display = 'none';
+          document.getElementById('scan-laser').classList.add('hidden');
           document.getElementById('lbl-toggle-cam').innerText = "Mula Kamera";
           document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
+          
+          const torchBtn = document.getElementById('btn-torch');
+          torchBtn.disabled = true;
+          torchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          document.getElementById('torch-icon').className = "fa-solid fa-bolt";
         }).catch(err => console.error("Stop scanner error:", err));
       }
     }
@@ -573,9 +699,24 @@ async function initCameraDevices() {
       }
     }
 
+    // FUNKSI FLASHLIGHT / TORCH
+    async function toggleTorch() {
+      if (!html5QrCode || !isScannerRunning) return;
+      try {
+        isTorchOn = !isTorchOn;
+        await html5QrCode.applyVideoConstraints({
+          advanced: [{ torch: isTorchOn }]
+        });
+        const icon = document.getElementById('torch-icon');
+        icon.className = isTorchOn ? "fa-solid fa-bolt text-amber-400 animate-bounce" : "fa-solid fa-bolt";
+      } catch (e) {
+        console.log("Torch tidak disokong oleh peranti/kamera ini.");
+      }
+    }
+
     function onScanError(errorMessage) {}
 
-    // FUNGSI CALLBACK IMBASAN KAMERA
+    // CALLBACK IMBASAN KAMERA
     function onScanSuccess(decodedText) {
       if (isProcessingScan) return;
 
@@ -601,7 +742,7 @@ async function initCameraDevices() {
       }
     }
 
-    // MEMULA PROSES IMBASAN (SEMAK CUTOFF & BUKA MODAL JIKA LEWAT)
+    // MEMULA PROSES IMBASAN
     function initiateScanProcess(scannedId) {
       const matchedStudent = studentCacheMap[scannedId] || {
         id: scannedId,
@@ -670,11 +811,21 @@ async function initCameraDevices() {
 
         speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
         document.getElementById('modal-student-name').innerText = matchedStudent.nama;
+        document.getElementById('custom-reason-box').classList.add('hidden');
         document.getElementById('reason-modal').classList.remove('hidden');
       }
     }
 
-    // DIPANGGIL APABILA BUTANG PUNCA DITEKAN
+    function toggleCustomReasonInput() {
+      const box = document.getElementById('custom-reason-box');
+      box.classList.toggle('hidden');
+    }
+
+    function submitCustomReason() {
+      const customVal = document.getElementById('custom-reason-input').value.trim();
+      submitReason(customVal || 'Lain-lain / Tiada Alasan');
+    }
+
     function submitReason(reason) {
       if (!pendingScanData) return;
 
@@ -744,11 +895,6 @@ async function initCameraDevices() {
       };
 
       sendDataToBackend(payload);
-      if (isHadir) {
-        speakText("Kehadiran berjaya direkodkan.");
-      } else {
-        speakText("Rekod kelewatan berjaya disimpan.");
-      }
     }
 
     // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
@@ -776,15 +922,25 @@ async function initCameraDevices() {
       let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
       offlineQueue.push(payload);
       localStorage.setItem('qtiba_offline_queue', JSON.stringify(offlineQueue));
-      console.log('Talian terputus. Data disimpan secara tempatan (Offline).');
+      checkNetworkStatus();
     }
 
-    // SINKRONISASI AUTOMATIK
-    window.addEventListener('online', () => {
+    function checkNetworkStatus() {
+      const offlineBar = document.getElementById('offline-bar');
+      const offlineCount = document.getElementById('offline-count');
+      const offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+
+      if (!navigator.onLine || offlineQueue.length > 0) {
+        offlineBar.classList.remove('hidden');
+        offlineCount.innerText = offlineQueue.length;
+      } else {
+        offlineBar.classList.add('hidden');
+      }
+    }
+
+    function syncOfflineQueue() {
       let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
       if (offlineQueue.length > 0 && API_URL && !API_URL.includes("MASUKKAN_URL")) {
-        console.log(`Menghantar ${offlineQueue.length} data offline ke server...`);
-
         offlineQueue.forEach((item) => {
           fetch(API_URL, {
             method: 'POST',
@@ -795,9 +951,13 @@ async function initCameraDevices() {
         });
 
         localStorage.removeItem('qtiba_offline_queue');
-        speakText("Data offline telah berjaya dikemas kini ke cloud.");
+        checkNetworkStatus();
+        speakText("Data offline telah dikemas kini ke cloud.");
       }
-    });
+    }
+
+    window.addEventListener('online', checkNetworkStatus);
+    window.addEventListener('offline', checkNetworkStatus);
 
     function renderSessionLog() {
       const logList = document.getElementById('session-log-list');
@@ -829,8 +989,31 @@ async function initCameraDevices() {
     }
 
     function clearSessionLog() {
-      sessionScannedList = [];
-      renderSessionLog();
+      if (confirm("Adakah anda pasti untuk mengosongkan senarai rekod sesi ini?")) {
+        sessionScannedList = [];
+        renderSessionLog();
+      }
+    }
+
+    // EKSPORT SESI KE CSV
+    function exportSessionCSV() {
+      if (sessionScannedList.length === 0) {
+        alert("Tiada rekod imbasan dalam sesi ini untuk dieksport.");
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,ID,Nama,Kelas,Masa,Status,Punca\n";
+      sessionScannedList.forEach(row => {
+        csvContent += `"${row.id}","${row.nama}","${row.kelas}","${row.masa}","${row.status}","${row.punca}"\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `QTIBA_Sesi_Imbasan_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     // PWA SETUP
