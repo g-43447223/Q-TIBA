@@ -122,7 +122,7 @@
     </div>
 
     <!-- KPI CARDS -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+    <div class="grid grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4">
       <div class="glass-card rounded-2xl p-3.5 sm:p-4">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Murid Dipantau</p>
         <h3 id="kpi-sasaran" class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
@@ -132,8 +132,12 @@
         <h3 id="kpi-hari-ini" class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
       </div>
       <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+        <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Tak Hadir Hari Ini</p>
+        <h3 id="kpi-tak-hadir" class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
+      </div>
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Jumlah Kes Kelewatan</p>
-        <h3 id="kpi-total-kes" class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
+        <h3 id="kpi-total-kes" class="text-xl sm:text-2xl font-black code-font text-violet-600 dark:text-violet-400 mt-1">0</h3>
       </div>
       <div class="glass-card rounded-2xl p-3.5 sm:p-4">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Bebas Lewat (0 Kes)</p>
@@ -173,6 +177,24 @@
       <div id="early-student-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
           Belum ada murid imbas sebelum 7:20 AM hari ini.
+        </div>
+      </div>
+    </div>
+
+    <!-- WIDGET MURID TAK HADIR HARI INI -->
+    <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-rose-500">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-user-xmark text-rose-500 text-lg"></i> Murid Tak Hadir Hari Ini (Belum Imbas)
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Murid sasaran yang belum mengimbas QR Code hari ini.</p>
+        </div>
+        <span id="absent-count" class="text-xs bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font">0 Orang</span>
+      </div>
+      <div id="absent-student-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
+          Memuatkan data kehadiran...
         </div>
       </div>
     </div>
@@ -398,6 +420,20 @@
         return;
       }
 
+      enrichedStudents.sort((a, b) => {
+        const timeA = a.waktuHariIni || a.masa || a.tarikhMasa || '';
+        const timeB = b.waktuHariIni || b.masa || b.tarikhMasa || '';
+        const matchA = timeA.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        const matchB = timeB.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        if (!matchA && !matchB) return (a.nama || '').localeCompare(b.nama || '');
+        if (!matchA) return 1;
+        if (!matchB) return -1;
+        const minsA = parseInt(matchA[1], 10) * 60 + parseInt(matchA[2], 10) + (matchA[3] ? parseInt(matchA[3], 10) / 60 : 0);
+        const minsB = parseInt(matchB[1], 10) * 60 + parseInt(matchB[2], 10) + (matchB[3] ? parseInt(matchB[3], 10) / 60 : 0);
+        if (minsA !== minsB) return minsA - minsB;
+        return (a.nama || '').localeCompare(b.nama || '');
+      });
+
       earlyListEl.innerHTML = '';
       enrichedStudents.forEach((item, index) => {
         let rankBadge = `<span class="text-[10px] font-bold text-slate-400 code-font">#${index + 1}</span>`;
@@ -454,11 +490,8 @@
       renderTodayTable();
     }
 
-    function renderTodayTable() {
-      const todayTableBody = document.getElementById('today-table-body');
-      if (!todayTableBody) return;
-
-      let list = globalMuridList.filter(m => {
+    function getLewatHariIniList() {
+      return globalMuridList.filter(m => {
         if (!m.lewatHariIni) return false;
         if (m.punca === "Tepat Masa" || m.status === "HADIR") return false;
 
@@ -467,7 +500,6 @@
         if (match) {
           const hours = parseInt(match[1], 10);
           const minutes = parseInt(match[2], 10);
-          
           if (hours < 7 || (hours === 7 && minutes <= 20)) {
             return false;
           }
@@ -475,6 +507,13 @@
 
         return true;
       });
+    }
+
+    function renderTodayTable() {
+      const todayTableBody = document.getElementById('today-table-body');
+      if (!todayTableBody) return;
+
+      let list = getLewatHariIniList();
 
       if (list.length === 0) {
         todayTableBody.innerHTML = `
@@ -521,6 +560,58 @@
       });
     }
 
+    function renderAbsentStudents() {
+      const absentList = document.getElementById('absent-student-list');
+      const absentCount = document.getElementById('absent-count');
+      if (!absentList) return;
+
+      const scannedIds = new Set();
+
+      globalRekodList.forEach(r => {
+        if (r.id) scannedIds.add(r.id.trim().toUpperCase());
+      });
+
+      globalMuridList.forEach(m => {
+        if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+          scannedIds.add(m.id.trim().toUpperCase());
+        }
+      });
+
+      const absentMurid = globalMuridList.filter(m => !scannedIds.has(m.id.trim().toUpperCase()));
+
+      if (absentCount) absentCount.textContent = `${absentMurid.length} Orang`;
+
+      if (absentMurid.length === 0) {
+        absentList.innerHTML = `
+          <div class="col-span-full py-4 text-center text-emerald-600 dark:text-emerald-400 text-xs code-font">
+            <i class="fa-solid fa-circle-check text-base mr-2"></i> Semua murid sasaran telah mengimbas hari ini!
+          </div>`;
+        return;
+      }
+
+      absentList.innerHTML = '';
+      absentMurid.forEach(m => {
+        const avatarUrl = (m.urlGambar && m.urlGambar !== "")
+          ? m.urlGambar
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
+        absentList.innerHTML += `
+          <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-transform">
+            <img src="${avatarUrl}" 
+                 alt="${m.nama}" 
+                 class="w-10 h-10 rounded-full object-cover border-2 border-rose-300 dark:border-rose-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0"
+                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+            <div class="min-w-0 flex-1">
+              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">${m.nama}</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${m.kelas}</p>
+            </div>
+            <span class="text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold code-font whitespace-nowrap flex-shrink-0">
+              <i class="fa-solid fa-ban mr-1"></i>TAK HADIR
+            </span>
+          </div>`;
+      });
+    }
+
     function renderStreakTracker(list) {
       const container = document.getElementById('streak-container');
       if (!container) return;
@@ -535,9 +626,19 @@
         return;
       }
 
+      weeklyHeroes.sort((a, b) => {
+        const streakA = a.streakHari || 0;
+        const streakB = b.streakHari || 0;
+        if (streakB !== streakA) return streakB - streakA;
+        const kesA = a.kiraan || 0;
+        const kesB = b.kiraan || 0;
+        if (kesA !== kesB) return kesA - kesB;
+        return (a.nama || '').localeCompare(b.nama || '');
+      });
+
       container.innerHTML = '';
 
-      weeklyHeroes.forEach(m => {
+      weeklyHeroes.forEach((m, index) => {
         const streakSemasa = m.streakHari || 0;
         const daysInWeek = streakSemasa > 5 ? 5 : streakSemasa;
         const isFullWeek = daysInWeek === 5 || m.kiraan === 0;
@@ -545,6 +646,12 @@
         let badgeColor = isFullWeek ? 'from-amber-500 to-orange-500' : 'from-emerald-500 to-teal-500';
         let badgeTitle = isFullWeek ? '🏆 Bintang Mingguan (Lengkap 5 Hari)' : '⭐ Istiqamah Minggu Ini';
         let statusText = isFullWeek ? '5/5 Hari Awal' : `${daysInWeek}/5 Hari Awal`;
+
+        let rankBadge = '';
+        if (index === 0) rankBadge = '<span class="text-xs font-bold text-amber-500 mr-2">🥇 #1</span>';
+        else if (index === 1) rankBadge = '<span class="text-xs font-bold text-slate-400 mr-2">🥈 #2</span>';
+        else if (index === 2) rankBadge = '<span class="text-xs font-bold text-amber-700 mr-2">🥉 #3</span>';
+        else rankBadge = `<span class="text-[10px] font-bold text-slate-400 code-font mr-2">#${index + 1}</span>`;
 
         const userImg = (m.urlGambar && m.urlGambar !== '') 
           ? m.urlGambar 
@@ -559,11 +666,14 @@
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${m.kelas}</p>
               </div>
             </div>
-            <div class="text-right flex-shrink-0 ml-2">
-              <span class="text-[10px] sm:text-[11px] font-black text-white px-2.5 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font whitespace-nowrap">
-                ✨ ${statusText}
-              </span>
-              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 whitespace-nowrap">${badgeTitle}</p>
+            <div class="text-right flex-shrink-0 ml-2 flex flex-col items-end gap-1">
+              <div class="flex items-center gap-1">
+                ${rankBadge}
+                <span class="text-[10px] sm:text-[11px] font-black text-white px-2.5 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font whitespace-nowrap">
+                  ✨ ${statusText}
+                </span>
+              </div>
+              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">${badgeTitle}</p>
             </div>
           </div>
         `;
@@ -595,22 +705,41 @@
           globalRekodList = data.rekodList || data.logs || [];
 
           setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
-          setElementText('kpi-hari-ini', data.lewatHariIni || 0);
+          setElementText('kpi-hari-ini', getLewatHariIniList().length);
 
           let totalKesSum = 0;
           let countBebasLewat = 0;
+          let countTakHadir = 0;
+
+          const scannedIdsToday = new Set();
+          globalRekodList.forEach(r => { if (r.id) scannedIdsToday.add(r.id.trim().toUpperCase()); });
 
           globalMuridList.forEach(m => {
             totalKesSum += (m.kiraan || 0);
             if ((m.kiraan || 0) === 0) countBebasLewat++;
+            if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+              scannedIdsToday.add(m.id.trim().toUpperCase());
+            }
           });
+
+          countTakHadir = globalMuridList.filter(m => !scannedIdsToday.has(m.id.trim().toUpperCase())).length;
 
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
+          setElementText('kpi-tak-hadir', countTakHadir);
 
           // HERO DISIPLIN
           if (heroContainer && globalMuridList.length > 0) {
-            const sortedMurid = [...globalMuridList].sort((a, b) => a.kiraan - b.kiraan);
+            const attendedIds = new Set();
+            globalRekodList.forEach(r => { if (r.id) attendedIds.add(r.id.trim().toUpperCase()); });
+
+            const heroCandidates = globalMuridList.filter(m => {
+              const hasScannedToday = m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '');
+              const hasAnyRecord = attendedIds.has(m.id.trim().toUpperCase());
+              return hasScannedToday || hasAnyRecord;
+            });
+
+            const sortedMurid = heroCandidates.sort((a, b) => a.kiraan - b.kiraan);
             const topHeroes = sortedMurid.slice(0, 4);
 
             heroContainer.innerHTML = '';
@@ -641,6 +770,7 @@
           }
 
           renderEarlyStudents(data.earlyList || globalRekodList);
+          renderAbsentStudents();
           renderTodayTable();
           renderStreakTracker(data.streakList || globalMuridList);
 
