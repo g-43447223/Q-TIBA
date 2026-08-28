@@ -301,6 +301,55 @@
     </div>
   </template>
 
+  <!-- MODAL PROFIL MURID (paparan besar) -->
+  <div id="student-profile-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[90] flex items-center justify-center p-4 hidden">
+    <div class="glass-card w-full max-w-lg rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-white/10 shadow-2xl relative text-slate-800 dark:text-white overflow-y-auto max-h-[90vh]">
+      <button onclick="closeStudentProfile()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg transition-colors z-10"><i class="fa-solid fa-xmark"></i></button>
+
+      <div class="flex flex-col items-center text-center">
+        <img id="sp-avatar" src="" alt="Avatar"
+             class="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-cyan-400 ring-4 ring-cyan-400/20 bg-slate-200 dark:bg-slate-900 shadow-xl mb-3">
+        <h3 id="sp-nama" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-wide">Nama Murid</h3>
+        <p id="sp-kelas" class="text-xs sm:text-sm font-bold text-cyan-600 dark:text-cyan-400 code-font mt-1">Kelas</p>
+        <p id="sp-id" class="text-[11px] text-slate-400 code-font mt-0.5">NO. ID</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-6">
+        <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
+          <div id="sp-total" class="text-2xl sm:text-3xl font-black code-font text-rose-500">0</div>
+          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Jumlah Kes Kelewatan</div>
+        </div>
+        <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
+          <div id="sp-status" class="text-2xl sm:text-3xl font-black code-font text-emerald-500">TEPAT</div>
+          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Status Hari Ini</div>
+        </div>
+        <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
+          <div id="sp-minggu" class="text-2xl sm:text-3xl font-black code-font text-amber-500">0</div>
+          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Kes Minggu Ini</div>
+        </div>
+        <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
+          <div id="sp-bulan" class="text-2xl sm:text-3xl font-black code-font text-amber-500">0</div>
+          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Kes Bulan Ini</div>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-xs space-y-2">
+        <div class="flex justify-between">
+          <span class="text-slate-500 dark:text-slate-400 font-bold">Masa Imbas Hari Ini</span>
+          <span id="sp-masa" class="font-bold code-font text-slate-800 dark:text-white">—</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500 dark:text-slate-400 font-bold">Punca Terakhir</span>
+          <span id="sp-punca" class="font-bold code-font text-slate-800 dark:text-white text-right">—</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500 dark:text-slate-400 font-bold">Tarikh Terakhir</span>
+          <span id="sp-tarikh" class="font-bold code-font text-slate-800 dark:text-white">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
     <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
     <div>PORTAL IBU BAPA - HAK CIPTA TERPELIHARA.</div>
@@ -400,6 +449,83 @@
       if (el) el.innerText = value;
     }
 
+    // Paparkan profil murid dalam modal besar (klik pada nama/ranking).
+    function showStudentProfile(idMurid) {
+      const m = globalMuridList.find(x => String(x.id) === String(idMurid));
+      const modal = document.getElementById('student-profile-modal');
+      if (!modal) return;
+      if (!m) {
+        closeStudentProfile();
+        return;
+      }
+
+      const avatarUrl = (m.urlGambar && m.urlGambar !== '')
+        ? m.urlGambar
+        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
+
+      setElementText('sp-nama', m.nama || 'Tanpa Nama');
+      setElementText('sp-kelas', m.kelas || 'Tiada Kelas');
+      setElementText('sp-id', 'NO. ID: ' + (m.id || '—'));
+      setElementText('sp-total', (m.kiraan || 0) + ' Kes');
+      setElementText('sp-minggu', (m.kesMingguIni || 0) + ' Kes');
+      setElementText('sp-bulan', (m.kesBulanIni || 0) + ' Kes');
+
+      const avatar = document.getElementById('sp-avatar');
+      if (avatar) avatar.src = avatarUrl;
+
+      // Tentukan status HARI INI berdasarkan rekod sebenar (bukan punca lama).
+      const today = getTodayDateStr();
+      const todayRecs = (globalRekodList || []).filter(r =>
+        String(r.id || '') === String(idMurid) &&
+        String(r.tarikhMasa || '').startsWith(today)
+      );
+
+      let statusText = 'TAK HADIR';
+      let statusColor = 'text-rose-500';
+      let masa = '—';
+      let punca = m.punca || '—';
+      let tarikh = m.tarikhLewat || '—';
+
+      if (todayRecs.length > 0) {
+        const rec = todayRecs[0];
+        const tmStr = String(rec.tarikhMasa || '');
+        const timeOnly = tmStr.includes(' ') ? tmStr.split(' ')[1] : '';
+        masa = timeOnly || rec.waktuHariIni || '—';
+        punca = rec.punca || '—';
+        tarikh = today;
+        const mm = (timeOnly || '00:00:00').match(/(\d{1,2}):(\d{2})/);
+        const isLate = mm
+          ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21))
+          : (String(rec.status || '').toUpperCase() === 'LEWAT');
+        statusText = isLate ? 'LEWAT' : 'TEPAT';
+      } else if (m.waktuHariIni && m.waktuHariIni.trim() !== '') {
+        // Imbas hari ini (fallback server)
+        masa = m.waktuHariIni;
+        tarikh = today || tarikh;
+        let isLate = false;
+        const mm = masa.match(/(\d{1,2}):(\d{2})/);
+        if (mm) { const h = +mm[1], mi = +mm[2]; isLate = h > 7 || (h === 7 && mi >= 21); }
+        statusText = isLate ? 'LEWAT' : 'TEPAT';
+      }
+
+      const statusEl = document.getElementById('sp-status');
+      if (statusEl) {
+        statusEl.textContent = statusText;
+        statusEl.className = 'text-2xl sm:text-3xl font-black code-font ' + statusColor;
+      }
+
+      setElementText('sp-masa', masa);
+      setElementText('sp-punca', punca);
+      setElementText('sp-tarikh', tarikh);
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeStudentProfile() {
+      const modal = document.getElementById('student-profile-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
     function updateSyncStatus(text, colorClass) {
       const syncStatus = document.getElementById('sync-status');
       const syncDot = document.getElementById('sync-dot');
@@ -493,7 +619,7 @@
         }
 
         earlyListEl.innerHTML += `
-          <div class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform">
+          <div data-murid-id="${encodeURIComponent(item.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer">
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
               <div class="truncate min-w-0">
@@ -589,7 +715,7 @@
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 code-font">${idx + 1}</td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.id)}</td>
-            <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
+            <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0 cursor-pointer" data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))">
               <img src="${userImg}" 
                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
@@ -644,7 +770,7 @@
           : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
 
         absentList.innerHTML += `
-          <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-transform">
+          <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer">
             <img src="${avatarUrl}" 
                  alt="${escapeHtml(m.nama)}" 
                  class="w-10 h-10 rounded-full object-cover border-2 border-rose-300 dark:border-rose-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0"
@@ -706,7 +832,7 @@
           : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
 
         container.innerHTML += `
-          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all">
+          <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all cursor-pointer">
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
               <div class="truncate min-w-0">
@@ -806,7 +932,7 @@
               const rankColor = idx === 0 ? 'bg-amber-500 text-slate-950 font-black border-amber-300' : 'bg-emerald-500 text-white font-bold border-emerald-300';
 
               heroContainer.innerHTML += `
-                <div class="p-3 sm:p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform">
+                <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3 sm:p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform cursor-pointer">
                   <div class="relative mb-2">
                     <img src="${avatarUrl}" 
                          alt="${escapeHtml(m.nama)}" 
