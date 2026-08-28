@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <!-- Ikon khas untuk iPhone / iPad (Safari) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="q-tibalogo.png">
+
+  <!-- Ikon asas pelayar web -->
+  <link rel="icon" type="image/png" sizes="32x32" href="q-tibalogo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q-TIBA - Pengimbas QR Kelewatan</title>
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- HTML5-QRCode Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .code-font { font-family: 'JetBrains Mono', monospace; }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.70);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Animasi Garisan Laser Scanner */
+    .scanner-overlay {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scan-laser {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #06b6d4, #38bdf8, #06b6d4, transparent);
+      box-shadow: 0 0 15px #06b6d4, 0 0 8px #38bdf8;
+      top: 0;
+      left: 0;
+      animation: scanAnimation 2s infinite ease-in-out;
+      z-index: 10;
+    }
+
+    @keyframes scanAnimation {
+      0% { top: 0%; opacity: 0.8; }
+      50% { top: 95%; opacity: 1; }
+      100% { top: 0%; opacity: 0.8; }
+    }
+
+    /* Video Scanner Tweaks */
+    #reader video {
+      object-fit: cover !important;
+      border-radius: 1rem;
+      width: 100% !important;
+    }
+
+    #reader {
+      border: none !important;
+    }
+
+    /* Success Pop Animation */
+    .pop-in {
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative overflow-x-hidden">
+
+  <!-- Cursor Glow Effect -->
+  <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" onerror="this.style.display='none'">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Q-TIBA</h1>
+            <span class="text-[10px] bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold">SCANNER</span>
+          </div>
+          <p class="text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold tracking-wide">Pengimbas QR Kelewatan Murid</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Dashboard Link -->
+        <a href="index.html" class="px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-cyan-500 hover:text-white transition-all border border-slate-300/50 dark:border-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Dashboard</span>
+        </a>
+
+        <!-- Sound Audio Toggle Button -->
+        <button id="sound-toggle" onclick="toggleAudioMute()" title="Tukar Suara Audio" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-cyan-600 dark:text-cyan-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="sound-toggle-icon" class="fa-solid fa-volume-high text-sm"></i>
+        </button>
+
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle" title="Tukar Tema" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-110 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="theme-toggle-icon" class="fa-solid fa-sun text-sm"></i>
+        </button>
+
+        <!-- Logout Admin Button -->
+        <button onclick="logoutAdmin()" title="Log Keluar Admin" class="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white transition-all border border-rose-500/20">
+          <i class="fa-solid fa-right-from-bracket text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AMARAN OFFLINE STATUS BAR -->
+  <div id="offline-bar" class="hidden bg-amber-500/90 text-slate-900 font-bold text-xs py-1.5 px-4 text-center z-30 shadow-md flex items-center justify-center gap-2">
+    <i class="fa-solid fa-wifi"></i>
+    <span>Talian terputus. Data imbasan disimpan dalam peranti secara selamat.</span>
+    <button onclick="syncOfflineQueue()" class="ml-2 px-2 py-0.5 bg-slate-900 text-white rounded-md text-[10px] hover:bg-slate-800">
+      Kemaskini Sekarang (<span id="offline-count">0</span>)
+    </button>
+  </div>
+
+  <!-- KANDUNGAN UTAMA -->
+  <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 z-10 relative">
+
+    <!-- RUANG KAMERA (SEBELAH KIRI) -->
+    <div class="md:col-span-7 flex flex-col gap-4">
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between h-full border-l-4 border-l-cyan-500">
+
+        <!-- Tajuk & Status -->
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-qrcode text-cyan-500 text-base"></i> Halakan Kad QR Murid
+            </h2>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pastikan kod QR berada di dalam garisan imbasan.</p>
+          </div>
+          <span id="scan-status-badge" class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> READY
+          </span>
+        </div>
+
+        <!-- BOX KAMERA -->
+        <div class="relative w-full aspect-square sm:aspect-video md:aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-inner flex items-center justify-center scanner-overlay">
+
+          <div id="scan-laser" class="scan-laser hidden"></div>
+
+          <div id="reader" class="w-full h-full"></div>
+
+          <!-- Empty Overlay Placeholder -->
+          <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center z-20 bg-slate-950">
+            <i class="fa-solid fa-camera text-4xl text-slate-600 mb-3 animate-bounce"></i>
+            <p class="text-xs font-semibold text-slate-300">Kamera Belum Diaktifkan</p>
+            <p class="text-[10px] text-slate-500 mt-1 max-w-xs">Tekan Mula Kamera di bawah untuk memulakan sesi imbasan.</p>
+            <button onclick="startScanner()" class="mt-4 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Mula Kamera
+            </button>
+          </div>
+        </div>
+
+        <!-- KAWALAN KAMERA, FLASHLIGHT & INPUT MANUAL -->
+        <div class="mt-4 flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <button id="btn-toggle-cam" onclick="toggleCameraState()" class="flex-1 py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-video"></i> <span id="lbl-toggle-cam">Mula Kamera</span>
+            </button>
+
+            <!-- Torch / Flashlight Toggle Button -->
+            <button id="btn-torch" onclick="toggleTorch()" disabled title="Lampu Suluh Kamera" class="py-2.5 px-3.5 rounded-xl bg-slate-200 dark:bg-slate-800 opacity-50 cursor-not-allowed text-slate-600 dark:text-slate-300 font-bold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5">
+              <i id="torch-icon" class="fa-solid fa-bolt"></i>
+            </button>
+
+            <!-- Camera Selector Dropdown -->
+            <select id="camera-select" onchange="onCameraChange()" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 focus:outline-none code-font max-w-[140px] sm:max-w-xs truncate">
+              <option value="">Pilih Kamera...</option>
+            </select>
+          </div>
+
+          <!-- Input Manual Fallback -->
+          <form onsubmit="handleManualSubmit(event)" class="flex items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+            <input type="text" id="manual-id" placeholder="Masukkan ID Murid secara manual..." class="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white code-font focus:outline-none focus:border-cyan-500">
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold hover:bg-slate-900 transition-all">
+              Hantar
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- KEPUTUSAN IMBASAN & REKOD SESI (SEBELAH KANAN) -->
+    <div class="md:col-span-5 flex flex-col gap-4">
+
+      <!-- KAD KEPUTUSAN TERKINI -->
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-amber-500 flex flex-col items-center text-center relative overflow-hidden">
+
+        <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400 code-font mb-2">IMBASAN TERAKHIR</span>
+
+        <div id="scanned-result-box" class="w-full flex flex-col items-center">
+          <!-- Default State -->
+          <div class="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-dashed border-slate-400 dark:border-slate-700 flex items-center justify-center my-2 text-slate-400">
+            <i class="fa-solid fa-user-clock text-2xl"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 mt-2">Menunggu Imbasan...</h3>
+          <p class="text-[11px] text-slate-400 code-font mt-0.5">Sila imbas kod QR murid</p>
+        </div>
+
+      </div>
+
+      <!-- SENARAI IMBASAN SESI INI -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex-1 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-cyan-500"></i> Sesi Imbasan <span id="session-date" class="normal-case tracking-wide"></span> (<span id="session-count">0</span>)
+          </h3>
+
+          <div class="flex items-center gap-2">
+            <!-- Eksport CSV Sesi -->
+            <button onclick="exportSessionCSV()" title="Muat Turun Rekod Sesi" class="text-[10px] text-cyan-600 hover:text-cyan-500 dark:text-cyan-400 code-font font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+            <span class="text-slate-300 dark:text-slate-700">|</span>
+            <!-- Reset Button -->
+            <button onclick="clearSessionLog()" title="Kosongkan Senarai Sesi" class="text-[10px] text-slate-400 hover:text-rose-500 transition-colors code-font">
+              <i class="fa-solid fa-trash-can mr-1"></i>Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-y-auto max-h-64 sm:max-h-80 pr-1">
+          <ul id="session-log-list" class="divide-y divide-slate-200/50 dark:divide-slate-800/60 text-xs">
+            <li class="py-6 text-center text-slate-400 code-font text-[11px]">Belum ada imbasan dilakukan dalam sesi ini.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- PASUKAN GURU INOVASI Q-TIBA -->
+  <section class="max-w-5xl w-full mx-auto px-4 sm:px-6 mb-6 z-10 relative">
+    <div class="glass-card rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-amber-500"></i> Pasukan Inovasi Q-TIBA
+        </h3>
+        <span class="text-[10px] text-slate-500 code-font">SK Pulau Indah</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <!-- Ustaz Ismail -->
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="assets/images/cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover" alt="Ustaz Ismail">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
+            <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+              "<span class="italic">Disiplin yang kukuh adalah asas pembentukan insan cemerlang.</span>"
+            </p>
+          </div>
+        </div>
+
+        <!-- Ustaz Fahmi -->
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="assets/images/cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover" alt="Ustaz Fahmi">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
+            <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem &amp; Data</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+              "<span class="italic">Analisis data tepat memandu keputusan intervensi berkesan.</span>"
+            </p>
+          </div>
+        </div>
+
+        <!-- Ustaz Hafifi -->
+        <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
+          <img src="assets/images/cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover" alt="Ustaz Hafifi">
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
+            <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin &amp; Intervensi</p>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic mt-2.5 bg-slate-200/50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-300/30 dark:border-slate-800">
+              "<span class="italic">Mendidik dengan empati, memimpin dengan ketegasan positif.</span>"
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
+    <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH</div>
+  </footer>
+
+  <!-- MODAL ADMIN LOGIN (MENGGANTIKAN PROMPT NATIVE) -->
+  <div id="admin-auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl relative">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-full bg-cyan-500/10 text-cyan-500 flex items-center justify-center mx-auto mb-3 text-2xl border border-cyan-500/20">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pengesahan Admin Q-TIBA</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Sila masukkan Emel dan PIN Admin untuk mengakses pengimbas.</p>
+      </div>
+
+      <form onsubmit="handleAdminLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Emel Admin</label>
+          <input type="email" id="auth-email" required placeholder="admin@skpulauindah.edu.my" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">PIN Keselamatan</label>
+          <input type="password" id="auth-pin" required placeholder="••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white code-font focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <div id="auth-error-msg" class="hidden text-[11px] text-rose-500 font-semibold text-center"></div>
+
+        <div class="pt-2 flex gap-2">
+          <button type="button" onclick="cancelAdminLogin()" class="w-1/3 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-300 transition-all">
+            Batal
+          </button>
+          <button type="submit" id="btn-auth-submit" class="w-2/3 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-key"></i> Pengesahan Akses
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- POP-UP INSTALL PWA -->
+  <div id="pwa-install-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative">
+      <button onclick="closePwaModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white text-sm p-1 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500 text-2xl shrink-0">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pasang Aplikasi Q-TIBA</h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Tambah ke Skrin Utama untuk imbasan pantas di pintu pagar tanpa pelayar web.</p>
+        </div>
+      </div>
+
+      <div id="pwa-android-btn-container">
+        <button onclick="installPWA()" class="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-download"></i> Pasang Sekarang
+        </button>
+      </div>
+
+      <div id="pwa-ios-instructions" class="hidden text-[11px] bg-slate-100 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 space-y-1.5 mt-2">
+        <p class="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
+          <i class="fa-brands fa-apple"></i> Pengguna iPhone / Safari:
+        </p>
+        <ol class="list-decimal list-inside space-y-1 text-[10px]">
+          <li>Tekan ikon <b>Kongsi / Share</b> (<i class="fa-solid fa-share-from-square"></i>) di bawah Safari.</li>
+          <li>Tatal ke bawah dan pilih <b>"Add to Home Screen"</b> (<i class="fa-solid fa-plus-square"></i>).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PUNCA KELEWATAN (TERMASUK INPUT KUSTOM) -->
+  <div id="reason-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3 text-xl border border-amber-500/20">
+        <i class="fa-solid fa-clipboard-question"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modal-student-name">Nama Murid</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Sila pilih punca kelewatan:</p>
+
+      <div class="grid grid-cols-2 gap-2 text-xs font-semibold mb-3">
+        <button onclick="submitReason('Bangun Lewat')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">⏰ Bangun Lewat</button>
+        <button onclick="submitReason('Kesesakan Trafik')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🚗 Trafik Jam</button>
+        <button onclick="submitReason('Masalah Kenderaan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🔧 Kenderaan Rosak</button>
+        <button onclick="submitReason('Cuaca / Hujan')" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700">🌧️ Faktor Cuaca</button>
+      </div>
+
+      <!-- Custom Reason Textfield Toggle -->
+      <div id="custom-reason-box" class="hidden mb-3">
+        <input type="text" id="custom-reason-input" placeholder="Taip alasan khas di sini..." class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-white mb-2 focus:outline-none focus:border-cyan-500">
+        <button onclick="submitCustomReason()" class="w-full py-2 bg-cyan-500 text-white font-bold text-xs rounded-xl shadow">Hantar Alasan Kustom</button>
+      </div>
+
+      <button id="btn-toggle-custom-reason" onclick="toggleCustomReasonInput()" class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl hover:bg-slate-300 transition-all">
+        Lain-lain / Taip Sendiri
+      </button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    let html5QrCode = null;
+    let isScannerRunning = false;
+    let isProcessingScan = false;
+    let isTorchOn = false;
+    let isAudioMuted = localStorage.getItem('qtiba_audio_muted') === 'true';
+    
+    let studentCacheMap = {};
+    let scannedTodaySet = new Set();
+    let sessionScannedList = [];
+    let pendingScanData = null;
+
+    // SESI LOG PERSISTEN IKUT TARIKH
+    function getTodayKey() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getSessionStorageKey() {
+      return `qtiba_session_log_${getTodayKey()}`;
+    }
+
+    function loadSessionLog() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(getSessionStorageKey()) || '[]');
+        sessionScannedList = Array.isArray(stored) ? stored : [];
+      } catch (e) {
+        sessionScannedList = [];
+      }
+      const sessionDateEl = document.getElementById('session-date');
+      if (sessionDateEl) {
+        sessionDateEl.innerText = getTodayKey();
+      }
+      renderSessionLog();
+    }
+
+    function persistSessionLog() {
+      try {
+        localStorage.setItem(getSessionStorageKey(), JSON.stringify(sessionScannedList));
+      } catch (e) {}
+    }
+
+    // SEMAK LOG MASUK ADMIN PADA PERMULAAN
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAdminAuth();
+      updateAudioToggleUI();
+      checkNetworkStatus();
+      loadSessionLog();
+    });
+
+    function checkAdminAuth() {
+      const isAuth = localStorage.getItem('qtiba_admin_auth');
+      if (isAuth !== 'true') {
+        document.getElementById('admin-auth-modal').classList.remove('hidden');
+      }
+    }
+
+    async function handleAdminLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const pin = document.getElementById('auth-pin').value.trim();
+      const errEl = document.getElementById('auth-error-msg');
+      const submitBtn = document.getElementById('btn-auth-submit');
+
+      errEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Menyemak...`;
+
+      try {
+        const response = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(email)}&pin=${encodeURIComponent(pin)}`);
+        const data = await response.json();
+
+        if (data.status === "Success" && data.authorized) {
+          localStorage.setItem('qtiba_admin_auth', 'true');
+          localStorage.setItem('qtiba_admin_email', email);
+          document.getElementById('admin-auth-modal').classList.add('hidden');
+          playAudioBeep('success');
+        } else {
+          errEl.innerText = "Emel atau PIN tidak sah! Akses ditolak.";
+          errEl.classList.remove('hidden');
+          playAudioBeep('error');
+        }
+      } catch (err) {
+        errEl.innerText = "Gagal menyemak peranan admin. Semak rangkaian.";
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-key"></i> Pengesahan Akses`;
+      }
+    }
+
+    function cancelAdminLogin() {
+      alert("Akses ditolak. Mengalihkan ke Portal Ibu Bapa.");
+      window.location.href = "parent.html";
+    }
+
+    function logoutAdmin() {
+      if (confirm("Adakah anda pasti untuk log keluar daripada mod Pengimbas?")) {
+        localStorage.removeItem('qtiba_admin_auth');
+        localStorage.removeItem('qtiba_admin_email');
+        window.location.href = "parent.html";
+      }
+    }
+
+    // TOGGLE AUDIO SOUND / TEXT-TO-SPEECH
+    function toggleAudioMute() {
+      isAudioMuted = !isAudioMuted;
+      localStorage.setItem('qtiba_audio_muted', isAudioMuted);
+      updateAudioToggleUI();
+    }
+
+    function updateAudioToggleUI() {
+      const icon = document.getElementById('sound-toggle-icon');
+      if (isAudioMuted) {
+        icon.className = 'fa-solid fa-volume-xmark text-rose-500';
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-cyan-600 dark:text-cyan-400';
+      }
+    }
+
+    // AUDIO BEEP GENERATOR
+    function playAudioBeep(type = 'success') {
+      if (isAudioMuted) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'success') {
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.15);
+        } else {
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          gain.gain.setValueAtTime(0.4, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+        }
+      } catch (e) {
+        console.log("Audio tidak disokong / disekat");
+      }
+    }
+
+    // TEXT-TO-SPEECH (SEBUTAN SUARA)
+    function speakText(text) {
+      if (isAudioMuted) return;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ms-MY';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // CURSOR GLOW
+    const cursorGlow = document.getElementById('cursor-glow');
+    window.addEventListener('mousemove', (e) => {
+      if(cursorGlow) {
+        cursorGlow.style.left = `${e.clientX}px`;
+        cursorGlow.style.top = `${e.clientY}px`;
+      }
+    });
+
+    // THEME TOGGLE
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
+
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.remove('dark');
+      if (themeToggleIcon) themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+    }
+
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('dark')) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          themeToggleIcon.className = 'fa-solid fa-moon text-slate-700';
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          themeToggleIcon.className = 'fa-solid fa-sun text-amber-400';
+        }
+      });
+    }
+
+    // PRELOAD DATA MURID
+    async function preloadStudentData() {
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        if (data.status === "Success" && data.muridList) {
+          data.muridList.forEach(m => {
+            const cleanId = m.id.trim().toUpperCase();
+            studentCacheMap[cleanId] = m;
+            if (m.lewatHariIni) {
+              scannedTodaySet.add(cleanId);
+            }
+          });
+          console.log("Q-TIBA: Loaded", Object.keys(studentCacheMap).length, "students.");
+        }
+      } catch (err) {
+        console.warn("Preload student map failed:", err);
+      }
+    }
+
+    // KAMERA SETUP
+    async function initCameraDevices() {
+      const cameraSelect = document.getElementById('camera-select');
+      if (!cameraSelect) return;
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        const devices = await Html5Qrcode.getCameras();
+        cameraSelect.innerHTML = '';
+
+        if (devices && devices.length > 0) {
+          devices.forEach((cam, index) => {
+            const opt = document.createElement('option');
+            opt.value = cam.id;
+            opt.innerText = cam.label || `Kamera ${index + 1}`;
+            cameraSelect.appendChild(opt);
+          });
+
+          const backCam = devices.find(d => 
+            d.label.toLowerCase().includes('back') || 
+            d.label.toLowerCase().includes('environment') ||
+            d.label.toLowerCase().includes('rear')
+          );
+          if (backCam) cameraSelect.value = backCam.id;
+
+        } else {
+          cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
+        }
+      } catch (err) {
+        console.error("Gagal mendapatkan senarai kamera:", err);
+        cameraSelect.innerHTML = '<option value="">Kamera disekat / Akses Ditolak</option>';
+      }
+    }
+
+    function startScanner() {
+      const selectedCamId = document.getElementById('camera-select').value;
+      const cameraConfig = selectedCamId ? { deviceId: selectedCamId } : { facingMode: "environment" };
+
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+
+      document.getElementById('camera-placeholder').style.display = 'none';
+      document.getElementById('scan-laser').classList.remove('hidden');
+
+      html5QrCode.start(
+        cameraConfig,
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        onScanError
+      ).then(() => {
+        isScannerRunning = true;
+        document.getElementById('lbl-toggle-cam').innerText = "Hentikan Kamera";
+        document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
+        
+        // Aktifkan Butang Torch / Lampu
+        const torchBtn = document.getElementById('btn-torch');
+        torchBtn.disabled = false;
+        torchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }).catch(err => {
+        console.error("Gagal menjalankan kamera:", err);
+        alert("Gagal membuka kamera. Pastikan kebenaran 'Allow Camera' telah diberikan pada pelayar web.");
+        document.getElementById('camera-placeholder').style.display = 'flex';
+        document.getElementById('scan-laser').classList.add('hidden');
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode && isScannerRunning) {
+        html5QrCode.stop().then(() => {
+          isScannerRunning = false;
+          isTorchOn = false;
+          document.getElementById('camera-placeholder').style.display = 'flex';
+          document.getElementById('scan-laser').classList.add('hidden');
+          document.getElementById('lbl-toggle-cam').innerText = "Mula Kamera";
+          document.getElementById('btn-toggle-cam').className = "flex-1 py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2";
+          
+          const torchBtn = document.getElementById('btn-torch');
+          torchBtn.disabled = true;
+          torchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          document.getElementById('torch-icon').className = "fa-solid fa-bolt";
+        }).catch(err => console.error("Stop scanner error:", err));
+      }
+    }
+
+    function toggleCameraState() {
+      if (isScannerRunning) stopScanner();
+      else startScanner();
+    }
+
+    function onCameraChange() {
+      if (isScannerRunning) {
+        stopScanner();
+        setTimeout(() => startScanner(), 300);
+      }
+    }
+
+    // FUNKSI FLASHLIGHT / TORCH
+    async function toggleTorch() {
+      if (!html5QrCode || !isScannerRunning) return;
+      try {
+        isTorchOn = !isTorchOn;
+        await html5QrCode.applyVideoConstraints({
+          advanced: [{ torch: isTorchOn }]
+        });
+        const icon = document.getElementById('torch-icon');
+        icon.className = isTorchOn ? "fa-solid fa-bolt text-amber-400 animate-bounce" : "fa-solid fa-bolt";
+      } catch (e) {
+        console.log("Torch tidak disokong oleh peranti/kamera ini.");
+      }
+    }
+
+    function onScanError(errorMessage) {}
+
+    // CALLBACK IMBASAN KAMERA
+    function onScanSuccess(decodedText) {
+      if (isProcessingScan) return;
+
+      const scannedId = String(decodedText || "").trim().toUpperCase();
+      if (!scannedId) return;
+
+      isProcessingScan = true;
+      initiateScanProcess(scannedId);
+
+      setTimeout(() => {
+        isProcessingScan = false;
+      }, 2500);
+    }
+
+    // FUNGSI INPUT MANUAL
+    function handleManualSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('manual-id');
+      const val = input.value.trim().toUpperCase();
+      if (val) {
+        initiateScanProcess(val);
+        input.value = '';
+      }
+    }
+
+    // MEMULA PROSES IMBASAN
+    function initiateScanProcess(scannedId) {
+      const matchedStudent = studentCacheMap[scannedId] || {
+        id: scannedId,
+        nama: "MURID DIIMBAS",
+        kelas: "SASARAN",
+        urlGambar: ""
+      };
+
+      const userImg = (matchedStudent.urlGambar && matchedStudent.urlGambar !== "") 
+        ? matchedStudent.urlGambar 
+        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}`;
+
+      const resultBox = document.getElementById('scanned-result-box');
+
+      // 1. Semak Jika Sudah Diimbas Hari Ini
+      if (scannedTodaySet.has(scannedId)) {
+        playAudioBeep('error');
+        speakText(`Amaran. ${matchedStudent.nama} telah diimbas hari ini.`);
+
+        resultBox.innerHTML = `
+          <div class="pop-in flex flex-col items-center w-full">
+            <div class="relative my-2">
+              <img src="${userImg}" 
+                   class="w-20 h-20 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
+              <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1 text-[10px]">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </span>
+            </div>
+            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
+            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
+            <div class="mt-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
+              <i class="fa-solid fa-ban"></i> SUDAH DIIMBAS HARI INI!
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // 2. Semak Masa Cutoff (7:21 AM)
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const isLate = (hours > 7) || (hours === 7 && minutes >= 21);
+
+      if (!isLate) {
+        // Tepat masa (Sebelum 7:21 AM)
+        speakText(`Terima kasih ${matchedStudent.nama}. Hadir tepat masa.`);
+        finalizeScanProcess({
+          id: scannedId,
+          nama: matchedStudent.nama,
+          kelas: matchedStudent.kelas,
+          img: userImg,
+          status: "HADIR",
+          punca: "Tepat Masa"
+        });
+      } else {
+        // Lewat (7:21 AM ke atas)
+        pendingScanData = {
+          id: scannedId,
+          nama: matchedStudent.nama,
+          kelas: matchedStudent.kelas,
+          img: userImg,
+          status: "LEWAT"
+        };
+
+        speakText(`Terima kasih ${matchedStudent.nama}. Sila nyatakan punca kelewatan.`);
+        document.getElementById('modal-student-name').innerText = matchedStudent.nama;
+        document.getElementById('custom-reason-box').classList.add('hidden');
+        document.getElementById('reason-modal').classList.remove('hidden');
+      }
+    }
+
+    function toggleCustomReasonInput() {
+      const box = document.getElementById('custom-reason-box');
+      box.classList.toggle('hidden');
+    }
+
+    function submitCustomReason() {
+      const customVal = document.getElementById('custom-reason-input').value.trim();
+      submitReason(customVal || 'Lain-lain / Tiada Alasan');
+    }
+
+    function submitReason(reason) {
+      if (!pendingScanData) return;
+
+      document.getElementById('reason-modal').classList.add('hidden');
+
+      const scanData = {
+        ...pendingScanData,
+        punca: reason
+      };
+
+      pendingScanData = null;
+      finalizeScanProcess(scanData);
+    }
+
+    // SIMPAN REKOD & HANTAR KE BACKEND
+    function finalizeScanProcess(data) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      playAudioBeep('success');
+      scannedTodaySet.add(data.id);
+
+      const isHadir = data.status === "HADIR";
+      const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
+      const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
+      const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
+      const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}`;
+
+      const resultBox = document.getElementById('scanned-result-box');
+      resultBox.innerHTML = `
+        <div class="pop-in flex flex-col items-center w-full">
+          <div class="relative my-2">
+            <img src="${data.img}" 
+                 class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
+                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+            <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
+              <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
+            </span>
+          </div>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
+          <p class="text-xs font-bold ${textColor} code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
+          <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
+            ${statusBadge}
+          </div>
+        </div>
+      `;
+
+      const guruScan = localStorage.getItem('qtiba_admin_email') || 'Admin';
+
+      sessionScannedList.unshift({
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        masa: timeStr,
+        punca: data.punca || "Tepat Masa",
+        status: data.status || "HADIR",
+        img: data.img,
+        guru: guruScan
+      });
+
+      persistSessionLog();
+      renderSessionLog();
+
+      const payload = {
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        status: data.status || "HADIR",
+        punca: data.punca || "Tepat Masa",
+        masa: timeStr,
+        guru: guruScan
+      };
+
+      sendDataToBackend(payload);
+    }
+
+    // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
+    function sendDataToBackend(payload) {
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+
+      if (navigator.onLine) {
+        fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        }).then(() => {
+          console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
+        }).catch((err) => {
+          console.error("Gagal hantar data:", err);
+          saveOffline(payload);
+        });
+      } else {
+        saveOffline(payload);
+      }
+    }
+
+    function saveOffline(payload) {
+      let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      offlineQueue.push(payload);
+      localStorage.setItem('qtiba_offline_queue', JSON.stringify(offlineQueue));
+      checkNetworkStatus();
+    }
+
+    function checkNetworkStatus() {
+      const offlineBar = document.getElementById('offline-bar');
+      const offlineCount = document.getElementById('offline-count');
+      const offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+
+      if (!navigator.onLine || offlineQueue.length > 0) {
+        offlineBar.classList.remove('hidden');
+        offlineCount.innerText = offlineQueue.length;
+      } else {
+        offlineBar.classList.add('hidden');
+      }
+    }
+
+    function syncOfflineQueue() {
+      let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      if (offlineQueue.length === 0 || !API_URL || API_URL.includes("MASUKKAN_URL")) return;
+
+      const pending = [...offlineQueue];
+      const remaining = [];
+      let sentCount = 0;
+
+      const sendNext = async (index) => {
+        if (index >= pending.length) {
+          if (remaining.length > 0) {
+            localStorage.setItem('qtiba_offline_queue', JSON.stringify(remaining));
+          } else {
+            localStorage.removeItem('qtiba_offline_queue');
+          }
+          checkNetworkStatus();
+          if (sentCount > 0) speakText(`${sentCount} data offline telah dikemas kini ke cloud.`);
+          return;
+        }
+
+        const item = pending[index];
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(item)
+          });
+          sentCount++;
+        } catch (err) {
+          remaining.push(item);
+        }
+        sendNext(index + 1);
+      };
+
+      sendNext(0);
+    }
+
+    window.addEventListener('online', () => {
+      checkNetworkStatus();
+      syncOfflineQueue();
+    });
+    window.addEventListener('offline', checkNetworkStatus);
+
+    function renderSessionLog() {
+      const logList = document.getElementById('session-log-list');
+      const countEl = document.getElementById('session-count');
+
+      if (!logList || !countEl) return;
+      countEl.innerText = sessionScannedList.length;
+
+      if (sessionScannedList.length === 0) {
+        logList.innerHTML = `<li class="py-6 text-center text-slate-400 code-font text-[11px]">Belum ada imbasan dilakukan dalam sesi ini.</li>`;
+        return;
+      }
+
+      logList.innerHTML = '';
+      sessionScannedList.forEach((item) => {
+        logList.innerHTML += `
+          <li class="py-2 flex items-center justify-between gap-2 hover:bg-slate-500/5 transition-colors">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <img src="${item.img}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
+              <div class="truncate">
+                <p class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">${item.nama}</p>
+                <p class="text-[9px] text-slate-400 code-font">${item.id} &bull; ${item.kelas} ${item.guru ? '&bull; <span class="text-cyan-500 font-semibold">' + item.guru + '</span>' : ''} ${item.punca ? '&bull; <span class="text-amber-500 font-semibold">' + item.punca + '</span>' : ''}</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 code-font bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">${item.masa}</span>
+          </li>
+        `;
+      });
+    }
+
+    function clearSessionLog() {
+      if (confirm("Adakah anda pasti untuk mengosongkan senarai rekod sesi ini?")) {
+        sessionScannedList = [];
+        persistSessionLog();
+        renderSessionLog();
+      }
+    }
+
+    // EKSPORT SESI KE CSV
+    function exportSessionCSV() {
+      if (sessionScannedList.length === 0) {
+        alert("Tiada rekod imbasan dalam sesi ini untuk dieksport.");
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,ID,Nama,Kelas,Masa,Status,Punca,Guru\n";
+      sessionScannedList.forEach(row => {
+        csvContent += `"${row.id}","${row.nama}","${row.kelas}","${row.masa}","${row.status}","${row.punca}","${row.guru || ''}"\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `QTIBA_Sesi_Imbasan_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // PWA SETUP
+    let deferredPrompt = null;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isPwaDismissed = localStorage.getItem('qtiba_pwa_dismissed') === 'true';
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isStandalone && !isPwaDismissed) showPwaModal();
+    });
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    window.addEventListener('load', () => {
+      initCameraDevices();
+      preloadStudentData();
+
+      if (isIOS && !isStandalone && !isPwaDismissed) {
+        document.getElementById('pwa-android-btn-container')?.classList.add('hidden');
+        document.getElementById('pwa-ios-instructions')?.classList.remove('hidden');
+        showPwaModal();
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+      }
+    });
+
+    function showPwaModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closePwaModal() {
+      const modal = document.getElementById('pwa-install-modal');
+      if (modal) modal.classList.add('hidden');
+      localStorage.setItem('qtiba_pwa_dismissed', 'true');
+    }
+
+    async function installPWA() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') console.log('Q-TIBA PWA dipasang.');
+      deferredPrompt = null;
+      closePwaModal();
+    }
+  </script>
+</body>
+</html>
