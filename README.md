@@ -59,6 +59,14 @@ Aplikasi ini menggunakan **Google Apps Script** sebagai backend, disambungkan ke
 
 1. Salin `config.example.js` kepada `config.js`
 2. Masukkan URL Google Apps Script Web App anda dalam `config.js`
-3. Buka fail HTML dalam pelayar
+3. **Tetapkan API Key** — nilai `QTIBA_API_KEY` dalam `config.js` **MESTI sama** dengan `var API_KEY` dalam `code.gs`. Gunakan nilai yang panjang & sukar diteka sebelum deploy.
+4. Buka fail HTML dalam pelayar
 
 **Penting:** `config.js` tidak dikomit ke repo (dalam `.gitignore`). Hanya `config.example.js` yang akan ada dalam repo sebagai template.
+
+## Keselamatan
+
+- **PIN di-hash (SHA-256)** — PIN admin tidak disimpan dalam bentuk teks biasa dalam Google Sheet. PIN teks biasa lama akan di-naik taraf secara automatik pada log masuk pertama.
+- **API Key** — Setiap permintaan ke back end mesti membawa `apiKey`; permintaan tanpa key yang sah akan ditolak.
+- **Token sesi** — Tindakan sensitif (tukar PIN, daftar admin) memerlukan token sesi yang sah yang dikeluarkan semasa log masuk.
+- **Sanitasi input** — Nama/kelas/punca murid di-escape sebelum dipaparkan (elak XSS) dan sanitized sebelum eksport CSV (elak CSV injection).
