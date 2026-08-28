@@ -162,6 +162,24 @@
 
     <!-- TAB 1: DASHBOARD UTAMA -->
     <div id="tab-utama" class="tab-content flex flex-col gap-4 sm:gap-6">
+
+      <!-- PEMILIH TARIKH AKTIF -->
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-l-4 border-l-indigo-500">
+        <div>
+          <h3 class="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-indigo-500"></i> Paparan Data Ikut Tarikh
+          </h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Pilih tarikh untuk semak semula rekod lama yang mungkin terlepas. Semua widget di bawah akan ikut tarikh ini.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="date" id="active-date" onchange="setActiveDate(this.value)"
+                 class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
+          <button onclick="resetToToday()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all whitespace-nowrap">
+            <i class="fa-solid fa-rotate-left mr-1"></i>Hari Ini
+          </button>
+        </div>
+      </div>
+
       <!-- KPI CARDS -->
       <div class="grid grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4">
         <div class="glass-card rounded-2xl p-3.5 sm:p-4">
@@ -183,6 +201,38 @@
         <div class="glass-card rounded-2xl p-3.5 sm:p-4">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Bebas Lewat (0 Kes)</p>
           <h3 id="kpi-bebas-lewat" class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+        </div>
+      </div>
+
+      <!-- KPI KES MENGIKUT TEMPOH -->
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 mt-2.5">
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h3 class="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2 uppercase tracking-wider">
+            <i class="fa-solid fa-calendar-days text-rose-500"></i> Trend Kes Kelewatan (Tempoh)
+          </h3>
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 code-font">Dikira mengikut tarikh imbasan</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+          <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Minggu Ini</p>
+            <h4 id="kpi-minggu-ini" class="text-lg sm:text-xl font-black code-font text-rose-600 dark:text-rose-400 mt-0.5">0</h4>
+          </div>
+          <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Minggu Lepas</p>
+            <h4 id="kpi-minggu-lepas" class="text-lg sm:text-xl font-black code-font text-amber-600 dark:text-amber-400 mt-0.5">0</h4>
+          </div>
+          <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Bulan Ini</p>
+            <h4 id="kpi-bulan-ini" class="text-lg sm:text-xl font-black code-font text-violet-600 dark:text-violet-400 mt-0.5">0</h4>
+          </div>
+          <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Bulan Lepas</p>
+            <h4 id="kpi-bulan-lepas" class="text-lg sm:text-xl font-black code-font text-blue-600 dark:text-blue-400 mt-0.5">0</h4>
+          </div>
+          <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Keseluruhan</p>
+            <h4 id="kpi-keseluruhan" class="text-lg sm:text-xl font-black code-font text-slate-900 dark:text-white mt-0.5">0</h4>
+          </div>
         </div>
       </div>
 
@@ -386,7 +436,7 @@
 
       <!-- BAR PENAPIS -->
       <section class="glass-card rounded-2xl p-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
             <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Cari nama atau ID..." class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">
@@ -414,6 +464,14 @@
               <option value="">Semua Rekod</option>
               <option value="tegar">Kes Tegar (&ge; 3 Kali)</option>
               <option value="normal">Kelewatan Biasa (&lt; 3 Kali)</option>
+            </select>
+          </div>
+
+          <div>
+            <select id="filter-tempoh" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 focus:outline-none">
+              <option value="semua">Keseluruhan</option>
+              <option value="minggu">Minggu Ini</option>
+              <option value="bulan">Bulan Ini</option>
             </select>
           </div>
 
@@ -506,6 +564,7 @@
       <h3 style="font-size: 10.5pt; font-weight: bold; text-transform: uppercase; text-decoration: underline; margin-bottom: 10px; letter-spacing: 0.5px;">
         SURAT AMARAN KELEWATAN HADIR KE SEKOLAH
       </h3>
+      <p style="font-size: 9pt; font-weight: bold; text-align: center; margin: -6px 0 8px 0;"><span id="pdf-tempoh-surat">Surat Amaran Kelewatan (KESELURUHAN)</span></p>
 
       <!-- ISI KANDUNGAN -->
       <div style="font-size: 10pt; text-align: justify; line-height: 1.5;">
@@ -527,24 +586,20 @@
           </tbody>
         </table>
 
-        <p style="margin-bottom: 6px; font-weight: bold;">Butiran Kehadiran Terkini:</p>
+        <p style="margin-bottom: 6px; font-weight: bold;">Rekod Kes Kelewatan (Mengikut Tempoh):</p>
         <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px;">
-          <tr>
-            <td style="border: 1px solid #000; padding: 6px; width: 30%; background-color: #f2f2f2; font-weight: bold;">Hari</td>
-            <td style="border: 1px solid #000; padding: 6px;" id="pdf-hari-murid">-</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #000; padding: 6px; background-color: #f2f2f2; font-weight: bold;">Tarikh</td>
-            <td style="border: 1px solid #000; padding: 6px;" id="pdf-tarikh-murid">-</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #000; padding: 6px; background-color: #f2f2f2; font-weight: bold;">Masa Imbas</td>
-            <td style="border: 1px solid #000; padding: 6px;" id="pdf-masa-murid">-</td>
-          </tr>
-          <tr>
-            <td style="border: 1px solid #000; padding: 6px; background-color: #f2f2f2; font-weight: bold;">Status / Punca</td>
-            <td style="border: 1px solid #000; padding: 6px;" id="pdf-punca-murid">-</td>
-          </tr>
+          <thead>
+            <tr style="background-color: #f2f2f2; font-weight: bold;">
+              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 7%;">Bil</th>
+              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 15%;">Hari</th>
+              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 28%;">Tarikh</th>
+              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 25%;">Masa Imbas</th>
+              <th style="border: 1px solid #000; padding: 5px; text-align: center;">Punca</th>
+            </tr>
+          </thead>
+          <tbody id="pdf-rekod-kes">
+            <tr><td colspan="5" style="border:1px solid #000;padding:6px;text-align:center;">Tiada rekod dipaparkan.</td></tr>
+          </tbody>
         </table>
 
         <p style="margin-bottom: 8px;">3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:21 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
@@ -714,6 +769,42 @@
   <script>
     let globalMuridList = [];
     let globalRekodList = [];
+
+    // Tarikh aktif untuk paparan ikut tarikh (format yyyy-mm-dd)
+    let activeDate = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
+
+    function setActiveDate(value) {
+      if (!value) return;
+      activeDate = value;
+      const input = document.getElementById('active-date');
+      if (input) input.value = value;
+      rerenderDateWidgets();
+    }
+
+    function resetToToday() {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      setActiveDate(todayStr);
+    }
+
+    function rerenderDateWidgets() {
+      renderEarlyStudents();
+      renderAbsentStudents();
+      renderTodayTable();
+      renderStreakTracker();
+    }
+
+    // Pulangkan rekod yang tarikhnya sama dengan tarikh diberi
+    function getRekodUntukHari(dateStr) {
+      const targetDate = dateStr || activeDate;
+      return (globalRekodList || []).filter(r => {
+        const t = String(r.tarikhMasa || '');
+        return t.startsWith(targetDate);
+      });
+    }
 
     let todaySortCol = 'waktuHariIni';
     let todaySortAsc = false;
@@ -970,10 +1061,14 @@
           : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
 
         const btnSurat = m.kiraan > 0 
-          ? `<button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', ${m.kiraan}, '${m.waktuHariIni || ''}', '${m.tarikhLewat || ''}', '${m.punca || ''}')" 
-                     class="ml-1.5 px-2 py-1 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-lg shadow-sm transition-all flex items-center gap-1 inline-flex whitespace-nowrap">
-               <i class="fa-solid fa-file-pdf"></i> Surat
-             </button>`
+          ? `<div class="flex flex-col items-end gap-1">
+               <span class="text-[9px] text-slate-400 code-font">Jana Surat:</span>
+               <div class="flex items-center gap-1">
+                 <button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', 'minggu')" title="Surat untuk kes minggu ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
+                 <button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', 'bulan')" title="Surat untuk kes bulan ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
+                 <button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', 'semua')" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+               </div>
+             </div>`
           : '';
 
         tableBody.innerHTML += `
@@ -995,28 +1090,17 @@
       });
     }
 
-    function renderEarlyStudents(dataList) {
+    function renderEarlyStudents() {
       const earlyListEl = document.getElementById('early-student-list');
       const countEl = document.getElementById('early-count');
       if (!earlyListEl || !countEl) return;
 
-      const listToFilter = dataList || globalRekodList || [];
-
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${year}-${month}-${day}`;
+      const listToFilter = getRekodUntukHari(activeDate);
 
       const earlyStudents = listToFilter.filter(item => {
         const timeStr = item.waktuHariIni || item.masa || item.tarikhMasa || '';
 
         if (!timeStr || timeStr.trim() === '' || timeStr === 'N/A') return false;
-
-        if (timeStr.includes('-')) {
-          const datePart = timeStr.split(' ')[0];
-          if (datePart !== todayStr) return false; 
-        }
 
         const match = timeStr.match(/(\d{1,2}):(\d{2})/);
         if (match) {
@@ -1041,7 +1125,8 @@
       countEl.innerText = `${enrichedStudents.length} Orang`;
 
       if (enrichedStudents.length === 0) {
-        earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum 7:21 AM hari ini.</div>`;
+        const dateLabel = formatTarikhLabel(activeDate);
+        earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum 7:21 AM pada ${dateLabel}.</div>`;
         return;
       }
 
@@ -1154,36 +1239,74 @@
       renderTodayTable();
     }
 
-    function getLewatHariIniList() {
-      return globalMuridList.filter(m => {
-        if (!m.lewatHariIni) return false;
-        if (m.punca === "Tepat Masa" || m.status === "HADIR") return false;
+    function getLewatHariIniList(dateStr) {
+      const tgl = dateStr || activeDate;
+      const records = getRekodUntukHari(tgl);
 
-        const timeStr = m.waktuHariIni || '';
+      const map = new Map();
+      records.forEach(r => {
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        if (st === 'HADIR' || r.punca === 'Tepat Masa') return;
+        const timeStr = String(r.tarikhMasa || '').split(' ')[1] || r.waktuHariIni || '';
         const match = timeStr.match(/(\d{1,2}):(\d{2})/);
         if (match) {
           const hours = parseInt(match[1], 10);
           const minutes = parseInt(match[2], 10);
-          if (hours < 7 || (hours === 7 && minutes < 21)) {
-            return false;
-          }
+          if (hours < 7 || (hours === 7 && minutes < 21)) return;
         }
-
-        return true;
+        const key = r.id || r.nama;
+        if (!map.has(key)) {
+          const murid = globalMuridList.find(m => String(m.id) === String(r.id)) || {};
+          map.set(key, {
+            id: r.id || r.nama,
+            nama: r.nama || murid.nama || 'Tanpa Nama',
+            kelas: r.kelas || murid.kelas || 'N/A',
+            urlGambar: murid.urlGambar || '',
+            waktuHariIni: timeStr,
+            punca: r.punca || 'Kelewatan'
+          });
+        }
       });
+
+      // Fallback untuk hari ini sahaja (guna field server)
+      const fn = new Date();
+      const todayStrFx = `${fn.getFullYear()}-${String(fn.getMonth() + 1).padStart(2, '0')}-${String(fn.getDate()).padStart(2, '0')}`;
+      if (tgl === todayStrFx && records.length === 0 && map.size === 0) {
+        (globalMuridList || []).forEach(m => {
+          if (!m.lewatHariIni || m.punca === "Tepat Masa" || m.status === "HADIR") return;
+          const timeStr = m.waktuHariIni || '';
+          const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            const hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            if (hours < 7 || (hours === 7 && minutes < 21)) return;
+          }
+          map.set(m.id, {
+            id: m.id,
+            nama: m.nama,
+            kelas: m.kelas,
+            urlGambar: m.urlGambar || '',
+            waktuHariIni: timeStr,
+            punca: m.punca || 'Kelewatan'
+          });
+        });
+      }
+
+      return Array.from(map.values());
     }
 
     function renderTodayTable() {
       const todayTableBody = document.getElementById('today-table-body');
       if (!todayTableBody) return;
 
-      let list = getLewatHariIniList();
+      let list = getLewatHariIniList(activeDate);
 
       if (list.length === 0) {
+        const dateLabel = formatTarikhLabel(activeDate);
         todayTableBody.innerHTML = `
           <tr>
             <td colspan="6" class="py-8 text-center text-emerald-600 dark:text-emerald-400 code-font">
-              <i class="fa-solid fa-circle-check text-base mr-2"></i> Tiada kelewatan murid sasaran direkodkan hari ini!
+              <i class="fa-solid fa-circle-check text-base mr-2"></i> Tiada kelewatan murid sasaran direkodkan pada ${dateLabel}!
             </td>
           </tr>`;
         return;
@@ -1231,24 +1354,30 @@
 
       const scannedIds = new Set();
 
-      globalRekodList.forEach(r => {
+      getRekodUntukHari(activeDate).forEach(r => {
         if (r.id) scannedIds.add(r.id.trim().toUpperCase());
       });
 
-      globalMuridList.forEach(m => {
-        if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
-          scannedIds.add(m.id.trim().toUpperCase());
-        }
-      });
+      // Fallback hari ini sahaja (guna field server)
+      const nowD = new Date();
+      const todayStr = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(nowD.getDate()).padStart(2, '0')}`;
+      if (scannedIds.size === 0 && activeDate === todayStr) {
+        globalMuridList.forEach(m => {
+          if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+            scannedIds.add(m.id.trim().toUpperCase());
+          }
+        });
+      }
 
       const absentMurid = globalMuridList.filter(m => !scannedIds.has(m.id.trim().toUpperCase()));
 
       if (absentCount) absentCount.textContent = `${absentMurid.length} Orang`;
 
       if (absentMurid.length === 0) {
+        const dateLabel = formatTarikhLabel(activeDate);
         absentList.innerHTML = `
           <div class="col-span-full py-4 text-center text-emerald-600 dark:text-emerald-400 text-xs code-font">
-            <i class="fa-solid fa-circle-check text-base mr-2"></i> Semua murid sasaran telah mengimbas hari ini!
+            <i class="fa-solid fa-circle-check text-base mr-2"></i> Semua murid sasaran telah mengimbas pada ${dateLabel}!
           </div>`;
         return;
       }
@@ -1308,14 +1437,16 @@
           globalRekodList = data.rekodList || data.logs || [];
 
           if (globalRekodList.length === 0 && globalMuridList.length > 0) {
+            const fbDate = activeDate;
             globalMuridList.forEach(m => {
               if (m.kiraan > 0) {
                 for (let i = 0; i < m.kiraan; i++) {
                   globalRekodList.push({
-                    tarikhMasa: m.waktuHariIni || "Terrekod",
+                    tarikhMasa: (fbDate + ' ' + (m.waktuHariIni || '07:30:00')),
                     id: m.id,
                     nama: m.nama,
                     kelas: m.kelas,
+                    status: 'LEWAT',
                     punca: m.punca || "Bangun Lewat",
                     kekerapan: m.kiraan
                   });
@@ -1347,6 +1478,45 @@
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
           setElementText('kpi-tak-hadir', countTakHadir);
+
+          // KPI kes mengikut tempoh (dari data Apps Script / failback kiraan lokal)
+          let kesMI = 0, kesML = 0, kesBI = 0, kesBL = 0, kesSemua = totalKesSum;
+          const hasTempohData = globalMuridList.some(m => (m.kesMingguIni !== undefined) || (m.kesBulanIni !== undefined));
+          if (hasTempohData) {
+            globalMuridList.forEach(m => {
+              kesMI += (m.kesMingguIni || 0);
+              kesML += (m.kesMingguLepas || 0);
+              kesBI += (m.kesBulanIni || 0);
+              kesBL += (m.kesBulanLepas || 0);
+            });
+            kesSemua = totalKesSum;
+          } else {
+            // Failback: kira dari globalRekodList ikut tarikh
+            const today = new Date();
+            const startMinggu = new Date(new Date().setHours(0,0,0,0));
+            const dow = (startMinggu.getDay() + 6) % 7;
+            startMinggu.setDate(startMinggu.getDate() - dow);
+            const startML = new Date(startMinggu); startML.setDate(startMinggu.getDate() - 7);
+            const startBulan = new Date(today.getFullYear(), today.getMonth(), 1);
+            const startBL = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+            globalRekodList.forEach(r => {
+              if (!isKesLewat(r)) return;
+              const t = new Date(String(r.tarikhMasa || '').replace(' ', 'T'));
+              if (!t.getTime()) return;
+              if (t >= startMinggu) kesMI++;
+              else if (t >= startML) kesML++;
+              if (t >= startBulan) kesBI++;
+              else if (t >= startBL && t < startBulan) kesBL++;
+            });
+            kesSemua = totalKesSum;
+          }
+
+          setElementText('kpi-minggu-ini', kesMI);
+          setElementText('kpi-minggu-lepas', kesML);
+          setElementText('kpi-bulan-ini', kesBI);
+          setElementText('kpi-bulan-lepas', kesBL);
+          setElementText('kpi-keseluruhan', kesSemua);
 
           if (timeChart && data.slotWaktu) {
             timeChart.data.datasets[0].data = data.slotWaktu;
@@ -1400,11 +1570,11 @@
             });
           }
 
-          renderEarlyStudents(data.earlyList || globalRekodList);
+          renderEarlyStudents();
           renderAbsentStudents();
           renderTodayTable();
           filterStudents();
-          renderStreakTracker(data.streakList || globalMuridList);
+          renderStreakTracker();
           populateClassFilter();
           applyFilters();
 
@@ -1436,21 +1606,60 @@
       });
     }
 
-    function getGroupedStudentRecords() {
+    // Kira sempadan tempoh (minggu Isnin / bulan)
+    function getTempohBoundaries(tempoh) {
+      const today = new Date();
+      const startMinggu = new Date(today); startMinggu.setHours(0,0,0,0);
+      const dow = (startMinggu.getDay() + 6) % 7;
+      startMinggu.setDate(startMinggu.getDate() - dow);
+      const startBulan = new Date(today.getFullYear(), today.getMonth(), 1);
+      if (tempoh === 'minggu') return startMinggu;
+      if (tempoh === 'bulan') return startBulan;
+      return null;
+    }
+
+    function isKesLewat(r) {
+      const st = String(r.status || 'LEWAT').trim().toUpperCase();
+      if (st === 'HADIR') return false;
+      if (st === 'LEWAT') return true;
+      return !(r.punca === 'Tepat Masa');
+    }
+
+    function countKesForRecord(r, sejak) {
+      if (!isKesLewat(r)) return 0;
+      if (!sejak) return 1;
+      const t = new Date(String(r.tarikhMasa || '').replace(' ', 'T'));
+      return (t.getTime() >= sejak) ? 1 : 0;
+    }
+
+    function getGroupedStudentRecords(tempoh) {
+      tempoh = (tempoh || 'semua').toLowerCase();
+      const sejak = getTempohBoundaries(tempoh);
       const map = new Map();
 
+      // Kira jumlahKes = jumlah kes lewat dalam tempoh (dari rekod)
+      const kesCount = {};
+      globalRekodList.forEach(r => {
+        if (!isKesLewat(r)) return;
+        const key = r.id || r.nama;
+        if (!kesCount[key]) kesCount[key] = 0;
+        kesCount[key] += countKesForRecord(r, sejak);
+      });
+
       globalMuridList.forEach(m => {
-        map.set(m.id || m.nama, {
+        const key = m.id || m.nama;
+        const cnt = kesCount[key] || 0;
+        map.set(key, {
           id: m.id || 'N/A',
           nama: m.nama || 'Tanpa Nama',
           kelas: m.kelas || 'N/A',
-          jumlahKes: m.kiraan || 0,
+          jumlahKes: cnt,
           puncas: new Set()
         });
       });
 
       globalRekodList.forEach(r => {
-        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+        if (!isKesLewat(r)) return;
 
         const key = r.id || r.nama;
         if (!map.has(key)) {
@@ -1458,7 +1667,7 @@
             id: r.id || 'N/A',
             nama: r.nama || 'Tanpa Nama',
             kelas: r.kelas || 'N/A',
-            jumlahKes: r.kekerapan || 1,
+            jumlahKes: 0,
             puncas: new Set()
           });
         }
@@ -1476,8 +1685,9 @@
       const selectedClass = document.getElementById('filter-class')?.value || '';
       const selectedReason = document.getElementById('filter-reason')?.value || '';
       const selectedStatus = document.getElementById('filter-status')?.value || '';
+      const selectedTempoh = document.getElementById('filter-tempoh')?.value || 'semua';
 
-      const grouped = getGroupedStudentRecords();
+      const grouped = getGroupedStudentRecords(selectedTempoh);
 
       const filtered = grouped.filter(student => {
         const matchSearch = !search || 
@@ -1522,10 +1732,14 @@
           : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 whitespace-nowrap">Kelewatan Biasa</span>`;
 
         const btnSurat = isTegar 
-          ? `<button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', ${s.jumlahKes}, '${(globalMuridList.find(mm => String(mm.id) === String(s.id)) || {}).waktuHariIni || ''}', '${(globalMuridList.find(mm => String(mm.id) === String(s.id)) || {}).tarikhLewat || ''}', '${(globalMuridList.find(mm => String(mm.id) === String(s.id)) || {}).punca || ''}')" 
-                     class="ml-1.5 px-2 py-0.5 text-[10px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all inline-flex items-center gap-1 whitespace-nowrap">
-               <i class="fa-solid fa-file-pdf"></i> Surat
-             </button>`
+          ? `<div class="flex flex-col items-end gap-1">
+               <span class="text-[9px] text-slate-400 code-font">Jana Surat:</span>
+               <div class="flex items-center gap-1">
+                 <button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', 'minggu')" title="Surat untuk kes minggu ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
+                 <button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', 'bulan')" title="Surat untuk kes bulan ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
+                 <button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', 'semua')" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+               </div>
+             </div>`
           : '';
 
         const puncasStr = s.puncas.size > 0 ? Array.from(s.puncas).join(', ') : 'Tiada Nyataan / Lain-lain';
@@ -1545,7 +1759,8 @@
     }
 
     function exportToCSV() {
-      const list = getGroupedStudentRecords();
+      const tempoh = document.getElementById('filter-tempoh')?.value || 'semua';
+      const list = getGroupedStudentRecords(tempoh);
       if (list.length === 0) {
         alert("Tiada data rekod untuk dieksport.");
         return;
@@ -1566,12 +1781,53 @@
       document.body.removeChild(link);
     }
 
-    // FUNGSI PENJANAAN PDF
-    async function generateSuratAmaran(nama, kelas, jumlahLewat, masaLewat, tarikhLewat, punca) {
+    // FUNGSI PENJANAAN PDF (ikut tempoh: minggu / bulan / semua)
+    async function generateSuratAmaran(nama, kelas, tempoh) {
       if (typeof html2pdf === 'undefined') {
         alert("Perpustakaan PDF belum dimuatkan. Sila muat semula halaman ini.");
         return;
       }
+
+      tempoh = (tempoh || 'semua').toLowerCase();
+
+      // 1. Cari murid & kumpul kes mengikut tempoh
+      const murid = (globalMuridList || []).find(m => m.nama === nama && m.kelas === kelas)
+                 || (globalMuridList || []).find(m => m.nama === nama);
+      const idMurid = murid ? String(murid.id).trim().toUpperCase() : null;
+
+      const semuaKes = (globalRekodList || []).filter(r => {
+        if (!idMurid) return (r.nama === nama);
+        const rid = String(r.id || '').trim().toUpperCase();
+        return rid === idMurid || r.nama === nama;
+      }).filter(r => {
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        return st === 'LEWAT';
+      });
+
+      // Tentukan tempoh
+      const today = new Date();
+      const startMinggu = new Date(today); startMinggu.setHours(0,0,0,0);
+      const dow = (startMinggu.getDay() + 6) % 7;
+      startMinggu.setDate(startMinggu.getDate() - dow);
+      const startBulan = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      let filtered = semuaKes;
+      let tempohLabel = 'KESELURUHAN';
+      if (tempoh === 'minggu') { filtered = semuaKes.filter(r => (new Date(String(r.tarikhMasa||'').replace(' ','T')) >= startMinggu)); tempohLabel = 'MINGGU INI'; }
+      else if (tempoh === 'bulan') { filtered = semuaKes.filter(r => (new Date(String(r.tarikhMasa||'').replace(' ','T')) >= startBulan)); tempohLabel = 'BULAN INI'; }
+
+      // Susun ikut hari bekerja (Isnin->Jumaat), kemudian mengikut tarikh/masa
+      const dayOrder = [6, 0, 1, 2, 3, 4, 5]; // getDay(): Ahd=0,Isn=1... => priority
+      filtered.sort((a, b) => {
+        const da = new Date(String(a.tarikhMasa || '').replace(' ', 'T'));
+        const db = new Date(String(b.tarikhMasa || '').replace(' ', 'T'));
+        const oa = dayOrder[da.getDay()];
+        const ob = dayOrder[db.getDay()];
+        if (oa !== ob) return oa - ob;
+        return da - db;
+      });
+
+      const jumlahLewat = filtered.length;
 
       const logoImg = document.getElementById('pdf-logo-img');
       if (logoImg && !logoImg.src.startsWith('data:')) {
@@ -1597,30 +1853,46 @@
 
       document.getElementById('pdf-nama-murid').innerText = nama;
       document.getElementById('pdf-kelas-murid').innerText = kelas;
+      document.getElementById('pdf-tempoh-surat').innerText = "Surat Amaran Kelewatan (" + tempohLabel + ")";
       document.getElementById('pdf-jumlah-lewat').innerText = jumlahLewat + " Kali";
       document.getElementById('pdf-tarikh-surat').innerText = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
 
-      const evidens = new Date(tarikhLewat || Date.now());
-
+      // Jadual rekod kes (semua kes dalam tempoh)
+      const rekodBody = document.getElementById('pdf-rekod-kes');
       const hariMs = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
-      const hariName = hariMs[evidens.getDay()];
-      const tarikhFull = evidens.toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
-
-      document.getElementById('pdf-hari-murid').innerText = hariName;
-      document.getElementById('pdf-tarikh-murid').innerText = tarikhFull;
-      document.getElementById('pdf-masa-murid').innerText = (masaLewat || 'Terrekod');
-      document.getElementById('pdf-punca-murid').innerText = (punca || 'Kelewatan');
+      if (rekodBody) {
+        if (filtered.length === 0) {
+          rekodBody.innerHTML = `<tr><td colspan="5" style="border:1px solid #000;padding:6px;text-align:center;">Tiada kes kelewatan direkodkan bagi tempoh ini.</td></tr>`;
+        } else {
+          let rows = '';
+          filtered.forEach((k, i) => {
+            const dt = new Date(String(k.tarikhMasa || '').replace(' ', 'T'));
+            const hak = hakNyata(dt, hariMs);
+            const tarikhS = dt.toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
+            const masaOnly = String(k.tarikhMasa || '').includes(' ') ? String(k.tarikhMasa).split(' ')[1] : String(k.tarikhMasa || '-');
+            const puncaK = k.punca || 'Kelewatan';
+            rows += `<tr>
+              <td style="border:1px solid #000;padding:5px;text-align:center;">${i + 1}</td>
+              <td style="border:1px solid #000;padding:5px;text-align:center;">${hak}</td>
+              <td style="border:1px solid #000;padding:5px;text-align:center;">${tarikhS}</td>
+              <td style="border:1px solid #000;padding:5px;text-align:center;">${masaOnly} pagi</td>
+              <td style="border:1px solid #000;padding:5px;">${puncaK}</td>
+            </tr>`;
+          });
+          rekodBody.innerHTML = rows;
+        }
+      }
 
       const element = document.getElementById('surat-amaran-pdf');
       const wrapper = document.getElementById('pdf-wrapper');
-      
+
       wrapper.style.cssText = 'position: fixed; left: 0; top: 0; right: auto; bottom: auto; width: 190mm; background: #ffffff; visibility: visible; opacity: 1; z-index: 9999;';
 
       await new Promise(r => setTimeout(r, 300));
 
       const opt = {
         margin:       [8, 8, 8, 8],
-        filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -1637,36 +1909,90 @@
       }
     }
 
-    function renderStreakTracker(list) {
+    // Fungsi bantu: nama hari dengan sokongan tarikh pelik & UTC
+    function hakNyata(d, hariMs) {
+      if (!d || isNaN(d.getTime())) return '-';
+      return hariMs[d.getDay()];
+    }
+
+    function renderStreakTracker() {
       const container = document.getElementById('streak-container');
       if (!container) return;
 
-      const weeklyHeroes = (list || []).filter(m => (m.streakHari && m.streakHari > 0) || (m.kiraan === 0));
+      // Tentukan sempadan minggu bagi tarikh aktif (bermula Isnin)
+      const activeD = new Date(activeDate + 'T00:00:00');
+      if (isNaN(activeD.getTime())) activeD = new Date();
+      const startWeek = new Date(activeD);
+      startWeek.setHours(0, 0, 0, 0);
+      const dow = (startWeek.getDay() + 6) % 7;
+      startWeek.setDate(startWeek.getDate() - dow);
+      const endWeek = new Date(startWeek);
+      endWeek.setDate(startWeek.getDate() + 6);
+      endWeek.setHours(23, 59, 59, 999);
+
+      // Kumpulkan rekod dalam minggu ini
+      const weekRecords = (globalRekodList || []).filter(r => {
+        const t = new Date(String(r.tarikhMasa || '').replace(' ', 'T'));
+        return t.getTime() >= startWeek.getTime() && t.getTime() <= endWeek.getTime();
+      });
+
+      function isKesLewatRec(r) {
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        if (st === 'HADIR') return false;
+        if (st === 'LEWAT') return true;
+        return !(r.punca === 'Tepat Masa');
+      }
+
+      function isAwal(r) {
+        const timeStr = String(r.tarikhMasa || '').split(' ')[1] || '';
+        const m = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (!m) return false;
+        const h = parseInt(m[1], 10), min = parseInt(m[2], 10);
+        return (h < 7 || (h === 7 && min < 21));
+      }
+
+      // Himpun per murid: kes lewat, hari awal, hari hadir dalam minggu
+      const stats = {};
+      weekRecords.forEach(r => {
+        const key = r.id || r.nama;
+        if (!stats[key]) stats[key] = { kes: 0, awalSet: new Set(), hadirSet: new Set() };
+        const s = stats[key];
+        if (r.id) s.hadirSet.add(r.id.trim().toUpperCase() + '|' + String(r.tarikhMasa || '').slice(0, 10));
+        if (isKesLewatRec(r)) s.kes += 1;
+        if (isAwal(r)) s.awalSet.add(String(r.tarikhMasa || '').slice(0, 10));
+      });
+
+      const weeklyHeroes = (globalMuridList || []).map(m => {
+        const s = stats[m.id || m.nama] || { kes: 0, awalSet: new Set(), hadirSet: new Set() };
+        return {
+          ...m,
+          _kes: s.kes,
+          _hariAwal: s.awalSet.size,
+          _hariHadir: s.hadirSet.size
+        };
+      }).filter(m => m._kes === 0 && m._hariHadir > 0);
 
       if (weeklyHeroes.length === 0) {
+        const dateLabel = formatTarikhLabel(activeDate);
         container.innerHTML = `
           <div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">
-            <i class="fa-solid fa-info-circle mr-1"></i> Tiada penerima Penghargaan Mingguan buat masa ini.
+            <i class="fa-solid fa-info-circle mr-1"></i> Tiada penerima Penghargaan Sahsiah pada minggu ${dateLabel}.
           </div>`;
         return;
       }
 
       weeklyHeroes.sort((a, b) => {
-        const streakA = a.streakHari || 0;
-        const streakB = b.streakHari || 0;
-        if (streakB !== streakA) return streakB - streakA;
-        const kesA = a.kiraan || 0;
-        const kesB = b.kiraan || 0;
-        if (kesA !== kesB) return kesA - kesB;
+        if (b._hariAwal !== a._hariAwal) return b._hariAwal - a._hariAwal;
+        if (a._kes !== b._kes) return a._kes - b._kes;
         return (a.nama || '').localeCompare(b.nama || '');
       });
 
       container.innerHTML = '';
 
       weeklyHeroes.forEach((m, index) => {
-        const streakSemasa = m.streakHari || 0;
+        const streakSemasa = m._hariAwal || 0;
         const daysInWeek = streakSemasa > 5 ? 5 : streakSemasa;
-        const isFullWeek = daysInWeek === 5 || m.kiraan === 0;
+        const isFullWeek = daysInWeek === 5;
 
         let badgeColor = isFullWeek ? 'from-amber-500 to-orange-500' : 'from-emerald-500 to-teal-500';
         let badgeTitle = isFullWeek ? '🏆 Bintang Mingguan (Lengkap 5 Hari)' : '⭐ Istiqamah Minggu Ini';
@@ -1703,6 +2029,13 @@
           </div>
         `;
       });
+    }
+
+    // Label tarikh yang mesra (ms-MY)
+    function formatTarikhLabel(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
     }
 
     // OPERASI MODAL KETETAPAN ADMIN
@@ -1763,6 +2096,10 @@
 
     // INISIALISASI APLIKASI
     document.addEventListener('DOMContentLoaded', () => {
+      // Tetapkan tarikh aktif awal pada pemilih tarikh
+      const dateInput = document.getElementById('active-date');
+      if (dateInput) dateInput.value = activeDate;
+
       // Semak status pendaftaran masuk admin
       if (localStorage.getItem('qtiba_admin_auth') !== 'true') {
         document.getElementById('login-modal').classList.remove('hidden');
