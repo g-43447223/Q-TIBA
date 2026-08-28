@@ -795,6 +795,8 @@
       renderAbsentStudents();
       renderTodayTable();
       renderStreakTracker();
+      // Kemas kini KPI "Tak Hadir" supaya seiring dengan tarikh aktif.
+      setElementText('kpi-tak-hadir', calculateAbsentCount(activeDate));
     }
 
     // Pulangkan rekod yang tarikhnya sama dengan tarikh diberi
@@ -806,11 +808,65 @@
       });
     }
 
+    // Kira bilangan murid "tak hadir" untuk tarikh diberi (konsisten dengan renderAbsentStudents).
+    function calculateAbsentCount(dateStr) {
+      const tgl = dateStr || activeDate;
+      const scannedIds = new Set();
+      getRekodUntukHari(tgl).forEach(r => {
+        if (r.id) scannedIds.add(r.id.trim().toUpperCase());
+      });
+      if (scannedIds.size === 0 && tgl === getTodayDateStr()) {
+        (globalMuridList || []).forEach(m => {
+          if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+            scannedIds.add(m.id.trim().toUpperCase());
+          }
+        });
+      }
+      return (globalMuridList || []).filter(m => !scannedIds.has(String(m.id || '').trim().toUpperCase())).length;
+    }
+
+    function getTodayDateStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
     let todaySortCol = 'waktuHariIni';
     let todaySortAsc = false;
 
     let targetSortCol = 'nama';
     let targetSortAsc = true;
+
+    // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
+
+    // Bina URL API lengkap dengan apiKey (#2) sebagai query param.
+    function buildApiUrl(params) {
+      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      return `${API_URL}?${new URLSearchParams(p).toString()}`;
+    }
+
+    // Baca token sesi admin yang disimpan semasa log masuk (#3).
+    function getAdminSessionToken() {
+      return localStorage.getItem('qtiba_admin_token') || '';
+    }
+
+    // Elak XSS (#4): buang aksara yang boleh menjadi HTML/JS dalam innerHTML.
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Elak CSV injection (#4): neutralkan = + - @ dan petik semula bila perlu.
+    function sanitizeCsv(str) {
+      let s = String(str == null ? '' : str).replace(/"/g, "'");
+      if (/^[=+\-@]/.test(s)) {
+        s = "'" + s;
+      }
+      return s;
+    }
 
     // SETUP TEACHER TEMPLATE
     const teacherTemplate = document.getElementById('teacher-team-template')?.content;
@@ -834,12 +890,15 @@
       spinner.classList.remove('hidden');
 
       try {
-        const res = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(email)}&pin=${encodeURIComponent(pin)}`);
+        const res = await fetch(buildApiUrl({ action: 'verifyAdmin', email: email, pin: pin }));
         const data = await res.json();
 
         if (data.status === "Success" && data.authorized) {
           localStorage.setItem('qtiba_admin_auth', 'true');
           localStorage.setItem('qtiba_admin_user', email);
+          if (data.token) {
+            localStorage.setItem('qtiba_admin_token', data.token);
+          }
           
           document.getElementById('login-modal').classList.add('hidden');
           fetchLiveData();
@@ -859,6 +918,7 @@
     function logoutAdmin() {
       localStorage.removeItem('qtiba_admin_auth');
       localStorage.removeItem('qtiba_admin_user');
+      localStorage.removeItem('qtiba_admin_token');
       window.location.href = "parent.html";
     }
 
@@ -1064,9 +1124,9 @@
           ? `<div class="flex flex-col items-end gap-1">
                <span class="text-[9px] text-slate-400 code-font">Jana Surat:</span>
                <div class="flex items-center gap-1">
-                 <button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', 'minggu')" title="Surat untuk kes minggu ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
-                 <button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', 'bulan')" title="Surat untuk kes bulan ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
-                 <button onclick="generateSuratAmaran('${m.nama.replace(/'/g, "\\'")}', '${m.kelas}', 'semua')" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="minggu" title="Surat untuk kes minggu ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
+                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="bulan" title="Surat untuk kes bulan ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
+                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="semua" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
                </div>
              </div>`
           : '';
@@ -1074,15 +1134,15 @@
         tableBody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 code-font">${index + 1}</td>
-            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.id)}</td>
             <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
               <img src="${userImg}" 
-                   alt="${m.nama}" 
+                   alt="${escapeHtml(m.nama)}" 
                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-cyan-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <span class="text-xs sm:text-sm tracking-wide truncate">${m.nama}</span>
+              <span class="text-xs sm:text-sm tracking-wide truncate">${escapeHtml(m.nama)}</span>
             </td>
-            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
+            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
             <td class="py-3 text-center text-blue-600 dark:text-cyan-400 font-bold code-font">${m.kiraan}</td>
             <td class="py-3 text-right flex items-center justify-end gap-1">${statusBadge} ${btnSurat}</td>
           </tr>
@@ -1165,8 +1225,8 @@
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
               <div class="truncate min-w-0">
-                <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide leading-snug">${item.nama}</h4>
-                <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5 truncate">${item.kelas}</p>
+                <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide leading-snug">${escapeHtml(item.nama)}</h4>
+                <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5 truncate">${escapeHtml(item.kelas)}</p>
               </div>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -1333,15 +1393,15 @@
         todayTableBody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 code-font">${idx + 1}</td>
-            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.id)}</td>
             <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
               <img src="${userImg}" 
                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <span class="text-xs sm:text-sm tracking-wide truncate">${m.nama}</span>
+              <span class="text-xs sm:text-sm tracking-wide truncate">${escapeHtml(m.nama)}</span>
             </td>
-            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
-            <td class="py-3 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${m.waktuHariIni || 'Terrekod'}</td>
+            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
+            <td class="py-3 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${escapeHtml(m.waktuHariIni || 'Terrekod')}</td>
             <td class="py-3 text-right font-bold code-font text-slate-700 dark:text-slate-300">${m.kiraan} Kes</td>
           </tr>`;
       });
@@ -1391,12 +1451,12 @@
         absentList.innerHTML += `
           <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-transform">
             <img src="${avatarUrl}" 
-                 alt="${m.nama}" 
+                 alt="${escapeHtml(m.nama)}" 
                  class="w-10 h-10 rounded-full object-cover border-2 border-rose-300 dark:border-rose-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0"
                  onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
             <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">${m.nama}</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${m.kelas}</p>
+              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">${escapeHtml(m.nama)}</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${escapeHtml(m.kelas)}</p>
             </div>
             <span class="text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold code-font whitespace-nowrap flex-shrink-0">
               <i class="fa-solid fa-ban mr-1"></i>TAK HADIR
@@ -1421,7 +1481,7 @@
 
       try {
         updateSyncStatus("Memuatkan Data...", "text-amber-500");
-        const response = await fetch(API_URL);
+        const response = await fetch(buildApiUrl({}));
 
         if (!response.ok) throw new Error("Gagal menyambung ke server Google");
 
@@ -1462,18 +1522,13 @@
           let countBebasLewat = 0;
           let countTakHadir = 0;
 
-          const scannedIdsToday = new Set();
-          globalRekodList.forEach(r => { if (r.id) scannedIdsToday.add(r.id.trim().toUpperCase()); });
-
+          // Bilangan tak hadir: gunakan logik yang SAMA dengan renderAbsentStudents.
           globalMuridList.forEach(m => {
             totalKesSum += (m.kiraan || 0);
             if ((m.kiraan || 0) === 0) countBebasLewat++;
-            if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
-              scannedIdsToday.add(m.id.trim().toUpperCase());
-            }
           });
 
-          countTakHadir = globalMuridList.filter(m => !scannedIdsToday.has(m.id.trim().toUpperCase())).length;
+          countTakHadir = calculateAbsentCount(activeDate);
 
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
@@ -1556,13 +1611,13 @@
                 <div class="p-3 sm:p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform">
                   <div class="relative mb-2">
                     <img src="${avatarUrl}" 
-                         alt="${m.nama}" 
+                         alt="${escapeHtml(m.nama)}" 
                          class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-slate-200 dark:bg-slate-900 border-4 border-amber-400 ring-4 ring-amber-400/20 object-cover shadow-md"
                          onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
                     <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] sm:text-[10px] ${rankColor} border px-2 py-0.5 rounded-full code-font whitespace-nowrap shadow-md">${rankBadge}</span>
                   </div>
-                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${m.nama}</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate w-full">${m.kelas}</p>
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${escapeHtml(m.nama)}</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate w-full">${escapeHtml(m.kelas)}</p>
                   <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
                     <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
                   </p>
@@ -1769,7 +1824,7 @@
       let csv = 'ID Murid,Nama Murid,Kelas,Punca Kelewatan,Jumlah Kes Kelewatan\n';
       list.forEach(s => {
         const puncasStr = s.puncas.size > 0 ? Array.from(s.puncas).join('; ') : 'Tiada Nyataan';
-        csv += `"${s.id || ''}","${s.nama || ''}","${s.kelas || ''}","${puncasStr}","${s.jumlahKes || 0}"\n`;
+        csv += `"${sanitizeCsv(s.id)}","${sanitizeCsv(s.nama)}","${sanitizeCsv(s.kelas)}","${sanitizeCsv(puncasStr)}","${sanitizeCsv(s.jumlahKes || 0)}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1781,19 +1836,27 @@
       document.body.removeChild(link);
     }
 
+    // Baca id & tempoh daripada butang, lalu jana surat (elak injeksi via attribute).
+    function generateSuratAmaranFrom(btn) {
+      const id = btn ? btn.getAttribute('data-murid-id') || '' : '';
+      const tempoh = btn ? btn.getAttribute('data-tempoh') || 'semua' : 'semua';
+      generateSuratAmaran(id, tempoh);
+    }
+
     // FUNGSI PENJANAAN PDF (ikut tempoh: minggu / bulan / semua)
-    async function generateSuratAmaran(nama, kelas, tempoh) {
+    async function generateSuratAmaran(idMurid, tempoh) {
       if (typeof html2pdf === 'undefined') {
         alert("Perpustakaan PDF belum dimuatkan. Sila muat semula halaman ini.");
         return;
       }
 
       tempoh = (tempoh || 'semua').toLowerCase();
+      idMurid = String(idMurid || '').trim().toUpperCase();
 
       // 1. Cari murid & kumpul kes mengikut tempoh
-      const murid = (globalMuridList || []).find(m => m.nama === nama && m.kelas === kelas)
-                 || (globalMuridList || []).find(m => m.nama === nama);
-      const idMurid = murid ? String(murid.id).trim().toUpperCase() : null;
+      const murid = (globalMuridList || []).find(m => String(m.id || '').trim().toUpperCase() === idMurid);
+      const nama = murid ? murid.nama : 'Murid';
+      const kelas = murid ? murid.kelas : '';
 
       const semuaKes = (globalRekodList || []).filter(r => {
         if (!idMurid) return (r.nama === nama);
@@ -1875,8 +1938,8 @@
               <td style="border:1px solid #000;padding:5px;text-align:center;">${i + 1}</td>
               <td style="border:1px solid #000;padding:5px;text-align:center;">${hak}</td>
               <td style="border:1px solid #000;padding:5px;text-align:center;">${tarikhS}</td>
-              <td style="border:1px solid #000;padding:5px;text-align:center;">${masaOnly} pagi</td>
-              <td style="border:1px solid #000;padding:5px;">${puncaK}</td>
+              <td style="border:1px solid #000;padding:5px;text-align:center;">${escapeHtml(masaOnly)} pagi</td>
+              <td style="border:1px solid #000;padding:5px;">${escapeHtml(puncaK)}</td>
             </tr>`;
           });
           rekodBody.innerHTML = rows;
@@ -2013,8 +2076,8 @@
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
               <div class="truncate min-w-0">
-                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide">${m.nama}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${m.kelas}</p>
+                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide">${escapeHtml(m.nama)}</h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${escapeHtml(m.kelas)}</p>
               </div>
             </div>
             <div class="text-right flex-shrink-0 ml-2 flex flex-col items-end gap-1">
@@ -2068,7 +2131,7 @@
       const newPin = document.getElementById('pin-new').value;
 
       try {
-        const res = await fetch(`${API_URL}?action=changePin&email=${encodeURIComponent(email)}&currentPin=${encodeURIComponent(currentPin)}&newPin=${encodeURIComponent(newPin)}`);
+        const res = await fetch(buildApiUrl({ action: 'changePin', email: email, currentPin: currentPin, newPin: newPin, token: getAdminSessionToken() }));
         const data = await res.json();
         alert(data.message || "Keputusan diproses.");
         if (data.status === 'Success') closeAdminSettings();
@@ -2085,7 +2148,7 @@
       const adminPin = document.getElementById('reg-my-pin').value;
 
       try {
-        const res = await fetch(`${API_URL}?action=registerAdmin&newEmail=${encodeURIComponent(newEmail)}&newPin=${encodeURIComponent(newPin)}&adminEmail=${encodeURIComponent(adminEmail)}&adminPin=${encodeURIComponent(adminPin)}`);
+        const res = await fetch(buildApiUrl({ action: 'registerAdmin', newEmail: newEmail, newPin: newPin, adminEmail: adminEmail, adminPin: adminPin, token: getAdminSessionToken() }));
         const data = await res.json();
         alert(data.message || "Keputusan diproses.");
         if (data.status === 'Success') closeAdminSettings();
