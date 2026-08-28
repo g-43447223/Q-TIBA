@@ -311,6 +311,48 @@
     let globalMuridList = [];
     let globalRekodList = [];
 
+    // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
+
+    // Bina URL API lengkap dengan apiKey (#2) sebagai query param.
+    function buildApiUrl(params) {
+      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      return `${API_URL}?${new URLSearchParams(p).toString()}`;
+    }
+
+    // Elak XSS (#4): buang aksara yang boleh menjadi HTML/JS dalam innerHTML.
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Elak CSV injection (#4): neutralkan = + - @ dan petik semula bila perlu.
+    function sanitizeCsv(str) {
+      let s = String(str == null ? '' : str).replace(/"/g, "'");
+      if (/^[=+\-@]/.test(s)) {
+        s = "'" + s;
+      }
+      return s;
+    }
+
+    // Tarikh hari ini dalam format yyyy-MM-dd.
+    function getTodayDateStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Pulangkan rekod yang tarikhnya sama dengan tarikh diberi (default hari ini).
+    function getRekodUntukHari(dateStr) {
+      const targetDate = dateStr || getTodayDateStr();
+      return (globalRekodList || []).filter(r => {
+        const t = String(r.tarikhMasa || '');
+        return t.startsWith(targetDate);
+      });
+    }
+
     let todaySortCol = 'waktuHariIni';
     let todaySortAsc = false;
 
@@ -455,8 +497,8 @@
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
               <div class="truncate min-w-0">
-                <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide leading-snug">${item.nama}</h4>
-                <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5 truncate">${item.kelas}</p>
+                <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide leading-snug">${escapeHtml(item.nama)}</h4>
+                <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5 truncate">${escapeHtml(item.kelas)}</p>
               </div>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -546,15 +588,15 @@
         todayTableBody.innerHTML += `
           <tr class="hover:bg-slate-500/5 transition-colors">
             <td class="py-3 code-font">${idx + 1}</td>
-            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.id}</td>
+            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.id)}</td>
             <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
               <img src="${userImg}" 
                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
                    onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <span class="text-xs sm:text-sm tracking-wide truncate">${m.nama}</span>
+              <span class="text-xs sm:text-sm tracking-wide truncate">${escapeHtml(m.nama)}</span>
             </td>
-            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${m.kelas}</td>
-            <td class="py-3 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${m.waktuHariIni || 'Terrekod'}</td>
+            <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
+            <td class="py-3 text-center text-amber-600 dark:text-amber-400 font-bold code-font">${escapeHtml(m.waktuHariIni || 'Terrekod')}</td>
             <td class="py-3 text-right font-bold code-font text-slate-700 dark:text-slate-300">${m.kiraan} Kes</td>
           </tr>`;
       });
@@ -567,15 +609,21 @@
 
       const scannedIds = new Set();
 
-      globalRekodList.forEach(r => {
+      // Hanya rekod HARI INI sahaja (konsisten dengan paparan index).
+      getRekodUntukHari().forEach(r => {
         if (r.id) scannedIds.add(r.id.trim().toUpperCase());
       });
 
-      globalMuridList.forEach(m => {
-        if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
-          scannedIds.add(m.id.trim().toUpperCase());
-        }
-      });
+      // Fallback: field server untuk hari ini (ditset oleh backend pada rekod hari ini).
+      const todayStr = getTodayDateStr();
+      const todayRecords = getRekodUntukHari(todayStr);
+      if (scannedIds.size === 0 && todayRecords.length === 0) {
+        globalMuridList.forEach(m => {
+          if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+            scannedIds.add(m.id.trim().toUpperCase());
+          }
+        });
+      }
 
       const absentMurid = globalMuridList.filter(m => !scannedIds.has(m.id.trim().toUpperCase()));
 
@@ -598,12 +646,12 @@
         absentList.innerHTML += `
           <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-transform">
             <img src="${avatarUrl}" 
-                 alt="${m.nama}" 
+                 alt="${escapeHtml(m.nama)}" 
                  class="w-10 h-10 rounded-full object-cover border-2 border-rose-300 dark:border-rose-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0"
                  onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
             <div class="min-w-0 flex-1">
-              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">${m.nama}</p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${m.kelas}</p>
+              <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">${escapeHtml(m.nama)}</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${escapeHtml(m.kelas)}</p>
             </div>
             <span class="text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold code-font whitespace-nowrap flex-shrink-0">
               <i class="fa-solid fa-ban mr-1"></i>TAK HADIR
@@ -662,8 +710,8 @@
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
               <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
               <div class="truncate min-w-0">
-                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide">${m.nama}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${m.kelas}</p>
+                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide">${escapeHtml(m.nama)}</h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${escapeHtml(m.kelas)}</p>
               </div>
             </div>
             <div class="text-right flex-shrink-0 ml-2 flex flex-col items-end gap-1">
@@ -689,7 +737,7 @@
 
       try {
         updateSyncStatus("Memuatkan Data...", "text-amber-500");
-        const response = await fetch(API_URL);
+        const response = await fetch(buildApiUrl({}));
 
         if (!response.ok) throw new Error("Gagal menyambung ke server Google");
 
@@ -712,15 +760,21 @@
           let countTakHadir = 0;
 
           const scannedIdsToday = new Set();
-          globalRekodList.forEach(r => { if (r.id) scannedIdsToday.add(r.id.trim().toUpperCase()); });
+          getRekodUntukHari().forEach(r => { if (r.id) scannedIdsToday.add(r.id.trim().toUpperCase()); });
 
           globalMuridList.forEach(m => {
             totalKesSum += (m.kiraan || 0);
             if ((m.kiraan || 0) === 0) countBebasLewat++;
-            if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
-              scannedIdsToday.add(m.id.trim().toUpperCase());
-            }
           });
+
+          // Fallback field server (waktu/lewat hari ini) hanya jika tiada rekod — sama seperti senarai bawah.
+          if (scannedIdsToday.size === 0) {
+            globalMuridList.forEach(m => {
+              if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+                scannedIdsToday.add(m.id.trim().toUpperCase());
+              }
+            });
+          }
 
           countTakHadir = globalMuridList.filter(m => !scannedIdsToday.has(m.id.trim().toUpperCase())).length;
 
@@ -755,13 +809,13 @@
                 <div class="p-3 sm:p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform">
                   <div class="relative mb-2">
                     <img src="${avatarUrl}" 
-                         alt="${m.nama}" 
+                         alt="${escapeHtml(m.nama)}" 
                          class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-slate-200 dark:bg-slate-900 border-4 border-amber-400 ring-4 ring-amber-400/20 object-cover shadow-md"
                          onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
                     <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] sm:text-[10px] ${rankColor} border px-2 py-0.5 rounded-full code-font whitespace-nowrap shadow-md">${rankBadge}</span>
                   </div>
-                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${m.nama}</h4>
-                  <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate w-full">${m.kelas}</p>
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${escapeHtml(m.nama)}</h4>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate w-full">${escapeHtml(m.kelas)}</p>
                   <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
                     <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
                   </p>
