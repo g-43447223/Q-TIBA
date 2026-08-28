@@ -347,6 +347,15 @@
           <span id="sp-tarikh" class="font-bold code-font text-slate-800 dark:text-white">—</span>
         </div>
       </div>
+
+      <div class="mt-4">
+        <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">
+          <i class="fa-solid fa-clock-rotate-left mr-1.5 text-cyan-500"></i> Rekod Kelewatan Terkini
+        </h4>
+        <div id="sp-rekod" class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+          <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -518,7 +527,39 @@
       setElementText('sp-punca', punca);
       setElementText('sp-tarikh', tarikh);
 
+      renderStudentRekod(idMurid);
+
       modal.classList.remove('hidden');
+    }
+
+    // Senarai rekod kelewatan terkini murid (untuk profil).
+    function renderStudentRekod(idMurid) {
+      const el = document.getElementById('sp-rekod');
+      if (!el) return;
+      const recs = (globalRekodList || [])
+        .filter(r => String(r.id || '') === String(idMurid))
+        .sort((a, b) => String(b.tarikhMasa || '').localeCompare(String(a.tarikhMasa || '')))
+        .slice(0, 10);
+
+      if (recs.length === 0) {
+        el.innerHTML = `<div class="text-center text-emerald-500 code-font py-2 text-xs"><i class="fa-solid fa-circle-check mr-1"></i> Tiada rekod kelewatan.</div>`;
+        return;
+      }
+
+      el.innerHTML = recs.map(r => {
+        const tm = String(r.tarikhMasa || '');
+        const dateOnly = tm.slice(0, 10);
+        const timeOnly = tm.includes(' ') ? tm.split(' ')[1] : '';
+        const mm = timeOnly.match(/(\d{1,2}):(\d{2})/);
+        const isLate = mm ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21)) : (String(r.status || '').toUpperCase() === 'LEWAT');
+        const warna = isLate ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10';
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl border ${warna}">
+            <span class="text-[11px] font-bold code-font">${escapeHtml(dateOnly)}</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${escapeHtml(r.punca || '—')}</span>
+            <span class="text-[10px] font-black code-font">${timeOnly || '—'}</span>
+          </div>`;
+      }).join('');
     }
 
     function closeStudentProfile() {
