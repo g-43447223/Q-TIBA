@@ -386,6 +386,68 @@
           <div class="relative w-full h-60 sm:h-64 flex items-center justify-center">
             <canvas id="classChart"></canvas>
           </div>
+          <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 code-font">💡 Klik pada bar kelas untuk lihat senarai murid.</p>
+        </div>
+      </div>
+
+      <!-- RINGKASAN INTERVENSI (nota auto) -->
+      <div id="intervention-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+
+      <!-- KERERAPAN PER MURID + PERBANDINGAN HARI -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+            <i class="fa-solid fa-users mr-1.5 text-amber-500"></i> Kekerapan Kelewatan Per Murid
+          </h3>
+          <div class="h-64 relative w-full">
+            <canvas id="freqChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+            <i class="fa-solid fa-calendar-days mr-1.5 text-emerald-500"></i> Perbandingan Hari Dalam Minggu
+          </h3>
+          <div class="h-64 relative w-full">
+            <canvas id="dayChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRILL-DOWN KELAS -->
+      <div id="class-drilldown" class="glass-card rounded-2xl p-4 sm:p-5 hidden">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            <i class="fa-solid fa-users-gear mr-1.5 text-cyan-500"></i> Murid Lepas dalam Kelas <span id="dd-kelas-name" class="text-cyan-500">—</span>
+          </h3>
+          <button onclick="closeClassDrilldown()" class="text-[11px] font-bold text-rose-500 hover:text-rose-600 transition-colors"><i class="fa-solid fa-xmark mr-1"></i>Tutup</button>
+        </div>
+        <div id="dd-list" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- SENARAI MURID BERISIKO -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-500"></i> Senarai Murid Berisiko (Untuk Intervensi)
+          </h3>
+          <span class="text-[10px] text-slate-400 code-font">Isih ikut jumlah kes</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="text-[10px] uppercase tracking-wider text-slate-400">
+              <tr class="border-b border-slate-200 dark:border-slate-700">
+                <th class="pb-2 pr-2">#</th>
+                <th class="pb-2 pr-2">Nama</th>
+                <th class="pb-2 pr-2">Kelas</th>
+                <th class="pb-2 pr-2 text-center">Kes Minggu</th>
+                <th class="pb-2 pr-2 text-center">Kes Bulan</th>
+                <th class="pb-2 pr-2 text-center">Jumlah</th>
+                <th class="pb-2 text-center">Amaran</th>
+              </tr>
+            </thead>
+            <tbody id="atrisk-tbody" class="text-xs"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -806,6 +868,15 @@
           <span id="sp-tarikh" class="font-bold code-font text-slate-800 dark:text-white">—</span>
         </div>
       </div>
+
+      <div class="mt-4">
+        <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">
+          <i class="fa-solid fa-clock-rotate-left mr-1.5 text-cyan-500"></i> Rekod Kelewatan Terkini
+        </h4>
+        <div id="sp-rekod" class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+          <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -991,6 +1062,8 @@
           trendChart.resize(); 
           reasonChart.resize();
           classChart.resize();
+          if (freqChart) freqChart.resize();
+          if (dayChart) dayChart.resize();
         }, 100);
       }
     }
@@ -1080,10 +1153,45 @@
       options: { 
         responsive: true, 
         maintainAspectRatio: false,
+        onClick: (evt, items) => {
+          if (items && items.length > 0) {
+            const idx = items[0].index;
+            const label = classChart.data.labels[idx];
+            if (label) showClassDrilldown(label);
+          }
+        },
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     }) : null;
+
+    const ctxFreq = document.getElementById('freqChart')?.getContext('2d');
+    let freqChart = ctxFreq ? new Chart(ctxFreq, {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: 'Bilangan Kes', data: [], backgroundColor: '#f59e0b', borderRadius: 4 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { display: false } } }
+      }
+    }) : null;
+
+    const ctxDay = document.getElementById('dayChart')?.getContext('2d');
+    let dayChart = ctxDay ? new Chart(ctxDay, {
+      type: 'bar',
+      data: {
+        labels: ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat'],
+        datasets: [{ label: 'Bilangan Kes', data: [0, 0, 0, 0, 0], backgroundColor: ['#34d399', '#34d399', '#34d399', '#34d399', '#34d399'], borderRadius: 6 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    }) : null;
+
 
     function setElementText(id, value) {
       const el = document.getElementById(id);
@@ -1288,7 +1396,7 @@
     }
 
     function updateAnalyticsCharts(rekodList) {
-      if (!rekodList || rekodList.length === 0) return;
+      if (!rekodList) rekodList = [];
 
       const reasonCounts = {
         "Bangun Lewat": 0,
@@ -1324,7 +1432,212 @@
         classChart.data.datasets[0].data = Object.values(classCounts);
         classChart.update();
       }
+
+      // Kekerapan per murid + perbandingan hari dalam minggu.
+      const freqMap = new Map();
+      const dayCounts = [0, 0, 0, 0, 0]; // Isnin..Jumaat
+      rekodList.forEach(r => {
+        const timeStr = String(r.tarikhMasa || '').slice(0, 10);
+        const dt = timeStr ? new Date(timeStr + 'T00:00:00') : null;
+        if (dt) {
+          let dow = dt.getDay(); // 0=Ahad
+          if (dow >= 1 && dow <= 5) dayCounts[dow - 1]++;
+        }
+        if (!(r.status === "HADIR" || r.punca === "Tepat Masa")) {
+          const key = String(r.id || '').toUpperCase();
+          freqMap.set(key, (freqMap.get(key) || 0) + 1);
+        }
+      });
+
+      if (dayChart) {
+        dayChart.data.datasets[0].data = dayCounts;
+        dayChart.update();
+      }
+      highlightDayChart();
+
+      if (freqChart) {
+        const names = [];
+        const vals = [];
+        const sortedFreq = globalMuridList
+          .map(m => ({ name: m.nama, kiraan: m.kiraan || 0 }))
+          .sort((a, b) => b.kiraan - a.kiraan)
+          .filter(x => x.kiraan > 0);
+        // Papar sehingga 15 murid paling kerap lewat.
+        sortedFreq.slice(0, 15).forEach(x => {
+          names.push(x.name);
+          vals.push(x.kiraan);
+        });
+        freqChart.data.labels = names;
+        freqChart.data.datasets[0].data = vals;
+        freqChart.update();
+      }
+
+      updateInterventionSummary();
+      renderAtRiskStudents();
     }
+
+    // Tukar warna bar "Hari" supaya hari paling ramai lewat diserlahkan.
+    function highlightDayChart() {
+      if (!dayChart || !dayChart.data.datasets[0].data) return;
+      const data = dayChart.data.datasets[0].data;
+      const max = Math.max.apply(null, data);
+      dayChart.data.datasets[0].backgroundColor = data.map(v => v === max && max > 0 ? '#f59e0b' : '#34d399');
+      dayChart.update();
+    }
+
+    // Nota intervensi auto berdasarkan data.
+    function updateInterventionSummary() {
+      const container = document.getElementById('intervention-summary');
+      if (!container) return;
+
+      const totalKes = globalMuridList.reduce((s, m) => s + (m.kiraan || 0), 0);
+      const kesMinggu = globalMuridList.reduce((s, m) => s + (m.kesMingguIni || 0), 0);
+      const atRiskMinggu = globalMuridList.filter(m => (m.kesMingguIni || 0) >= 3).length;
+      const atRiskBulan = globalMuridList.filter(m => (m.kesBulanIni || 0) >= 5).length;
+      const topReason = mostCommonReason();
+      const topClass = mostCommonClass();
+
+      const items = [];
+      items.push({
+        icon: 'fa-bullhorn',
+        color: 'text-amber-500',
+        title: 'Kes Keseluruhan',
+        body: `${totalKes} kes kelewatan direkod. ${kesMinggu} kes pada minggu ini.`
+      });
+      items.push({
+        icon: 'fa-triangle-exclamation',
+        color: atRiskMinggu > 0 ? 'text-rose-500' : 'text-emerald-500',
+        title: 'Perlu Dipantau',
+        body: atRiskMinggu > 0
+          ? `${atRiskMinggu} murid ≥3 kes seminggu (amaran). `
+          : 'Tiada murid yang mencapai ambang amaran mingguan. '
+          + (atRiskBulan > 0 ? `${atRiskBulan} murid ≥5 kes bulan ini (kaunseling/surat).` : 'Tiada yang mencapai ambang bulanan.')
+      });
+      items.push({
+        icon: 'fa-lightbulb',
+        color: 'text-indigo-500',
+        title: 'Syor Tindakan',
+        body: `${topReason ? 'Punca utama: ' + topReason + '. ' : ''}${topClass ? 'Kelas paling kerap lewat: ' + topClass + '.' : ''} Ambil tindakan surf/amaran serta ceramah intervensi.`
+      });
+
+      container.innerHTML = items.map((it, i) => `
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-white/10">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i class="fa-solid ${it.icon} ${it.color}"></i>
+            <h4 class="text-xs font-extrabold text-slate-800 dark:text-white">${it.title}</h4>
+          </div>
+          <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">${escapeHtml(it.body)}</p>
+        </div>`).join('');
+    }
+
+    function mostCommonReason() {
+      const counts = {};
+      globalRekodList.forEach(r => {
+        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+        const reason = r.punca || 'Lain-lain';
+        counts[reason] = (counts[reason] || 0) + 1;
+      });
+      let best = null, bestC = 0;
+      Object.keys(counts).forEach(k => { if (counts[k] > bestC) { best = k; bestC = counts[k]; } });
+      return best;
+    }
+
+    function mostCommonClass() {
+      const counts = {};
+      globalRekodList.forEach(r => {
+        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+        const kls = r.kelas || 'Tiada Kelas';
+        counts[kls] = (counts[kls] || 0) + 1;
+      });
+      let best = null, bestC = 0;
+      Object.keys(counts).forEach(k => { if (counts[k] > bestC) { best = k; bestC = counts[k]; } });
+      return best;
+    }
+
+    // Senarai murid berisiko (jadual isih ikut kes + lencana amaran).
+    function renderAtRiskStudents() {
+      const tbody = document.getElementById('atrisk-tbody');
+      if (!tbody) return;
+
+      const sorted = globalMuridList
+        .filter(m => (m.kiraan || 0) > 0)
+        .sort((a, b) => (b.kiraan || 0) - (a.kiraan || 0));
+
+      if (sorted.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-400 code-font">Tiada rekod kelewatan buat masa ini.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = sorted.map((m, idx) => {
+        const kesMinggu = m.kesMingguIni || 0;
+        const kesBulan = m.kesBulanIni || 0;
+        const jumlah = m.kiraan || 0;
+
+        let badge = '';
+        if (kesBulan >= 5) {
+          badge = `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/30 whitespace-nowrap">Kaunseling</span>`;
+        } else if (kesMinggu >= 3) {
+          badge = `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 whitespace-nowrap">⚠ Amaran</span>`;
+        } else {
+          badge = `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-500 border border-slate-500/20 whitespace-nowrap">Pantau</span>`;
+        }
+
+        return `
+          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-500/5">
+            <td class="py-2 pr-2 text-slate-400 code-font">${idx + 1}</td>
+            <td class="py-2 pr-2">
+              <span data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="font-bold text-slate-800 dark:text-white cursor-pointer hover:underline">${escapeHtml(m.nama)}</span>
+            </td>
+            <td class="py-2 pr-2 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
+            <td class="py-2 pr-2 text-center font-bold code-font text-amber-500">${kesMinggu}</td>
+            <td class="py-2 pr-2 text-center font-bold code-font text-amber-500">${kesBulan}</td>
+            <td class="py-2 pr-2 text-center font-black code-font text-rose-500">${jumlah}</td>
+            <td class="py-2 text-center">${badge}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    // Drill-down: klik bar kelas -> senarai murid lewat dalam kelas itu.
+    function showClassDrilldown(kelas) {
+      const panel = document.getElementById('class-drilldown');
+      const listEl = document.getElementById('dd-list');
+      if (!panel || !listEl) return;
+
+      document.getElementById('dd-kelas-name').textContent = kelas;
+
+      const seen = new Map();
+      globalRekodList.forEach(r => {
+        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+        if (String(r.kelas || '').trim() !== String(kelas).trim()) return;
+        const id = String(r.id || '');
+        if (!seen.has(id)) {
+          const murid = globalMuridList.find(mx => String(mx.id) === id) || {};
+          seen.set(id, { id, nama: r.nama || murid.nama, kes: 0 });
+        }
+        const entry = seen.get(id);
+        entry.kes++;
+      });
+
+      const rows = Array.from(seen.values()).sort((a, b) => b.kes - a.kes);
+
+      if (rows.length === 0) {
+        listEl.innerHTML = `<div class="py-3 text-center text-slate-400 code-font">Tiada rekod kelewatan untuk kelas ini.</div>`;
+      } else {
+        listEl.innerHTML = rows.map(r => `
+          <div data-murid-id="${encodeURIComponent(r.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 cursor-pointer hover:scale-[1.01] transition-transform">
+            <span class="text-xs font-bold text-slate-800 dark:text-white truncate">${escapeHtml(r.nama)}</span>
+            <span class="text-[10px] font-black text-rose-500 code-font bg-rose-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">${r.kes} Kes</span>
+          </div>`).join('');
+      }
+
+      panel.classList.remove('hidden');
+    }
+
+    function closeClassDrilldown() {
+      const panel = document.getElementById('class-drilldown');
+      if (panel) panel.classList.add('hidden');
+    }
+
 
     function sortTodayTable(columnKey) {
       if (todaySortCol === columnKey) {
@@ -2183,21 +2496,84 @@
       document.getElementById('sp-minggu').textContent = (m.kesMingguIni || 0) + ' Kes';
       document.getElementById('sp-bulan').textContent = (m.kesBulanIni || 0) + ' Kes';
 
-      const statusEl = document.getElementById('sp-status');
-      const puncaNorm = String(m.punca || '').toLowerCase();
-      if (m.lewatHariIni || puncaNorm === 'lewat' || (puncaNorm && puncaNorm !== 'tepat masa' && puncaNorm !== 'hadir')) {
-        statusEl.textContent = 'LEWAT';
-        statusEl.className = 'text-2xl sm:text-3xl font-black code-font text-rose-500';
-      } else {
-        statusEl.textContent = 'TEPAT';
-        statusEl.className = 'text-2xl sm:text-3xl font-black code-font text-emerald-500';
+      // Tentukan status HARI INI berdasarkan rekod sebenar (bukan punca lama).
+      const today = getTodayDateStr();
+      const todayRecs = (globalRekodList || []).filter(r =>
+        String(r.id || '') === String(idMurid) &&
+        String(r.tarikhMasa || '').startsWith(today)
+      );
+
+      let statusText = 'TAK HADIR';
+      let statusColor = 'text-rose-500';
+      let masa = '—';
+      let punca = m.punca || '—';
+      let tarikh = m.tarikhLewat || '—';
+
+      if (todayRecs.length > 0) {
+        const rec = todayRecs[0];
+        const tmStr = String(rec.tarikhMasa || '');
+        const timeOnly = tmStr.includes(' ') ? tmStr.split(' ')[1] : '';
+        masa = timeOnly || rec.waktuHariIni || '—';
+        punca = rec.punca || '—';
+        tarikh = today;
+        const mm = (timeOnly || '00:00:00').match(/(\d{1,2}):(\d{2})/);
+        const isLate = mm
+          ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21))
+          : (String(rec.status || '').toUpperCase() === 'LEWAT');
+        statusText = isLate ? 'LEWAT' : 'TEPAT';
+      } else if (m.waktuHariIni && m.waktuHariIni.trim() !== '') {
+        // Imbas hari ini (fallback server)
+        masa = m.waktuHariIni;
+        tarikh = today || tarikh;
+        let isLate = false;
+        const mm = masa.match(/(\d{1,2}):(\d{2})/);
+        if (mm) { const h = +mm[1], mi = +mm[2]; isLate = h > 7 || (h === 7 && mi >= 21); }
+        statusText = isLate ? 'LEWAT' : 'TEPAT';
       }
 
-      document.getElementById('sp-masa').textContent = m.waktuHariIni || '—';
-      document.getElementById('sp-punca').textContent = m.punca || '—';
-      document.getElementById('sp-tarikh').textContent = m.tarikhLewat || '—';
+      const statusEl = document.getElementById('sp-status');
+      if (statusEl) {
+        statusEl.textContent = statusText;
+        statusEl.className = 'text-2xl sm:text-3xl font-black code-font ' + statusColor;
+      }
+
+      document.getElementById('sp-masa').textContent = masa;
+      document.getElementById('sp-punca').textContent = punca;
+      document.getElementById('sp-tarikh').textContent = tarikh;
+
+      renderStudentRekod(idMurid);
 
       modal.classList.remove('hidden');
+    }
+
+    // Senarai rekod kelewatan terkini murid (untuk profil).
+    function renderStudentRekod(idMurid) {
+      const el = document.getElementById('sp-rekod');
+      if (!el) return;
+      const recs = (globalRekodList || [])
+        .filter(r => String(r.id || '') === String(idMurid))
+        .sort((a, b) => String(b.tarikhMasa || '').localeCompare(String(a.tarikhMasa || '')))
+        .slice(0, 10);
+
+      if (recs.length === 0) {
+        el.innerHTML = `<div class="text-center text-emerald-500 code-font py-2 text-xs"><i class="fa-solid fa-circle-check mr-1"></i> Tiada rekod kelewatan.</div>`;
+        return;
+      }
+
+      el.innerHTML = recs.map(r => {
+        const tm = String(r.tarikhMasa || '');
+        const dateOnly = tm.slice(0, 10);
+        const timeOnly = tm.includes(' ') ? tm.split(' ')[1] : '';
+        const mm = timeOnly.match(/(\d{1,2}):(\d{2})/);
+        const isLate = mm ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21)) : (String(r.status || '').toUpperCase() === 'LEWAT');
+        const warna = isLate ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10';
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl border ${warna}">
+            <span class="text-[11px] font-bold code-font">${escapeHtml(dateOnly)}</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${escapeHtml(r.punca || '—')}</span>
+            <span class="text-[10px] font-black code-font">${timeOnly || '—'}</span>
+          </div>`;
+      }).join('');
     }
 
     function closeStudentProfile() {
