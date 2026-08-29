@@ -22,6 +22,8 @@ Q-TIBA/
 ├── index.html              # Dashboard Admin
 ├── scan.html               # Pemimbas QR Code
 ├── parent.html             # Portal Ibu Bapa
+├── Panel.html              # UI Panel Pentadbir (HTML Service Apps Script)
+├── theme.css               # Gaya dikongsi (glass-card, tab, sorot)
 ├── config.js               # Konfigurasi API URL (gitignore)
 ├── config.example.js       # Template config
 ├── sw.js                   # Service Worker (PWA)
@@ -87,6 +89,25 @@ Contoh:
 ```
 
 > **Penting:** Cuti Islam (Hari Raya, dll.) bertukar setiap tahun mengikut kalendar Hijrah, dan takwim penggal bertukar setiap tahun. Pastikan senarai `cuti` dikemas kini pada awal tahun persekolahan.
+
+## Panel Pentadbir (Sidebar Google Sheets)
+
+Panel pentadbir menyediakan **UI dalam Google Sheets** untuk mengurus tetapan dan murid tanpa menulis kod:
+
+| Tab | Fungsi |
+|-----|--------|
+| **Tetapan** | Ubah masa cutoff, hari minggu cuti, dan senarai cuti (senarai lalai 2026 disediakan). |
+| **Murid** | Tambah, kemas kini, dan padam murid sasaran (ID, Nama, Kelas, URL gambar). |
+
+### Cara Menggunakan
+
+1. Buka Google Sheet yang dipautkan kepada Apps Script ini.
+2. Menu baru **`Q-TIBA`** akan muncul di atas (selepas `onOpen` dijalankan).
+3. Klik **Q-TIBA → Panel Pentadbir** untuk membuka sidebar di sebelah kanan.
+4. Gunakan tab **Tetapan** atau **Murid** dan klik butang **Simpan**.
+5. Perubahan disimpan terus ke tab `Tetapan` / `MuridSasaran`, dan digunakan serta-merta oleh sistem.
+
+> **Nota deploy:** Fail **`Panel.html`** perlu ditambahkan sebagai satu fail *HTML* (bukan `.gs`) dalam editor Apps Script, selain `code.gs`. Tanpa fail itu, butang menu "Panel Pentadbir" tidak akan dapat membuka sidebar.
 
 
 ## Persediaan
