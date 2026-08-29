@@ -22,26 +22,10 @@
   <!-- HTML5-QRCode Library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
+  <link rel="stylesheet" href="theme.css">
+
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .code-font { font-family: 'JetBrains Mono', monospace; }
-
-    .glass-card {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .dark .glass-card {
-      background: rgba(15, 23, 42, 0.70);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
 
     /* Animasi Garisan Laser Scanner */
     .scanner-overlay {
@@ -68,14 +52,21 @@
     }
 
     /* Video Scanner Tweaks */
-    #reader video {
-      object-fit: cover !important;
-      border-radius: 1rem;
+    #reader {
       width: 100% !important;
+      height: 100% !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none !important;
     }
 
-    #reader {
-      border: none !important;
+    #reader video {
+      object-fit: cover !important;
+      object-position: center center;
+      border-radius: 1rem;
+      width: 100% !important;
+      height: 100% !important;
     }
 
     /* Success Pop Animation */
@@ -142,6 +133,23 @@
     </button>
   </div>
 
+  <!-- PANEL HARI CUTI (Sabtu/Ahad & cuti umum) -->
+  <section id="cuti-panel" class="hidden max-w-lg w-full mx-auto p-6 sm:p-8 flex-1 flex flex-col items-center justify-center text-center z-10 relative">
+    <div class="glass-card rounded-3xl p-8 sm:p-10 w-full border-l-4 border-l-violet-500">
+      <div class="w-20 h-20 mx-auto rounded-full bg-violet-500/10 border-2 border-violet-500 flex items-center justify-center mb-5">
+        <i class="fa-solid fa-face-smile-beam text-4xl text-violet-500"></i>
+      </div>
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-1">Hari Ini Cuti Sekolah</h2>
+      <p id="cuti-nama" class="text-violet-600 dark:text-violet-400 font-extrabold text-base mb-1"></p>
+      <p id="cuti-message" class="text-sm text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+        Tiada sesi imbasan kehadiran pada hari ini.
+      </p>
+      <a href="index.html" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm shadow-lg shadow-cyan-500/25 transition-all">
+        <i class="fa-solid fa-chart-pie"></i> Kembali ke Dashboard
+      </a>
+    </div>
+  </section>
+
   <!-- KANDUNGAN UTAMA -->
   <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 z-10 relative">
 
@@ -163,7 +171,7 @@
         </div>
 
         <!-- BOX KAMERA -->
-        <div class="relative w-full aspect-square sm:aspect-video md:aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-inner flex items-center justify-center scanner-overlay">
+        <div id="camera-box" class="relative w-full aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-inner flex items-center justify-center scanner-overlay">
 
           <div id="scan-laser" class="scan-laser hidden"></div>
 
@@ -426,6 +434,33 @@
     let sessionScannedList = [];
     let pendingScanData = null;
 
+    // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
+
+    // Bina URL API lengkap dengan apiKey (keselamatan #2) sebagai query param.
+    function buildApiUrl(params) {
+      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      return `${API_URL}?${new URLSearchParams(p).toString()}`;
+    }
+
+    // Elak XSS (#4): buang aksara yang boleh menjadi HTML/JS dalam innerHTML.
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Elak CSV injection (#4): neutralkan = + - @ dan petik semula bila perlu.
+    function sanitizeCsv(str) {
+      let s = String(str == null ? '' : str).replace(/"/g, "'");
+      if (/^[=+\-@]/.test(s)) {
+        s = "'" + s;
+      }
+      return s;
+    }
+
     // SESI LOG PERSISTEN IKUT TARIKH
     function getTodayKey() {
       const d = new Date();
@@ -461,11 +496,167 @@
 
     // SEMAK LOG MASUK ADMIN PADA PERMULAAN
     document.addEventListener('DOMContentLoaded', () => {
+      applyHariCuti();
+      if (isHariCuti()) return;
       checkAdminAuth();
       updateAudioToggleUI();
       checkNetworkStatus();
       loadSessionLog();
+      // Muat konfigurasi pusat (cuti & cutoff) dari server, then semak semula hari cuti.
+      muatKonfigurasi().then(() => {
+        if (isHariCuti()) {
+          applyHariCuti();
+        }
+      });
     });
+
+    // ===== HARI CUTI SEKOLAH =====
+    // Hari cuti mingguan (getDay(): 0=Ahad, 6=Sabtu). Tambah nombor jika perlu.
+    const HARI_CUTI_MINGGU = [0, 6];
+
+    // Tarikh penuh cuti umum & cuti khusus (format "YYYY-MM-DD").
+    // NOTA: Cuti Islam (Aidilfitri, Aidiladha, dsb.) berubah setiap tahun ikut
+    // kalendar Hijrah, jadi senarai ini perlu dikemas kini setiap tahun.
+    const HARI_CUTI_TARIKH = [
+      // --- Cuti umum persekutuan 2026 ---
+      { tarikh: "2026-01-01", nama: "Tahun Baru" },
+      { tarikh: "2026-02-17", nama: "Tahun Baru Cina" },
+      { tarikh: "2026-02-18", nama: "Tahun Baru Cina" },
+      { tarikh: "2026-03-21", nama: "Hari Raya Aidilfitri" },
+      { tarikh: "2026-03-22", nama: "Hari Raya Aidilfitri" },
+      { tarikh: "2026-03-23", nama: "Hari Raya Aidilfitri (Cuti Ganti)" },
+      { tarikh: "2026-05-01", nama: "Hari Pekerja" },
+      { tarikh: "2026-05-27", nama: "Hari Raya Aidiladha" },
+      { tarikh: "2026-05-31", nama: "Hari Wesak" },
+      { tarikh: "2026-06-01", nama: "Hari Keputeraan YDP Agong" },
+      { tarikh: "2026-06-02", nama: "Hari Wesak (Cuti Ganti)" },
+      { tarikh: "2026-06-17", nama: "Awal Muharam" },
+      { tarikh: "2026-08-25", nama: "Maulidur Rasul" },
+      { tarikh: "2026-08-31", nama: "Hari Kebangsaan" },
+      { tarikh: "2026-09-16", nama: "Hari Malaysia" },
+      { tarikh: "2026-11-08", nama: "Hari Deepavali" },
+      { tarikh: "2026-11-09", nama: "Hari Deepavali (Cuti Ganti)" },
+      { tarikh: "2026-12-25", nama: "Hari Krismas" }
+    ];
+
+    // Julat tarikh cuti penggal persekolahan (mulai, akhir "YYYY-MM-DD").
+    // Ikut takwim KPM 2026, KUMPULAN B (Selangor & kebanyakan negeri).
+    // Perlu dikemas kini setiap tahun mengikut takwim terbaru.
+    const HARI_CUTI_JULAT = [
+      { mulai: "2026-03-21", akhir: "2026-03-29", nama: "Cuti Penggal 1" },
+      { mulai: "2026-05-23", akhir: "2026-06-07", nama: "Cuti Pertengahan Tahun" },
+      { mulai: "2026-08-29", akhir: "2026-09-06", nama: "Cuti Penggal 2" },
+      { mulai: "2026-12-05", akhir: "2026-12-31", nama: "Cuti Akhir Tahun" }
+    ];
+
+    // Konfigurasi pusat (dari server tab "Tetapan"). Fallback: senarai di atas.
+    // Bila muatKonfigurasi() berjaya, nilai repo ini akan di-override oleh server
+    // supaya satu sumber kebenaran (elak kena ubah 3 fail setiap tahun).
+    let CUTOFF_MIN = 7 * 60 + 21; // default 7:21 AM
+    let hujungMingguServer = null; // null = guna HARI_CUTI_MINGGU
+    let cutiServerTarikh = []; // { tarikh, nama } dari server
+    let cutiServerJulat = []; // { mulai, akhir, nama } dari server
+
+    // Muat konfigurasi (cutoff + cuti) dari backend (action=settings).
+    // Tidak batal jika gagal — fallback statik kekal.
+    async function muatKonfigurasi() {
+      try {
+        if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+        const res = await fetch(buildApiUrl({ action: 'settings' }));
+        const data = await res.json();
+        if (!data || data.status !== 'Success') return;
+        if (typeof data.cutoffMin === 'number' && data.cutoffMin >= 0) {
+          CUTOFF_MIN = data.cutoffMin;
+        }
+        if (Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
+          hujungMingguServer = data.hujungMinggu;
+        }
+        if (Array.isArray(data.cuti)) {
+          cutiServerTarikh = data.cuti.filter(c => c.tarikh);
+          cutiServerJulat = data.cuti.filter(c => c.mulai && c.akhir);
+        }
+      } catch (err) {
+        console.warn("Q-TIBA: Gagal muat konfigurasi pusat, guna nilai tetap.", err);
+      }
+    }
+
+    // Pulangkan tarikh hari ini dalam bentuk "YYYY-MM-DD".
+    function getTarikhPenuh() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // Pulangkan nilai tarikh (bulan-hari) hari ini dalam bentuk "MM-DD".
+    function getBulanHari() {
+      const d = new Date();
+      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Dapatkan nama cuti untuk tarikh diberi (YYYY-MM-DD), atau null jika bukan cuti.
+    // Jika data dari server (tab Tetapan) tersedia, ia menjadi sumber utama.
+    function dapatNamaCuti(today) {
+      if (cutiServerTarikh.length > 0 || cutiServerJulat.length > 0) {
+        for (let i = 0; i < cutiServerTarikh.length; i++) {
+          if (cutiServerTarikh[i].tarikh === today) return cutiServerTarikh[i].nama;
+        }
+        for (let i = 0; i < cutiServerJulat.length; i++) {
+          const c = cutiServerJulat[i];
+          if (today >= c.mulai && today <= c.akhir) return c.nama;
+        }
+        return null;
+      }
+      for (let i = 0; i < HARI_CUTI_TARIKH.length; i++) {
+        if (HARI_CUTI_TARIKH[i].tarikh === today) return HARI_CUTI_TARIKH[i].nama;
+      }
+      for (let i = 0; i < HARI_CUTI_JULAT.length; i++) {
+        if (today >= HARI_CUTI_JULAT[i].mulai && today <= HARI_CUTI_JULAT[i].akhir) {
+          return HARI_CUTI_JULAT[i].nama;
+        }
+      }
+      return null;
+    }
+
+    // Semak sama ada hari ini adalah hari cuti sekolah.
+    // Pulangkan nama cuti (truthy) atau null (bukan cuti).
+    function isHariCuti() {
+      const today = getTarikhPenuh();
+      const namaKhas = dapatNamaCuti(today);
+      if (namaKhas) return namaKhas;
+      const hujung = hujungMingguServer ? hujungMingguServer : HARI_CUTI_MINGGU;
+      if (hujung.indexOf(new Date().getDay()) !== -1) return "Hujung Minggu (Cuti Sekolah)";
+      return null;
+    }
+
+    // Jika hari ini cuti, sembunyikan kawalan imbasan dan papar panel cuti.
+    function applyHariCuti() {
+      const main = document.querySelector('main');
+      const panel = document.getElementById('cuti-panel');
+      const namaCuti = isHariCuti();
+      if (!namaCuti || !panel) return;
+
+      if (main) main.style.display = 'none';
+
+      const d = new Date();
+      const hariNama = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'][d.getDay()];
+      const msg = document.getElementById('cuti-message');
+      const namaEl = document.getElementById('cuti-nama');
+      if (namaEl) {
+        namaEl.innerText = namaCuti;
+      }
+      if (msg) {
+        msg.innerHTML = `${hariNama}, <strong>${getBulanHari()}</strong> — tiada sesi imbasan kehadiran pada hari ini.`;
+      }
+
+      panel.classList.remove('hidden');
+      panel.classList.add('flex');
+
+      // Sembunyikan amaran offline agar tidak mengganggu paparan cuti
+      const offlineBar = document.getElementById('offline-bar');
+      if (offlineBar) offlineBar.style.display = 'none';
+    }
 
     function checkAdminAuth() {
       const isAuth = localStorage.getItem('qtiba_admin_auth');
@@ -486,12 +677,15 @@
       submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Menyemak...`;
 
       try {
-        const response = await fetch(`${API_URL}?action=verifyAdmin&email=${encodeURIComponent(email)}&pin=${encodeURIComponent(pin)}`);
+        const response = await fetch(buildApiUrl({ action: 'verifyAdmin', email: email, pin: pin }));
         const data = await response.json();
 
         if (data.status === "Success" && data.authorized) {
           localStorage.setItem('qtiba_admin_auth', 'true');
           localStorage.setItem('qtiba_admin_email', email);
+          if (data.token) {
+            localStorage.setItem('qtiba_admin_token', data.token);
+          }
           document.getElementById('admin-auth-modal').classList.add('hidden');
           playAudioBeep('success');
         } else {
@@ -517,6 +711,7 @@
       if (confirm("Adakah anda pasti untuk log keluar daripada mod Pengimbas?")) {
         localStorage.removeItem('qtiba_admin_auth');
         localStorage.removeItem('qtiba_admin_email');
+        localStorage.removeItem('qtiba_admin_token');
         window.location.href = "parent.html";
       }
     }
@@ -616,7 +811,7 @@
     async function preloadStudentData() {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(buildApiUrl({}));
         const data = await response.json();
         if (data.status === "Success" && data.muridList) {
           data.muridList.forEach(m => {
@@ -671,7 +866,19 @@
       }
     }
 
+    // Saiz kotak imbasan QR yang responsif mengikut saiz bekas kamera.
+    // Ini penting supaya kotak QR tidak "lari"/tidak seimbang pada tablet
+    // atau peranti dengan lebar berbeza.
+    function getQrBoxSize() {
+      const box = document.getElementById('camera-box');
+      const w = box ? box.clientWidth : 320;
+      const size = Math.floor(Math.min(w, w) * 0.68);
+      const clamped = Math.max(180, Math.min(size, 320));
+      return { width: clamped, height: clamped };
+    }
+
     function startScanner() {
+      if (isHariCuti()) return;
       const selectedCamId = document.getElementById('camera-select').value;
       const cameraConfig = selectedCamId ? { deviceId: selectedCamId } : { facingMode: "environment" };
 
@@ -684,7 +891,7 @@
 
       html5QrCode.start(
         cameraConfig,
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        { fps: 10, qrbox: getQrBoxSize() },
         onScanSuccess,
         onScanError
       ).then(() => {
@@ -807,8 +1014,8 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </span>
             </div>
-            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${matchedStudent.nama}</h3>
-            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${matchedStudent.kelas} &bull; ${scannedId}</p>
+            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${escapeHtml(matchedStudent.nama)}</h3>
+            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${escapeHtml(matchedStudent.kelas)} &bull; ${escapeHtml(scannedId)}</p>
             <div class="mt-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
               <i class="fa-solid fa-ban"></i> SUDAH DIIMBAS HARI INI!
             </div>
@@ -817,11 +1024,11 @@
         return;
       }
 
-      // 2. Semak Masa Cutoff (7:21 AM)
+      // 2. Semak Masa Cutoff (dari konfigurasi pusat, default 7:21 AM)
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
-      const isLate = (hours > 7) || (hours === 7 && minutes >= 21);
+      const isLate = (hours * 60 + minutes) >= CUTOFF_MIN;
 
       if (!isLate) {
         // Tepat masa (Sebelum 7:21 AM)
@@ -887,7 +1094,7 @@
       const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
       const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
       const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
-      const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${timeStr} &bull; ${data.punca}`;
+      const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${escapeHtml(timeStr)} &bull; ${escapeHtml(data.punca)}`;
 
       const resultBox = document.getElementById('scanned-result-box');
       resultBox.innerHTML = `
@@ -900,8 +1107,8 @@
               <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
             </span>
           </div>
-          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${data.nama}</h3>
-          <p class="text-xs font-bold ${textColor} code-font mt-0.5">${data.kelas} &bull; ${data.id}</p>
+          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${escapeHtml(data.nama)}</h3>
+          <p class="text-xs font-bold ${textColor} code-font mt-0.5">${escapeHtml(data.kelas)} &bull; ${escapeHtml(data.id)}</p>
           <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
             ${statusBadge}
           </div>
@@ -931,28 +1138,51 @@
         status: data.status || "HADIR",
         punca: data.punca || "Tepat Masa",
         masa: timeStr,
-        guru: guruScan
+        guru: guruScan,
+        apiKey: QTIBA_API_KEY || ''
       };
 
       sendDataToBackend(payload);
     }
 
+    // HANTAR REKOD KE GOOGLE APPS SCRIPT (boleh baca respons sebenar)
+    async function postToBackend(payload) {
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return { result: 'skip' };
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      let data = {};
+      try { data = await res.json(); } catch (err) { /* bukan JSON */ }
+      if (res.ok) return data;
+      return Object.assign({ result: 'error', message: 'HTTP ' + res.status }, data);
+    }
+
     // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
-    function sendDataToBackend(payload) {
+    // - success  : sudah tersimpan di cloud.
+    // - duplicate: rekod sudah wujud untuk hari ini (jangan simpan lagi).
+    // - error    : server tolak / gagal -> simpan ke queue offline untuk cuba semula.
+    async function sendDataToBackend(payload) {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
 
       if (navigator.onLine) {
-        fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        }).then(() => {
-          console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
-        }).catch((err) => {
+        try {
+          const data = await postToBackend(payload);
+          const result = data && data.result;
+          if (result === 'success') {
+            console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
+          } else if (result === 'duplicate') {
+            console.log("Q-TIBA: Rekod duplikat, tidak disimpan dua kali.");
+          } else {
+            console.warn("Q-TIBA: Server tolak rekod, simpan ke queue:", data && data.message);
+            saveOffline(payload);
+          }
+        } catch (err) {
           console.error("Gagal hantar data:", err);
           saveOffline(payload);
-        });
+        }
       } else {
         saveOffline(payload);
       }
@@ -1000,13 +1230,15 @@
 
         const item = pending[index];
         try {
-          await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(item)
-          });
-          sentCount++;
+          const data = await postToBackend(item);
+          const result = data && data.result;
+          if (result === 'success' || result === 'duplicate') {
+            // Selesai (tersimpan atau sudah wujud) -> buang dari queue.
+            sentCount++;
+          } else {
+            // Server tolak / error -> cuba semula kemudian.
+            remaining.push(item);
+          }
         } catch (err) {
           remaining.push(item);
         }
@@ -1041,8 +1273,8 @@
             <div class="flex items-center gap-2 overflow-hidden">
               <img src="${item.img}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
               <div class="truncate">
-                <p class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">${item.nama}</p>
-                <p class="text-[9px] text-slate-400 code-font">${item.id} &bull; ${item.kelas} ${item.guru ? '&bull; <span class="text-cyan-500 font-semibold">' + item.guru + '</span>' : ''} ${item.punca ? '&bull; <span class="text-amber-500 font-semibold">' + item.punca + '</span>' : ''}</p>
+                <p class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">${escapeHtml(item.nama)}</p>
+                <p class="text-[9px] text-slate-400 code-font">${escapeHtml(item.id)} &bull; ${escapeHtml(item.kelas)} ${item.guru ? '&bull; <span class="text-cyan-500 font-semibold">' + escapeHtml(item.guru) + '</span>' : ''} ${item.punca ? '&bull; <span class="text-amber-500 font-semibold">' + escapeHtml(item.punca) + '</span>' : ''}</p>
               </div>
             </div>
             <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 code-font bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">${item.masa}</span>
@@ -1068,7 +1300,7 @@
 
       let csvContent = "data:text/csv;charset=utf-8,ID,Nama,Kelas,Masa,Status,Punca,Guru\n";
       sessionScannedList.forEach(row => {
-        csvContent += `"${row.id}","${row.nama}","${row.kelas}","${row.masa}","${row.status}","${row.punca}","${row.guru || ''}"\n`;
+        csvContent += `"${sanitizeCsv(row.id)}","${sanitizeCsv(row.nama)}","${sanitizeCsv(row.kelas)}","${sanitizeCsv(row.masa)}","${sanitizeCsv(row.status)}","${sanitizeCsv(row.punca)}","${sanitizeCsv(row.guru || '')}"\n`;
       });
 
       const encodedUri = encodeURI(csvContent);
