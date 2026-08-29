@@ -417,10 +417,14 @@
                 <th class="pb-2 pr-2">#</th>
                 <th class="pb-2 pr-2">Nama</th>
                 <th class="pb-2 pr-2">Kelas</th>
-                <th class="pb-2 pr-2 text-center">Kes Minggu</th>
-                <th class="pb-2 pr-2 text-center">Kes Bulan</th>
+                <th class="pb-2 pr-2 text-center">Mgg</th>
+                <th class="pb-2 pr-2 text-center">Bulan</th>
                 <th class="pb-2 pr-2 text-center">Jumlah</th>
-                <th class="pb-2 text-center">Amaran</th>
+                <th class="pb-2 pr-2 text-center">Tren</th>
+                <th class="pb-2 pr-2">Punca Utama</th>
+                <th class="pb-2 pr-2">Tindakan</th>
+                <th class="pb-2 pr-2">Tarikh</th>
+                <th class="pb-2">Nota</th>
               </tr>
             </thead>
             <tbody id="atrisk-tbody" class="text-xs"></tbody>
@@ -866,6 +870,7 @@
   <script>
     let globalMuridList = [];
     let globalRekodList = [];
+    let intervensiMap = {};
 
     // Tarikh aktif untuk paparan ikut tarikh (format yyyy-mm-dd)
     let activeDate = (() => {
@@ -1637,7 +1642,7 @@
       return best;
     }
 
-    // Senarai murid berisiko (jadual isih ikut kes + lencana amaran).
+    // Senarai murid berisiko (jadual isih ikut kes + lencana amaran + tindakan intervensi).
     function renderAtRiskStudents() {
       const tbody = document.getElementById('atrisk-tbody');
       if (!tbody) return;
@@ -1647,37 +1652,129 @@
         .sort((a, b) => (b.kiraan || 0) - (a.kiraan || 0));
 
       if (sorted.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-400 code-font">Tiada rekod kelewatan buat masa ini.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="py-4 text-center text-slate-400 code-font">Tiada rekod kelewatan buat masa ini.</td></tr>`;
         return;
       }
+
+      const puncaCache = {};
 
       tbody.innerHTML = sorted.map((m, idx) => {
         const kesMinggu = m.kesMingguIni || 0;
         const kesBulan = m.kesBulanIni || 0;
         const jumlah = m.kiraan || 0;
 
-        let badge = '';
-        if (kesBulan >= 5) {
-          badge = `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/30 whitespace-nowrap">Kaunseling</span>`;
-        } else if (kesMinggu >= 3) {
-          badge = `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 whitespace-nowrap">⚠ Amaran</span>`;
-        } else {
-          badge = `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-500 border border-slate-500/20 whitespace-nowrap">Pantau</span>`;
+        // Tren jangka pendek: minggu ini vs minggu lepas.
+        const kesMingguLepas = m.kesMingguLepas || 0;
+        let trenHtml = '<span class="text-slate-400">•</span>';
+        if (kesMinggu > kesMingguLepas) {
+          trenHtml = `<span class="text-rose-500 font-black" title="Naik berbanding minggu lepas">▲${kesMinggu > kesMingguLepas ? (kesMinggu - kesMingguLepas) : ''}</span>`;
+        } else if (kesMinggu < kesMingguLepas) {
+          trenHtml = `<span class="text-emerald-500 font-black" title="Turun berbanding minggu lepas (membaik)">▼</span>`;
+        } else if (kesMinggu > 0) {
+          trenHtml = `<span class="text-slate-400" title="Sama dengan minggu lepas">•</span>`;
         }
 
+        // Punca utama per murid (dikira semula dari rekod).
+        const pid = String(m.id || '').toUpperCase();
+        if (puncaCache[pid] === undefined) puncaCache[pid] = commonReasonForStudent(pid);
+        const puncaUtama = puncaCache[pid] || '—';
+
+        // Data tindakan intervensi (dari server / sheet).
+        const iv = intervensiMap[String(m.id || '')] || {};
+        const ivStatus = iv.status || '';
+        const ivTarikh = iv.tarikh || '';
+        const ivNota = iv.nota || '';
+
+        const statusOptions = ['Belum', 'Surat 1', 'Surat 2', 'Surat 3', 'Kaunseling', 'Rujuk Pengetua'];
+        const select = statusOptions.map(opt => {
+          const sel = ivStatus === opt ? ' selected' : '';
+          return `<option value="${opt}"${sel}>${opt}</option>`;
+        }).join('');
+
+        const statusColor = ivStatus === 'Kaunseling' || ivStatus === 'Rujuk Pengetua' ? 'border-rose-400 text-rose-600 dark:text-rose-300'
+          : ivStatus && ivStatus !== 'Belum' ? 'border-amber-400 text-amber-600 dark:text-amber-300'
+          : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300';
+
+        const safeNota = escapeHtml(ivNota);
+
         return `
-          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-500/5">
+          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-500/5 align-top">
             <td class="py-2 pr-2 text-slate-400 code-font">${idx + 1}</td>
             <td class="py-2 pr-2">
               <span data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="font-bold text-slate-800 dark:text-white cursor-pointer hover:underline">${escapeHtml(m.nama)}</span>
             </td>
-            <td class="py-2 pr-2 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
+            <td class="py-2 pr-2 text-slate-500 dark:text-slate-400 code-font whitespace-nowrap">${escapeHtml(m.kelas)}</td>
             <td class="py-2 pr-2 text-center font-bold code-font text-amber-500">${kesMinggu}</td>
             <td class="py-2 pr-2 text-center font-bold code-font text-amber-500">${kesBulan}</td>
             <td class="py-2 pr-2 text-center font-black code-font text-rose-500">${jumlah}</td>
-            <td class="py-2 text-center">${badge}</td>
+            <td class="py-2 pr-2 text-center">${trenHtml}</td>
+            <td class="py-2 pr-2">
+              <span class="inline-block max-w-[90px] truncate align-middle text-[10px] font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2 py-0.5" title="${escapeHtml(puncaUtama)}">${escapeHtml(puncaUtama)}</span>
+            </td>
+            <td class="py-2 pr-2">
+              <select onchange="simpanIntervensi('${encodeURIComponent(m.id || '')}')" class="intervensi-status text-[10px] font-bold bg-white dark:bg-slate-900 border ${statusColor} rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}">${select}</select>
+            </td>
+            <td class="py-2 pr-2">
+              <input type="date" onchange="simpanIntervensi('${encodeURIComponent(m.id || '')}')" class="intervensi-tarikh text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${escapeHtml(ivTarikh)}">
+            </td>
+            <td class="py-2">
+              <input type="text" onblur="simpanIntervensi('${encodeURIComponent(m.id || '')}')" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
+            </td>
           </tr>`;
       }).join('');
+    }
+
+    // Hitung punca paling kerap bagi seorang murid (kecuali Tepat Masa).
+    function commonReasonForStudent(pid) {
+      const counts = {};
+      globalRekodList.forEach(r => {
+        if (r.status === "HADIR" || r.punca === "Tepat Masa") return;
+        if (String(r.id || '').trim().toUpperCase() !== pid) return;
+        const reason = r.punca || 'Lain-lain';
+        counts[reason] = (counts[reason] || 0) + 1;
+      });
+      let best = null, bestC = 0;
+      Object.keys(counts).forEach(k => { if (counts[k] > bestC) { best = k; bestC = counts[k]; } });
+      return best;
+    }
+
+    // Baca semua field intervensi bagi murid & hantar ke server (upsert).
+    function simpanIntervensi(encodedId) {
+      const id = decodeURIComponent(encodedId);
+      const status = document.querySelector(`.intervensi-status[data-murid="${encodedId}"]`);
+      const tarikh = document.querySelector(`.intervensi-tarikh[data-murid="${encodedId}"]`);
+      const nota = document.querySelector(`.intervensi-nota[data-murid="${encodedId}"]`);
+      if (!status || !tarikh || !nota) return;
+
+      const rec = {
+        id: id,
+        status: status.value,
+        tarikh: tarikh.value,
+        nota: nota.value
+      };
+
+      // Kemas kini local map supaya UI kekal responsif.
+      intervensiMap[id] = rec;
+
+      fetch(buildApiUrl({ action: 'saveIntervensi' }), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ apiKey: QTIBA_API_KEY || '' }, rec))
+      }).then(r => r.json()).catch(() => {});
+    }
+
+    // Muat rekod intervensi dari server & set semula jadual.
+    async function muatIntervensi() {
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+      try {
+        const res = await fetch(buildApiUrl({ action: 'intervensi' }));
+        const data = await res.json();
+        if (data.status === 'Success' && data.intervensi) {
+          // Simpan nilai sedia ada yang mungkin belum dihantar? Tiada. Guna server sebagai sumber utama.
+          intervensiMap = data.intervensi || {};
+        }
+      } catch (err) { /* senyap - guna map kosong */ }
+      renderAtRiskStudents();
     }
 
     // Drill-down: klik bar kelas -> senarai murid lewat dalam kelas itu.
@@ -2042,6 +2139,8 @@
           }
 
           updateAnalyticsCharts(globalRekodList);
+
+          muatIntervensi();
 
           if (heroContainer && globalMuridList.length > 0) {
             const attendedIds = new Set();
