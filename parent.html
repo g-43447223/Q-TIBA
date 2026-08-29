@@ -29,39 +29,11 @@
   <link rel="manifest" href="manifest-parent.json">
   <meta name="theme-color" content="#0f172a">
 
+  <link rel="stylesheet" href="theme.css">
+
   <style>
     * { box-sizing: border-box; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
-    .code-font { font-family: 'JetBrains Mono', monospace; }
-
-    .glass-card {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .dark .glass-card {
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    .glass-card:hover {
-      border-color: rgba(56, 189, 248, 0.4);
-    }
-
-    th.sortable {
-      cursor: pointer;
-      user-select: none;
-    }
-    th.sortable:hover {
-      color: #06b6d4;
-    }
   </style>
 </head>
 
@@ -107,6 +79,17 @@
 
   <!-- KANDUNGAN UTAMA DASHBOARD IBU BAPA -->
   <main class="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col gap-4 sm:gap-6 z-10 relative">
+
+    <!-- BEKAS CUTI SEKOLAH -->
+    <div id="cuti-banner" class="hidden items-center gap-3 rounded-2xl px-4 py-3 border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+      <div class="w-9 h-9 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-face-smile-beam text-amber-500"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p id="cuti-banner-title" class="text-sm font-extrabold text-amber-700 dark:text-amber-400">Hari Ini Cuti Sekolah</p>
+        <p id="cuti-banner-desc" class="text-xs text-amber-600/90 dark:text-amber-500/80 leading-relaxed"></p>
+      </div>
+    </div>
 
     <!-- BANNER HERO -->
     <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-l-4 border-l-cyan-500">
@@ -769,10 +752,123 @@
       });
     }
 
+    // ===== HARI CUTI SEKOLAH =====
+    const PAR_HARI_CUTI_MINGGU = [0, 6];
+    const PAR_HARI_CUTI_TARIKH = [
+      { tarikh: "2026-01-01", nama: "Tahun Baru" },
+      { tarikh: "2026-02-17", nama: "Tahun Baru Cina" },
+      { tarikh: "2026-02-18", nama: "Tahun Baru Cina" },
+      { tarikh: "2026-03-21", nama: "Hari Raya Aidilfitri" },
+      { tarikh: "2026-03-22", nama: "Hari Raya Aidilfitri" },
+      { tarikh: "2026-03-23", nama: "Hari Raya Aidilfitri (Cuti Ganti)" },
+      { tarikh: "2026-05-01", nama: "Hari Pekerja" },
+      { tarikh: "2026-05-27", nama: "Hari Raya Aidiladha" },
+      { tarikh: "2026-05-31", nama: "Hari Wesak" },
+      { tarikh: "2026-06-01", nama: "Hari Keputeraan YDP Agong" },
+      { tarikh: "2026-06-02", nama: "Hari Wesak (Cuti Ganti)" },
+      { tarikh: "2026-06-17", nama: "Awal Muharam" },
+      { tarikh: "2026-08-25", nama: "Maulidur Rasul" },
+      { tarikh: "2026-08-31", nama: "Hari Kebangsaan" },
+      { tarikh: "2026-09-16", nama: "Hari Malaysia" },
+      { tarikh: "2026-11-08", nama: "Hari Deepavali" },
+      { tarikh: "2026-11-09", nama: "Hari Deepavali (Cuti Ganti)" },
+      { tarikh: "2026-12-25", nama: "Hari Krismas" }
+    ];
+    const PAR_HARI_CUTI_JULAT = [
+      { mulai: "2026-03-21", akhir: "2026-03-29", nama: "Cuti Penggal 1" },
+      { mulai: "2026-05-23", akhir: "2026-06-07", nama: "Cuti Pertengahan Tahun" },
+      { mulai: "2026-08-29", akhir: "2026-09-06", nama: "Cuti Penggal 2" },
+      { mulai: "2026-12-05", akhir: "2026-12-31", nama: "Cuti Akhir Tahun" }
+    ];
+
+    // Konfigurasi pusat dari server (tab "Tetapan"). Override fallback bila berjaya.
+    let parHujungMingguServer = null;
+    let parCutiServerTarikh = [];
+    let parCutiServerJulat = [];
+
+    // Muat senarai cuti dari backend (action=settings). Tak batal jika gagal.
+    async function muatKonfigurasiCuti() {
+      try {
+        if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+        const res = await fetch(`${API_URL}?action=settings&apiKey=${encodeURIComponent(QTIBA_API_KEY || '')}`);
+        const data = await res.json();
+        if (!data || data.status !== 'Success') return;
+        if (Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
+          parHujungMingguServer = data.hujungMinggu;
+        }
+        if (Array.isArray(data.cuti)) {
+          parCutiServerTarikh = data.cuti.filter(c => c.tarikh);
+          parCutiServerJulat = data.cuti.filter(c => c.mulai && c.akhir);
+        }
+      } catch (err) {
+        console.warn("Q-TIBA: Gagal muat senarai cuti pusat, guna nilai tetap.", err);
+      }
+    }
+
+    // Dapatkan nama cuti untuk tarikh (YYYY-MM-DD), atau "Hujung Minggu" / null.
+    // Jika data dari server tersedia, ia menjadi sumber utama.
+    function getNamaCuti(dateStr) {
+      if (!dateStr) return null;
+      if (parCutiServerTarikh.length > 0 || parCutiServerJulat.length > 0) {
+        for (let i = 0; i < parCutiServerTarikh.length; i++) {
+          if (parCutiServerTarikh[i].tarikh === dateStr) return parCutiServerTarikh[i].nama;
+        }
+        for (let i = 0; i < parCutiServerJulat.length; i++) {
+          const cj = parCutiServerJulat[i];
+          if (dateStr >= cj.mulai && dateStr <= cj.akhir) return cj.nama;
+        }
+        return null;
+      }
+      for (let i = 0; i < PAR_HARI_CUTI_TARIKH.length; i++) {
+        if (PAR_HARI_CUTI_TARIKH[i].tarikh === dateStr) return PAR_HARI_CUTI_TARIKH[i].nama;
+      }
+      for (let i = 0; i < PAR_HARI_CUTI_JULAT.length; i++) {
+        const j = PAR_HARI_CUTI_JULAT[i];
+        if (dateStr >= j.mulai && dateStr <= j.akhir) return j.nama;
+      }
+      const hujung = parHujungMingguServer ? parHujungMingguServer : PAR_HARI_CUTI_MINGGU;
+      const day = new Date(String(dateStr).replace(/-/g, '/') + ' 00:00:00').getDay();
+      if (hujung.indexOf(day) !== -1) return "Hujung Minggu";
+      return null;
+    }
+
+    function isTarikhCuti(dateStr) {
+      return !!getNamaCuti(dateStr);
+    }
+
+    // Tunjukkan/sembunyikan banner cuti di atas portal ibu bapa (ikut hari ini).
+    function updateCutiBanner() {
+      const banner = document.getElementById('cuti-banner');
+      if (!banner) return;
+      const namaCuti = getNamaCuti(getTodayDateStr());
+      if (!namaCuti) {
+        banner.classList.add('hidden');
+        return;
+      }
+      const titleEl = document.getElementById('cuti-banner-title');
+      const descEl = document.getElementById('cuti-banner-desc');
+      if (titleEl) titleEl.innerText = namaCuti;
+      if (descEl) descEl.innerText = 'Hari ini cuti sekolah (takwim KPM 2026). Tiada sesi imbasan kehadiran; murid tidak dikira tak hadir pada hari cuti.';
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+    }
+
     function renderAbsentStudents() {
       const absentList = document.getElementById('absent-student-list');
       const absentCount = document.getElementById('absent-count');
       if (!absentList) return;
+
+      // Jika hari ini cuti, papar mesej cuti (bukan senarai tak hadir).
+      const cutiTodayStr = getTodayDateStr();
+      if (isTarikhCuti(cutiTodayStr)) {
+        const namaCuti = getNamaCuti(cutiTodayStr);
+        if (absentCount) absentCount.textContent = '0 Orang';
+        absentList.innerHTML = `
+          <div class="col-span-full py-4 text-center text-amber-600 dark:text-amber-400 text-xs code-font">
+            <i class="fa-solid fa-face-smile-beam text-base mr-2"></i> ${escapeHtml(namaCuti || 'Hari Cuti')} hari ini — tiada sesi imbasan kehadiran. Murid tidak dikira tak hadir pada hari cuti.
+          </div>`;
+        return;
+      }
 
       const scannedIds = new Set();
 
@@ -944,6 +1040,8 @@
           }
 
           countTakHadir = globalMuridList.filter(m => !scannedIdsToday.has(m.id.trim().toUpperCase())).length;
+          // Hari cuti: tiada siapa "tak hadir" kerana tiada sesi imbasan.
+          if (isTarikhCuti(getTodayDateStr())) countTakHadir = 0;
 
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
@@ -1008,6 +1106,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      updateCutiBanner();
+      muatKonfigurasiCuti().then(() => {
+        updateCutiBanner();
+        renderAbsentStudents();
+      });
       fetchLiveData();
 
       // Kemaskini automatik setiap 10 saat
