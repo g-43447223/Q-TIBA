@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root {
+      --cyan: #06b6d4;
+      --cyan-dark: #0e7490;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --emerald: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .header {
+      background: linear-gradient(135deg, #06b6d4, #0e7490);
+      color: #fff;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header .logo {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .header h1 { margin: 0; font-size: 15px; font-weight: 800; }
+    .header p { margin: 0; font-size: 11px; opacity: .85; }
+    .tabs {
+      display: flex; gap: 6px; padding: 10px 12px 0;
+      background: var(--bg);
+    }
+    .tab {
+      flex: 1; padding: 9px 0; text-align: center; cursor: pointer;
+      border: 1px solid var(--border); border-bottom: none;
+      border-radius: 10px 10px 0 0; background: #eef2f7;
+      font-weight: 700; color: var(--muted); font-size: 12px;
+      transition: all .15s;
+    }
+    .tab.active { background: var(--card); color: var(--cyan-dark); }
+    .panel { display: none; padding: 14px 14px 20px; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; margin-bottom: 14px;
+    }
+    label { display: block; font-weight: 600; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    input[type=text], input[type=password], textarea, select {
+      width: 100%; padding: 9px 10px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 13px; margin-bottom: 12px;
+      background: #fff; color: var(--text);
+    }
+    textarea { min-height: 110px; font-family: ui-monospace, monospace; font-size: 11px; }
+    .row { display: flex; gap: 8px; }
+    .row > div { flex: 1; }
+    .chk { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+    .chk input { width: auto; margin: 0; }
+    .btn {
+      width: 100%; padding: 11px; border: none; border-radius: 8px;
+      font-weight: 800; font-size: 13px; cursor: pointer;
+      background: linear-gradient(90deg, var(--cyan), var(--cyan-dark));
+      color: #fff; transition: filter .15s;
+    }
+    .btn:hover { filter: brightness(1.05); }
+    .btn.small { width: auto; padding: 7px 12px; font-size: 11px; }
+    .btn.ghost { background: #eef2f7; color: var(--text); border: 1px solid var(--border); }
+    .btn.danger { background: #fff; color: var(--rose); border: 1px solid var(--rose); }
+    .btn.outline-cyan { background: #fff; color: var(--cyan-dark); border: 1px solid var(--cyan); }
+    .status {
+      display: none; padding: 9px 11px; border-radius: 8px; margin-bottom: 12px;
+      font-weight: 600; font-size: 12px;
+    }
+    .status.ok { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status.err { background: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+    .hint { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .empty { text-align: center; color: var(--muted); padding: 16px 0; }
+    .scroll { max-height: 320px; overflow-y: auto; }
+    .tag { display:inline-block; background:#e0f2fe; color:#0369a1; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🏫</div>
+    <div>
+      <h1>Q-TIBA Panel Pentadbir</h1>
+      <p>Urus tetapan & murid dari Google Sheets</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="tetapan" onclick="switchTab('tetapan')">⚙️ Tetapan</div>
+    <div class="tab" data-tab="murid" onclick="switchTab('murid')">👥 Murid</div>
+  </div>
+
+  <!-- TAB TETAPAN -->
+  <div class="panel active" id="panel-tetapan">
+    <div class="status" id="status-tetapan"></div>
+    <div class="card">
+      <label>Masa Cutoff Kelewatan (HH:MM)</label>
+      <input type="text" id="cutoff" placeholder="07:21">
+      <label>Hari Minggu yang Cuti (0=Ahad ... 6=Sabtu)</label>
+      <div class="chk">
+        <input type="checkbox" value="0" class="hw"> <span>Ahad (0)</span>
+        <input type="checkbox" value="6" class="hw" style="margin-left:10px"> <span>Sabtu (6)</span>
+      </div>
+      <label>Senarai Cuti (satu baris setiap cuti)</label>
+      <p class="hint" style="margin-top:-6px">Format: <code>YYYY-MM-DD|Nama</code> atau julat
+        <code>YYYY-MM-DD:YYYY-MM-DD|Nama</code></p>
+      <textarea id="cuti-list"></textarea>
+      <button class="btn" onclick="saveTetapan()">💾 Simpan Tetapan</button>
+    </div>
+    <div class="card">
+      <label>Lengkapkan Semula Senarai Cuti Lalai (2026 Kumpulan B)</label>
+      <button class="btn ghost" onclick="loadDefault()">Muat Senarai Lalai</button>
+    </div>
+  </div>
+
+  <!-- TAB MURID -->
+  <div class="panel" id="panel-murid">
+    <div class="status" id="status-murid"></div>
+    <div class="card">
+      <div class="row">
+        <div><label>ID (QR)</label><input type="text" id="m-id" placeholder="cth 2026001"></div>
+      </div>
+      <div class="row">
+        <div><label>Nama</label><input type="text" id="m-nama" placeholder="Nama Murid"></div>
+        <div><label>Kelas</label><input type="text" id="m-kelas" placeholder="cth 5 Amanah"></div>
+      </div>
+      <label>URL Gambar (pilihan)</label>
+      <input type="text" id="m-url" placeholder="https://...">
+      <div class="row">
+        <button class="btn" id="btn-save-murid" onclick="saveMurid()">➕ Tambah Murid</button>
+        <button class="btn ghost" onclick="clearMuridForm()" style="margin-left:8px">✖ Kosong</button>
+      </div>
+    </div>
+    <div class="card">
+      <label>Senarai Murid Sasaran</label>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Nama</th><th>Kelas</th><th></th></tr></thead>
+          <tbody id="murid-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var editingId = null;
+    var allMurid = [];
+
+    function showStatus(elId, msg, ok) {
+      var el = document.getElementById(elId);
+      el.style.display = 'block';
+      el.className = 'status ' + (ok ? 'ok' : 'err');
+      el.innerHTML = (ok ? '✅ ' : '⚠️ ') + msg;
+    }
+    function hideStatus(elId) {
+      document.getElementById(elId).style.display = 'none';
+    }
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(function (t) {
+        t.classList.toggle('active', t.getAttribute('data-tab') === name);
+      });
+      document.getElementById('panel-tetapan').classList.toggle('active', name === 'tetapan');
+      document.getElementById('panel-murid').classList.toggle('active', name === 'murid');
+    }
+
+    // ---- MUAT DATA ----
+    function init(data) {
+      if (!data) return;
+      if (data.cutoff !== undefined) document.getElementById('cutoff').value = data.cutoff;
+      document.querySelectorAll('.hw').forEach(function (cb) {
+        cb.checked = (data.hujung || []).indexOf(parseInt(cb.value, 10)) !== -1;
+      });
+      document.getElementById('cuti-list').value = data.cutiString || '';
+      allMurid = data.murid || [];
+      renderMuridTable();
+    }
+
+    function renderMuridTable() {
+      var tbody = document.getElementById('murid-tbody');
+      if (!allMurid.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">Tiada murid.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = allMurid.map(function (m, i) {
+        return '<tr>' +
+          '<td>' + escapeHtml(m.nama) + '<br><span class="tag">' + escapeHtml(m.id) + '</span></td>' +
+          '<td>' + escapeHtml(m.kelas) + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="btn small outline-cyan" onclick="editMurid(' + i + ')">Edit</button> ' +
+            '<button class="btn small danger" onclick="hapusMurid(' + i + ')">✕</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ---- TETAPAN ----
+    function getCutiList() {
+      return document.getElementById('cuti-list').value
+        .split('\n').map(function (l) { return l.trim(); })
+        .filter(function (l) { return l !== ''; }).join(';');
+    }
+    function saveTetapan() {
+      hideStatus('status-tetapan');
+      var hujung = [];
+      document.querySelectorAll('.hw:checked').forEach(function (cb) { hujung.push(parseInt(cb.value,10)); });
+      google.script.run
+        .withSuccessHandler(function (r) {
+          showStatus('status-tetapan', r.ok ? 'Tetapan disimpan.' : r.msg, r.ok);
+        })
+        .withFailureHandler(function (e) { showStatus('status-tetapan', 'Ralat: ' + e.message, false); })
+        .savePanelSettings({
+          cutoff: document.getElementById('cutoff').value.trim(),
+          hujung: hujung,
+          cuti: getCutiList()
+        });
+    }
+    function loadDefault() {
+      google.script.run
+        .withSuccessHandler(function (str) { document.getElementById('cuti-list').value = str; })
+        .defaultCutiString();
+    }
+
+    // ---- MURID ----
+    function clearMuridForm() {
+      editingId = null;
+      document.getElementById('m-id').value = '';
+      document.getElementById('m-nama').value = '';
+      document.getElementById('m-kelas').value = '';
+      document.getElementById('m-url').value = '';
+      document.getElementById('btn-save-murid').innerHTML = '➕ Tambah Murid';
+    }
+    function editMurid(i) {
+      var m = allMurid[i];
+      editingId = m.id;
+      document.getElementById('m-id').value = m.id;
+      document.getElementById('m-nama').value = m.nama || '';
+      document.getElementById('m-kelas').value = m.kelas || '';
+      document.getElementById('m-url').value = m.urlGambar || '';
+      document.getElementById('btn-save-murid').innerHTML = '💾 Simpan Perubahan';
+    }
+    function saveMurid() {
+      hideStatus('status-murid');
+      var data = {
+        id: document.getElementById('m-id').value.trim(),
+        nama: document.getElementById('m-nama').value.trim(),
+        kelas: document.getElementById('m-kelas').value.trim(),
+        urlGambar: document.getElementById('m-url').value.trim(),
+        editingId: editingId
+      };
+      if (!data.id || !data.nama) {
+        showStatus('status-murid', 'ID dan Nama wajib diisi.', false);
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (r.ok) {
+            showStatus('status-murid', r.msg, true);
+            clearMuridForm();
+            google.script.run.withSuccessHandler(function (d) { allMurid = d.murid || []; renderMuridTable(); }).getPanelMurid();
+          } else {
+            showStatus('status-murid', r.msg, false);
+          }
+        })
+        .withFailureHandler(function (e) { showStatus('status-murid', 'Ralat: ' + e.message, false); })
+        .savePanelMurid(data);
+    }
+    function hapusMurid(i) {
+      var m = allMurid[i];
+      if (!confirm('Padam murid ' + (m.nama || m.id) + '? Tindakan ini tidak boleh dibatalkan.')) return;
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (r.ok) {
+            showStatus('status-murid', r.msg, true);
+            google.script.run.withSuccessHandler(function (d) { allMurid = d.murid || []; renderMuridTable(); }).getPanelMurid();
+          } else {
+            showStatus('status-murid', r.msg, false);
+          }
+        })
+        .withFailureHandler(function (e) { showStatus('status-murid', 'Ralat: ' + e.message, false); })
+        .deletePanelMurid({ id: m.id });
+    }
+
+    google.script.run.withSuccessHandler(init).getPanelData();
+  </script>
+</body>
+</html>

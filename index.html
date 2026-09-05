@@ -39,7 +39,7 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative">
+<body class="aurora-bg bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative">
 
   <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
 
@@ -95,7 +95,7 @@
   </header>
 
   <!-- KANDUNGAN UTAMA DASHBOARD -->
-  <main class="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col gap-4 sm:gap-6 z-10 relative">
+  <main class="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col gap-4 sm:gap-6 z-10 relative ios-bottom-space">
 
     <!-- BEKAS CUTI SEKOLAH -->
     <div id="cuti-banner" class="hidden items-center gap-3 rounded-2xl px-4 py-3 border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
@@ -108,21 +108,26 @@
       </div>
     </div>
 
-    <!-- TAB NAVIGATION -->
-    <div class="glass-card p-1.5 rounded-2xl flex items-center justify-between gap-1 overflow-x-auto">
-      <button onclick="switchTab('utama')" id="tab-btn-utama" class="tab-btn-active flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
-        <i class="fa-solid fa-house text-xs"></i> <span>Dashboard</span>
+    <!-- TAB NAVIGATION (iOS 26 floating) -->
+    <nav id="tab-bar" class="ios-tabbar" aria-label="Navigasi utama">
+      <span id="tab-indicator" class="ios-tab-indicator" aria-hidden="true"></span>
+      <button onclick="switchTab('utama')" id="tab-btn-utama" class="ios-tab-item tab-btn-active" role="tab" aria-selected="true">
+        <span class="tab-icon"><i class="fa-solid fa-house"></i></span>
+        <span class="tab-label">Dashboard</span>
       </button>
-      <button onclick="switchTab('analitik')" id="tab-btn-analitik" class="flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-        <i class="fa-solid fa-chart-pie text-xs"></i> <span>Analitik</span>
+      <button onclick="switchTab('analitik')" id="tab-btn-analitik" class="ios-tab-item" role="tab" aria-selected="false">
+        <span class="tab-icon"><i class="fa-solid fa-chart-pie"></i></span>
+        <span class="tab-label">Analitik</span>
       </button>
-      <button onclick="switchTab('murid')" id="tab-btn-murid" class="flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-        <i class="fa-solid fa-users text-xs"></i> <span>Murid Sasaran</span>
+      <button onclick="switchTab('murid')" id="tab-btn-murid" class="ios-tab-item" role="tab" aria-selected="false">
+        <span class="tab-icon"><i class="fa-solid fa-users"></i></span>
+        <span class="tab-label">Murid</span>
       </button>
-      <button onclick="switchTab('records')" id="tab-btn-records" class="flex-1 min-w-[90px] py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-        <i class="fa-solid fa-clipboard-list text-xs"></i> <span>Rekod BNK</span>
+      <button onclick="switchTab('records')" id="tab-btn-records" class="ios-tab-item" role="tab" aria-selected="false">
+        <span class="tab-icon"><i class="fa-solid fa-clipboard-list"></i></span>
+        <span class="tab-label">Rekod</span>
       </button>
-    </div>
+    </nav>
 
     <!-- BANNER HERO -->
     <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-l-4 border-l-cyan-500">
@@ -159,30 +164,31 @@
 
       <!-- KPI CARDS -->
       <div class="grid grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4">
-        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Murid Sasaran</p>
-          <h3 id="kpi-sasaran" class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
+          <h3 id="kpi-sasaran" data-countup class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 relative reveal">
+          <span class="pulse-dot absolute top-2 right-2" aria-hidden="true"></span>
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Lewat Hari Ini</p>
-          <h3 id="kpi-hari-ini" class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
+          <h3 id="kpi-hari-ini" data-countup class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Tak Hadir Hari Ini</p>
-          <h3 id="kpi-tak-hadir" class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
+          <h3 id="kpi-tak-hadir" data-countup class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Jumlah Kes</p>
-          <h3 id="kpi-total-kes" class="text-xl sm:text-2xl font-black code-font text-violet-600 dark:text-violet-400 mt-1">0</h3>
+          <h3 id="kpi-total-kes" data-countup class="text-xl sm:text-2xl font-black code-font text-violet-600 dark:text-violet-400 mt-1">0</h3>
         </div>
-        <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Bebas Lewat (0 Kes)</p>
-          <h3 id="kpi-bebas-lewat" class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+          <h3 id="kpi-bebas-lewat" data-countup class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
         </div>
       </div>
 
       <!-- KPI KES MENGIKUT TEMPOH -->
-      <div class="glass-card rounded-2xl p-3.5 sm:p-4 mt-2.5">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 mt-2.5 reveal">
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
           <h3 class="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2 uppercase tracking-wider">
             <i class="fa-solid fa-calendar-days text-rose-500"></i> Trend Kes Kelewatan (Tempoh)
@@ -192,23 +198,23 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
           <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
             <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Minggu Ini</p>
-            <h4 id="kpi-minggu-ini" class="text-lg sm:text-xl font-black code-font text-rose-600 dark:text-rose-400 mt-0.5">0</h4>
+            <h4 id="kpi-minggu-ini" data-countup class="text-lg sm:text-xl font-black code-font text-rose-600 dark:text-rose-400 mt-0.5">0</h4>
           </div>
           <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
             <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Minggu Lepas</p>
-            <h4 id="kpi-minggu-lepas" class="text-lg sm:text-xl font-black code-font text-amber-600 dark:text-amber-400 mt-0.5">0</h4>
+            <h4 id="kpi-minggu-lepas" data-countup class="text-lg sm:text-xl font-black code-font text-amber-600 dark:text-amber-400 mt-0.5">0</h4>
           </div>
           <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
             <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Bulan Ini</p>
-            <h4 id="kpi-bulan-ini" class="text-lg sm:text-xl font-black code-font text-violet-600 dark:text-violet-400 mt-0.5">0</h4>
+            <h4 id="kpi-bulan-ini" data-countup class="text-lg sm:text-xl font-black code-font text-violet-600 dark:text-violet-400 mt-0.5">0</h4>
           </div>
           <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
             <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Bulan Lepas</p>
-            <h4 id="kpi-bulan-lepas" class="text-lg sm:text-xl font-black code-font text-blue-600 dark:text-blue-400 mt-0.5">0</h4>
+            <h4 id="kpi-bulan-lepas" data-countup class="text-lg sm:text-xl font-black code-font text-blue-600 dark:text-blue-400 mt-0.5">0</h4>
           </div>
           <div class="rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 p-3 text-center">
             <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">Keseluruhan</p>
-            <h4 id="kpi-keseluruhan" class="text-lg sm:text-xl font-black code-font text-slate-900 dark:text-white mt-0.5">0</h4>
+            <h4 id="kpi-keseluruhan" data-countup class="text-lg sm:text-xl font-black code-font text-slate-900 dark:text-white mt-0.5">0</h4>
           </div>
         </div>
       </div>
@@ -861,7 +867,7 @@
     </div>
   </div>
 
-  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
+  <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-28 z-10">
     <div>Q-TIBA INNOVATION SYSTEM &copy; 2026 SK PULAU INDAH</div>
     <div>HAK CIPTA TERPELIHARA.</div>
   </footer>
@@ -1131,10 +1137,25 @@
     }
 
     // TAB SWITCHER
+    function moveTabIndicator() {
+      const bar = document.getElementById('tab-bar');
+      const ind = document.getElementById('tab-indicator');
+      const btn = bar && (bar.querySelector('.tab-btn-active') || bar.querySelector('.ios-tab-item'));
+      if (!bar || !ind || !btn) return;
+      const barRect = bar.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      ind.style.width = `${btnRect.width - 8}px`;
+      ind.style.transform = `translateX(${btnRect.left - barRect.left + 4}px)`;
+    }
+
     function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('tab-entering'); });
       const target = document.getElementById(`tab-${tabName}`);
-      if (target) target.classList.remove('hidden');
+      if (target) {
+        target.classList.remove('hidden');
+        void target.offsetWidth;
+        target.classList.add('tab-entering');
+      }
 
       ['utama', 'analitik', 'murid', 'records'].forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
@@ -1143,6 +1164,8 @@
           else btn.classList.remove('tab-btn-active');
         }
       });
+
+      requestAnimationFrame(moveTabIndicator);
 
       if (tabName === 'analitik' && timeChart && trendChart && reasonChart && classChart) {
         setTimeout(() => { 
@@ -1164,6 +1187,9 @@
         cursorGlow.style.top = `${e.clientY}px`;
       });
     }
+
+    window.addEventListener('resize', () => requestAnimationFrame(moveTabIndicator));
+    requestAnimationFrame(moveTabIndicator);
 
     // THEME TOGGLE
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -1283,7 +1309,44 @@
 
     function setElementText(id, value) {
       const el = document.getElementById(id);
-      if (el) el.innerText = value;
+      if (!el) return;
+      // Count-up animasi untuk elemen KPI yang bertanda data-countup.
+      if (el.hasAttribute('data-countup') && /^-?\d+(\.\d+)?$/.test(String(value))) {
+        el.classList.remove('skeleton');
+        animateCount(el, parseFloat(value));
+      } else {
+        el.innerText = value;
+      }
+    }
+
+    // Animasi nombor "count up" yang lancar (KPI).
+    function animateCount(el, to) {
+      const from = parseFloat(el.innerText.replace(/[^\d.-]/g, '')) || 0;
+      if (from === to) { el.innerText = Math.round(to).toString(); return; }
+      const duration = 700;
+      const start = performance.now();
+      const step = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = from + (to - from) * eased;
+        el.innerText = el.innerText.includes('.') ? val.toFixed(1) : Math.round(val).toString();
+        if (p < 1) requestAnimationFrame(step);
+        else el.innerText = el.innerText.includes('.') ? to.toFixed(1) : Math.round(to).toString();
+      };
+      requestAnimationFrame(step);
+    }
+
+    // Skeleton loading: hidupkan shimmer pada semua KPI ketika mula memuat data.
+    function enableKpiSkeleton() {
+      document.querySelectorAll('[data-countup]').forEach(el => el.classList.add('skeleton'));
+    }
+
+    // Entrance reveal berperingkat (staggered) untuk elemen .reveal.
+    function initReveal() {
+      const items = document.querySelectorAll('.reveal');
+      items.forEach((el, i) => {
+        setTimeout(() => el.classList.add('is-visible'), 60 * (i % 8));
+      });
     }
 
     function updateSyncStatus(text, colorClass) {
@@ -2036,6 +2099,8 @@
 
       try {
         updateSyncStatus("Memuatkan Data...", "text-amber-500");
+        // Skeleton hanya pada muat pertama sahaja; refresh seterusnya kekalkan nombor sedia ada.
+        if ((globalMuridList || []).length === 0) enableKpiSkeleton();
         const response = await fetch(buildApiUrl({}));
 
         if (!response.ok) throw new Error("Gagal menyambung ke server Google");
@@ -2347,9 +2412,9 @@
           ? `<div class="flex flex-col items-end gap-1">
                <span class="text-[9px] text-slate-400 code-font">Jana Surat:</span>
                <div class="flex items-center gap-1">
-                 <button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', 'minggu')" title="Surat untuk kes minggu ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
-                 <button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', 'bulan')" title="Surat untuk kes bulan ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
-                 <button onclick="generateSuratAmaran('${s.nama.replace(/'/g, "\\'")}', '${s.kelas}', 'semua')" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="minggu" title="Surat untuk kes minggu ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
+                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="bulan" title="Surat untuk kes bulan ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
+                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="semua" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
                </div>
              </div>`
           : '';
@@ -2410,15 +2475,24 @@
       tempoh = (tempoh || 'semua').toLowerCase();
       idMurid = String(idMurid || '').trim().toUpperCase();
 
-      // 1. Cari murid & kumpul kes mengikut tempoh
-      const murid = (globalMuridList || []).find(m => String(m.id || '').trim().toUpperCase() === idMurid);
-      const nama = murid ? murid.nama : 'Murid';
+      // 1. Cari murid (ikut ID dahulu, jika tiada cari ikut nama) & kumpul kes mengikut tempoh
+      const murid = (globalMuridList || []).find(m => String(m.id || '').trim().toUpperCase() === idMurid)
+                 || (globalMuridList || []).find(m => String(m.nama || '').trim().toUpperCase() === idMurid);
+      const nama = murid ? murid.nama : '';
       const kelas = murid ? murid.kelas : '';
 
+      if (!nama) {
+        alert("Murid tidak ditemui dalam senarai sasaran. Sila muat semula data atau semak butang surat.");
+        return;
+      }
+
       const semuaKes = (globalRekodList || []).filter(r => {
-        if (!idMurid) return (r.nama === nama);
-        const rid = String(r.id || '').trim().toUpperCase();
-        return rid === idMurid || r.nama === nama;
+        if (murid) {
+          const rid = String(r.id || '').trim().toUpperCase();
+          return rid === String(murid.id || '').trim().toUpperCase() || String(r.nama || '').trim().toUpperCase() === String(murid.nama || '').trim().toUpperCase();
+        }
+        // Sandaran terakhir: padankan nama sahaja (guna nama asal)
+        return String(r.nama || '').trim().toUpperCase() === idMurid;
       }).filter(r => {
         const st = String(r.status || 'LEWAT').trim().toUpperCase();
         return st === 'LEWAT';
@@ -2823,6 +2897,7 @@
 
     // INISIALISASI APLIKASI
     document.addEventListener('DOMContentLoaded', () => {
+      initReveal();
       updateCutiBanner();
       muatKonfigurasiCuti().then(() => {
         updateCutiBanner();

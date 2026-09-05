@@ -14,6 +14,11 @@ Sistem disiplin sekolah untuk mengesan ketibaan murid menggunakan imbasan QR Cod
 - Eksport CSV & Surat Amaran PDF
 - Cegah rekod imbasan duplikat di sisi server (satu imbasan setiap murid sehari)
 - Konfigurasi pusat (masa cutoff & senarai cuti) boleh diubah dalam Google Sheet tanpa sentuh kod
+- Panel pentadbir dalam Google Sheets (ubah tetapan & senarai murid)
+- **Tracking intervensi** — jadual murid berisiko dengan status tindakan (Surat 1/2/3, Kaunseling, Rujuk), tarikh & nota, disimpan dalam Google Sheet
+- Tren naik/turun & punca utama per murid untuk ukur keberkesanan intervensi
+- **UI yang hidup** — latar aurora beranimasi, kad glass lift + glow, nombor KPI count-up, skeleton loading, konfeti apabila imbasan berjaya, kontrast peralihan tab & entrance reveal (hormati `prefers-reduced-motion`)
+- **Reka bentuk gaya iOS 26 (Liquid Glass)** — tab navigasi floating kekal di bawah (safe-area iPhone), item tab besar untuk jari (min 48px), font asli sistem iOS, sesuaian fon untuk telefon
 
 ## Struktur Fail
 
@@ -128,6 +133,20 @@ Panel pentadbir menyediakan **UI dalam Google Sheets** untuk mengurus tetapan da
 ### Cegah Rekod Duplikat
 
 Backend **menolak imbasan duplikat** — jika ID murid sudah wujud dalam tab **Rekod** pada tarikh yang sama, rekod kedua tidak disimpan (dipulangkan sebagai `duplicate`). Ini menghalang rekod berganda yang berpunca daripada lebih satu peranti, antrian offline yang dihantar semula, atau imbasan tidak sengaja berulang.
+
+### Tracking Intervensi (Surat / Kaunseling / Rujuk)
+
+Jadual **Senarai Murid Berisiko** dalam tab Analitik (dashboard admin) kini membolehkan guru merekod **tindakan intervensi** bagi setiap murid:
+
+- **Status tindakan** (dropdown): `Belum`, `Surat 1`, `Surat 2`, `Surat 3`, `Kaunseling`, `Rujuk Pengetua`.
+- **Tarikh** tindakan diambil.
+- **Nota** ringkas untuk rekod follow-up.
+- **Tren** (▲ naik / ▼ turun) — perbandingan kes minggu ini berbanding minggu lepas, untuk melihat sama ada intervensi berkesan (merosot → membaik).
+- **Punca utama** per murid — sebab paling kerap bagi murid itu.
+
+Perubahan disimpan **automatik** ke Google Sheet melalui backend (`action=saveIntervensi`). Semua rekod tindakan disimpan dalam tab **`Intervensi`** dengan lajur: `ID, Status, Tarikh, Nota`. Kerana ia disimpan di server, rekod tindakan **dikongsi** antara semua guru/peranti.
+
+> Nota: Tab `Intervensi` dicipta secara automatik pada kali pertama rekod disimpan. Ia membaca akaun yang sama yang menguruskan `Rekod`/`MuridSasaran` (Web App dikaitkan dengan spreadsheet aktif).
 
 ## Keselamatan
 

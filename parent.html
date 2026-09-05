@@ -37,7 +37,7 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative">
+<body class="aurora-bg bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-300 relative">
 
   <div id="cursor-glow" class="pointer-events-none fixed w-80 h-80 rounded-full bg-cyan-400/20 dark:bg-cyan-500/15 blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-0"></div>
 
@@ -92,7 +92,7 @@
     </div>
 
     <!-- BANNER HERO -->
-    <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-l-4 border-l-cyan-500">
+    <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-l-4 border-l-cyan-500 reveal">
       <div>
         <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 code-font">Inovasi Disiplin SK Pulau Indah</span>
         <h2 class="text-base sm:text-xl font-black text-slate-900 dark:text-white mt-0.5 leading-tight">
@@ -106,30 +106,31 @@
 
     <!-- KPI CARDS -->
     <div class="grid grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4">
-      <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Murid Dipantau</p>
-        <h3 id="kpi-sasaran" class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
+        <h3 id="kpi-sasaran" data-countup class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
       </div>
-      <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 relative reveal">
+        <span class="pulse-dot absolute top-2 right-2" aria-hidden="true"></span>
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Lewat Hari Ini</p>
-        <h3 id="kpi-hari-ini" class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
+        <h3 id="kpi-hari-ini" data-countup class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
       </div>
-      <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Tak Hadir Hari Ini</p>
-        <h3 id="kpi-tak-hadir" class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
+        <h3 id="kpi-tak-hadir" data-countup class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400 mt-1">0</h3>
       </div>
-      <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Jumlah Kes Kelewatan</p>
-        <h3 id="kpi-total-kes" class="text-xl sm:text-2xl font-black code-font text-violet-600 dark:text-violet-400 mt-1">0</h3>
+        <h3 id="kpi-total-kes" data-countup class="text-xl sm:text-2xl font-black code-font text-violet-600 dark:text-violet-400 mt-1">0</h3>
       </div>
-      <div class="glass-card rounded-2xl p-3.5 sm:p-4">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
         <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Bebas Lewat (0 Kes)</p>
-        <h3 id="kpi-bebas-lewat" class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+        <h3 id="kpi-bebas-lewat" data-countup class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
       </div>
     </div>
 
     <!-- HERO DISIPLIN -->
-    <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-amber-500">
+    <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-amber-500 reveal">
       <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
           <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -438,7 +439,40 @@
 
     function setElementText(id, value) {
       const el = document.getElementById(id);
-      if (el) el.innerText = value;
+      if (!el) return;
+      if (el.hasAttribute('data-countup') && /^-?\d+(\.\d+)?$/.test(String(value))) {
+        el.classList.remove('skeleton');
+        animateCount(el, parseFloat(value));
+      } else {
+        el.innerText = value;
+      }
+    }
+
+    function animateCount(el, to) {
+      const from = parseFloat(el.innerText.replace(/[^\d.-]/g, '')) || 0;
+      if (from === to) { el.innerText = Math.round(to).toString(); return; }
+      const duration = 700;
+      const start = performance.now();
+      const step = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = from + (to - from) * eased;
+        el.innerText = el.innerText.includes('.') ? val.toFixed(1) : Math.round(val).toString();
+        if (p < 1) requestAnimationFrame(step);
+        else el.innerText = el.innerText.includes('.') ? to.toFixed(1) : Math.round(to).toString();
+      };
+      requestAnimationFrame(step);
+    }
+
+    function enableKpiSkeleton() {
+      document.querySelectorAll('[data-countup]').forEach(el => el.classList.add('skeleton'));
+    }
+
+    function initReveal() {
+      const items = document.querySelectorAll('.reveal');
+      items.forEach((el, i) => {
+        setTimeout(() => el.classList.add('is-visible'), 60 * (i % 8));
+      });
     }
 
     // Paparkan profil murid dalam modal besar (klik pada nama/ranking).
@@ -1000,6 +1034,8 @@
 
       try {
         updateSyncStatus("Memuatkan Data...", "text-amber-500");
+        // Skeleton hanya pada muat pertama sahaja; refresh seterusnya kekalkan nombor sedia ada.
+        if ((globalMuridList || []).length === 0) enableKpiSkeleton();
         const response = await fetch(buildApiUrl({}));
 
         if (!response.ok) throw new Error("Gagal menyambung ke server Google");
@@ -1106,6 +1142,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      initReveal();
       updateCutiBanner();
       muatKonfigurasiCuti().then(() => {
         updateCutiBanner();
