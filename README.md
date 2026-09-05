@@ -11,11 +11,16 @@ Sistem disiplin sekolah untuk mengesan ketibaan murid menggunakan imbasan QR Cod
 - Portal Ibu Bapa (paparan ringkas tanpa login)
 - PWA - boleh dipasang sebagai aplikasi
 - Mod luar talian (offline) dengan antrian auto-sync
+- **Cache senarai murid offline** — senarai murid disimpan dalam peranti; imbasan tetap berfungsi walaupun tanpa internet (data dihantar semula bila kembali dalam talian)
 - Eksport CSV & Surat Amaran PDF
 - Cegah rekod imbasan duplikat di sisi server (satu imbasan setiap murid sehari)
 - Konfigurasi pusat (masa cutoff & senarai cuti) boleh diubah dalam Google Sheet tanpa sentuh kod
 - Panel pentadbir dalam Google Sheets (ubah tetapan & senarai murid)
 - **Tracking intervensi** — jadual murid berisiko dengan status tindakan (Surat 1/2/3, Kaunseling, Rujuk), tarikh & nota, disimpan dalam Google Sheet
+- **Auto-cadang tindakan intervensi** — sistem mencadangkan status (Surat 1 → Rujuk Pengetua) berdasarkan jumlah kes murid, ditanda "(disyorkan)" dalam dropdown
+- **Kronologi murid** — profil murid memaparkan timeline penuh semua imbasan + tindakan intervensi, dan boleh dimuat turun sebagai PDF
+- **Ranking kelas** — jadual & bar disiplin per kelas (kadar hadir hari ini, jumlah kes) dalam tab Analitik
+- **KPI Hadir Hari Ini** — kad dashboard menunjukkan bilangan murid hadir berbanding sasaran
 - Tren naik/turun & punca utama per murid untuk ukur keberkesanan intervensi
 - **UI yang hidup** — latar aurora beranimasi, kad glass lift + glow, nombor KPI count-up, skeleton loading, konfeti apabila imbasan berjaya, kontrast peralihan tab & entrance reveal (hormati `prefers-reduced-motion`)
 - **Reka bentuk gaya iOS 26 (Liquid Glass)** — tab navigasi floating kekal di bawah (safe-area iPhone), item tab besar untuk jari (min 48px), font asli sistem iOS, sesuaian fon untuk telefon
@@ -147,6 +152,46 @@ Jadual **Senarai Murid Berisiko** dalam tab Analitik (dashboard admin) kini memb
 Perubahan disimpan **automatik** ke Google Sheet melalui backend (`action=saveIntervensi`). Semua rekod tindakan disimpan dalam tab **`Intervensi`** dengan lajur: `ID, Status, Tarikh, Nota`. Kerana ia disimpan di server, rekod tindakan **dikongsi** antara semua guru/peranti.
 
 > Nota: Tab `Intervensi` dicipta secara automatik pada kali pertama rekod disimpan. Ia membaca akaun yang sama yang menguruskan `Rekod`/`MuridSasaran` (Web App dikaitkan dengan spreadsheet aktif).
+
+### Auto-Cadang Tindakan Intervensi
+
+Dalam jadual **Senarai Murid Berisiko**, sistem secara automatik mencadangkan status tindakan berdasarkan jumlah kes murid:
+
+| Jumlah Kes | Cadangan Tindakan |
+|-----------|-------------------|
+| 1–2 | Surat 1 |
+| 3–4 | Surat 2 |
+| 5–6 | Surat 3 |
+| 7–9 | Kaunseling |
+| ≥10 | Rujuk Pengetua |
+
+Pilihan yang disyorkan ditanda **"(disyorkan)"** dalam dropdown — guru boleh klik untuk menetapkannya atau pilih status lain secara manual.
+
+### Kronologi Murid (PDF)
+
+Klik nama murid di mana-mana senarai untuk membuka profil. Bahagian **Kronologi Murid** memaparkan:
+- Timeline penuh **semua** ciri-scan kehadiran murid (bukan hanya yang terkini) dengan tarikh, hari, masa & lencana HADIR/LEWAT.
+- Blok **Tindakan Intervensi semasa** (status, tarikh, nota).
+- Butang **Muat Turun PDF** — menjana dokumen `Kronologi_<Nama>.pdf` (A4) yang sedia untuk fail murid.
+
+### Ranking Kelas
+
+Dalam tab **Analitik**, kad **Ranking Disiplin Kelas** menyusun kelas mengikut:
+- Kadar hadir hari ini (peratusan & bar visual).
+- Jumlah kes kelewatan (pangkat) sebagai pemutus seri.
+Kelas terbaik ditanda 🏆, kelas paling perlu perhatian ditanda **PERLU TINDAKAN**.
+
+### KPI Hadir Hari Ini
+
+Kad baharu **Hadir Hari Ini** pada dashboard menunjukkan bilangan murid yang telah mengimbas (HADIR atau LEWAT) berbanding sasaran ("dari X") untuk tarikh aktif. Ia turut terkini apabila anda bersiar-siar antara tarikh.
+
+### Cache Senarai Murid (Offline Penuh)
+
+Pemimbas QR kini menyimpan senarai murid sebagai cache dalam peranti (`qtiba_murid_cache_v1`):
+- **Bila berjaya** — cache dikemas kini setiap kali `preloadStudentData` dimuatkan.
+- **Bila offline** — senarai murid dibaca daripada cache supaya imbas-scan tetap dapat dipadankan dengan nama murid, walaupun tanpa internet.
+- Amaran **violet** ("Menggunakan cache murid...") dipaparkan semasa mod offline, dan ia hilang secara automatik bila kembali dalam talian.
+- Data imbasan tetap masuk ke antrian offline dan disegerakkan kemudian (gabungan ciri sedia ada).
 
 ## Keselamatan
 

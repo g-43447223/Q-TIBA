@@ -133,6 +133,9 @@
     </button>
   </div>
 
+  <!-- AMARAN OFFLINE + CACHE MURID (mod pengimbas berfungsi tanpa internet) -->
+  <div id="offline-cache-bar" class="hidden bg-violet-500/90 text-white font-bold text-xs py-1.5 px-4 text-center z-30 shadow-md"></div>
+
   <!-- PANEL HARI CUTI (Sabtu/Ahad & cuti umum) -->
   <section id="cuti-panel" class="hidden max-w-lg w-full mx-auto p-6 sm:p-8 flex-1 flex flex-col items-center justify-center text-center z-10 relative">
     <div class="glass-card rounded-3xl p-8 sm:p-10 w-full border-l-4 border-l-violet-500">
@@ -824,7 +827,43 @@
       });
     }
 
-    // PRELOAD DATA MURID
+    // PRELOAD DATA MURID (dengan cache offline #7)
+    const CACHE_KEY = 'qtiba_murid_cache_v1';
+
+    function simpanMuridCache(muridList) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          bila: new Date().toISOString(),
+          muridList: muridList
+        }));
+      } catch (e) {
+        console.warn("Gagal simpan cache murid:", e);
+      }
+    }
+
+    function bacaMuridCache() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || !Array.isArray(obj.muridList)) return null;
+        return obj;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function paparStatusCache() {
+      const bar = document.getElementById('offline-cache-bar');
+      const cache = bacaMuridCache();
+      if (!bar || !cache) return;
+      const bila = cache.bila ? new Date(cache.bila) : null;
+      bar.classList.remove('hidden');
+      bar.innerText = bila && !isNaN(bila.getTime())
+        ? `⚠ Anda sedang OFFLINE. Menggunakan cache murid (dikemas kini ${bila.toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' })} ${bila.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}). Imbasan tetap berfungsi.`
+        : "⚠ Anda sedang OFFLINE. Menggunakan cache murid untuk imbasan.";
+    }
+
     async function preloadStudentData() {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       try {
@@ -838,10 +877,42 @@
               scannedTodaySet.add(cleanId);
             }
           });
+          simpanMuridCache(data.muridList);
           console.log("Q-TIBA: Loaded", Object.keys(studentCacheMap).length, "students.");
+        } else {
+          // Server reply tidak berjaya — cuba guna cache.
+          const cache = bacaMuridCache();
+          if (cache) {
+            cache.muridList.forEach(m => {
+              const cleanId = m.id.trim().toUpperCase();
+              studentCacheMap[cleanId] = m;
+              if (m.lewatHariIni) scannedTodaySet.add(cleanId);
+            });
+            paparStatusCache();
+            console.warn("Q-TIBA: Server returned failure, using cache.",
+              Object.keys(studentCacheMap).length, "students.");
+          }
         }
       } catch (err) {
         console.warn("Preload student map failed:", err);
+        // Offline / rangkaian gagal — guna cache supaya imbasan masih berfungsi.
+        const cache = bacaMuridCache();
+        if (cache) {
+          cache.muridList.forEach(m => {
+            const cleanId = m.id.trim().toUpperCase();
+            studentCacheMap[cleanId] = m;
+            if (m.lewatHariIni) scannedTodaySet.add(cleanId);
+          });
+          paparStatusCache();
+          console.warn("Q-TIBA: Offline fallback — using cached student map.",
+            Object.keys(studentCacheMap).length, "students.");
+        } else {
+          const bar = document.getElementById('offline-cache-bar');
+          if (bar) {
+            bar.classList.remove('hidden');
+            bar.innerText = "⚠ OFFLINE dan tiada cache murid. Imbasan mungkin tidak dapat dipadankan.";
+          }
+        }
       }
     }
 
@@ -1216,6 +1287,7 @@
     function checkNetworkStatus() {
       const offlineBar = document.getElementById('offline-bar');
       const offlineCount = document.getElementById('offline-count');
+      const offlineCacheBar = document.getElementById('offline-cache-bar');
       const offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
 
       if (!navigator.onLine || offlineQueue.length > 0) {
@@ -1223,6 +1295,8 @@
         offlineCount.innerText = offlineQueue.length;
       } else {
         offlineBar.classList.add('hidden');
+        // Kembali dalam talian — sembunyikan amaran cache murid.
+        if (offlineCacheBar) offlineCacheBar.classList.add('hidden');
       }
     }
 

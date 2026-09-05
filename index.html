@@ -163,10 +163,15 @@
       </div>
 
       <!-- KPI CARDS -->
-      <div class="grid grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4">
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-4">
         <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Murid Sasaran</p>
           <h3 id="kpi-sasaran" data-countup class="text-xl sm:text-2xl font-black code-font text-slate-900 dark:text-white mt-1">0</h3>
+        </div>
+        <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Hadir Hari Ini</p>
+          <h3 id="kpi-hadir" data-countup class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+          <p id="kpi-hadir-note" class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 code-font"></p>
         </div>
         <div class="glass-card rounded-2xl p-3.5 sm:p-4 relative reveal">
           <span class="pulse-dot absolute top-2 right-2" aria-hidden="true"></span>
@@ -183,7 +188,7 @@
         </div>
         <div class="glass-card rounded-2xl p-3.5 sm:p-4 reveal">
           <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">Bebas Lewat (0 Kes)</p>
-          <h3 id="kpi-bebas-lewat" data-countup class="text-xl sm:text-2xl font-black code-font text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+          <h3 id="kpi-bebas-lewat" data-countup class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400 mt-1">0</h3>
         </div>
       </div>
 
@@ -370,6 +375,29 @@
             <canvas id="classChart"></canvas>
           </div>
           <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 code-font">💡 Klik pada bar kelas untuk lihat senarai murid.</p>
+        </div>
+
+        <div class="lg:col-span-5 glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <div class="mb-3">
+            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-ranking-star text-violet-500"></i> Ranking Disiplin Kelas
+            </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelas paling disiplin berdasarkan kadar kehadiran &amp; kes kelewatan</p>
+          </div>
+          <div class="overflow-x-auto -mx-1">
+            <table class="w-full text-left text-[11px]">
+              <thead>
+                <tr class="text-[9px] uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-700/60">
+                  <th class="px-1.5 py-2">#</th>
+                  <th class="px-1.5 py-2">Kelas</th>
+                  <th class="px-1.5 py-2 text-center">Murid</th>
+                  <th class="px-1.5 py-2 text-center">Hadir Hari Ini</th>
+                  <th class="px-1.5 py-2 text-center">Jumlah Kes</th>
+                </tr>
+              </thead>
+              <tbody id="class-ranking-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -857,10 +885,15 @@
       </div>
 
       <div class="mt-4">
-        <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">
-          <i class="fa-solid fa-clock-rotate-left mr-1.5 text-cyan-500"></i> Rekod Kelewatan Terkini
-        </h4>
-        <div id="sp-rekod" class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+          <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <i class="fa-solid fa-clock-rotate-left mr-1.5 text-cyan-500"></i> Kronologi Murid
+          </h4>
+          <button onclick="cetakKronologiPDF()" class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 rounded-full hover:bg-cyan-500/20 transition-colors">
+            <i class="fa-solid fa-file-pdf mr-1"></i> Muat Turun PDF
+          </button>
+        </div>
+        <div id="sp-rekod" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
           <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
         </div>
       </div>
@@ -906,6 +939,9 @@
       renderStreakTracker();
       // Kemas kini KPI "Tak Hadir" supaya seiring dengan tarikh aktif.
       setElementText('kpi-tak-hadir', calculateAbsentCount(activeDate));
+      setElementText('kpi-hadir', calculateHadirCount(activeDate));
+      const hadirNote = document.getElementById('kpi-hadir-note');
+      if (hadirNote) hadirNote.textContent = `dari ${(globalMuridList || []).length}`;
     }
 
     // Pulangkan rekod yang tarikhnya sama dengan tarikh diberi
@@ -1037,6 +1073,23 @@
         });
       }
       return (globalMuridList || []).filter(m => !scannedIds.has(String(m.id || '').trim().toUpperCase())).length;
+    }
+
+    // Bilangan murid yang sudah mengimbas (HADIR atau LEWAT) pada tarikh diberi.
+    function calculateHadirCount(dateStr) {
+      const tgl = dateStr || activeDate;
+      const scannedIds = new Set();
+      getRekodUntukHari(tgl).forEach(r => {
+        if (r.id) scannedIds.add(r.id.trim().toUpperCase());
+      });
+      if (scannedIds.size === 0 && tgl === getTodayDateStr()) {
+        (globalMuridList || []).forEach(m => {
+          if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+            scannedIds.add(m.id.trim().toUpperCase());
+          }
+        });
+      }
+      return scannedIds.size;
     }
 
     function getTodayDateStr() {
@@ -1584,6 +1637,9 @@
         classChart.update();
       }
 
+      // #6 Ranking kelas (rangle didipline per kelas).
+      renderClassRanking();
+
       // Kekerapan per murid + perbandingan hari dalam minggu.
       const freqMap = new Map();
       const dayCounts = [0, 0, 0, 0, 0]; // Isnin..Jumaat
@@ -1705,6 +1761,88 @@
       return best;
     }
 
+    // Cadangan tindakan intervensi berdasarkan jumlah kes (#4 Auto-cadang).
+    function suggestStatus(murid) {
+      const j = murid.kiraan || murid.jumlahKes || 0;
+      if (j >= 10) return 'Rujuk Pengetua';
+      if (j >= 7) return 'Kaunseling';
+      if (j >= 5) return 'Surat 3';
+      if (j >= 3) return 'Surat 2';
+      if (j >= 1) return 'Surat 1';
+      return 'Belum';
+    }
+
+    // Ranking kelas mengikut disiplin (#6): kadar hadir hari ini & jumlah kes.
+    function renderClassRanking() {
+      const tbody = document.getElementById('class-ranking-body');
+      if (!tbody) return;
+      const kelasMap = {};
+      (globalMuridList || []).forEach(m => {
+        const kls = m.kelas || 'Tiada Kelas';
+        if (!kelasMap[kls]) kelasMap[kls] = { bilangan: 0, kes: 0, hadir: 0 };
+        kelasMap[kls].bilangan++;
+        kelasMap[kls].kes += (m.kiraan || 0);
+      });
+      // Kilang kes terbaru daripada rekod global supaya padan carta.
+      const kesKelas = {};
+      (globalRekodList || []).forEach(r => {
+        const kls = r.kelas || 'Tiada Kelas';
+        kesKelas[kls] = (kesKelas[kls] || 0) + 1;
+      });
+      // Kadar hadir hari ini (imbas), ikut tarikh aktif.
+      const todayRecs = getRekodUntukHari(activeDate);
+      const hadirSet = {};
+      todayRecs.forEach(r => {
+        if (!r.id) return;
+        const m = (globalMuridList || []).find(x => String(x.id || '') === String(r.id));
+        const kls = (m && m.kelas) || r.kelas || 'Tiada Kelas';
+        hadirSet[kls] = (hadirSet[kls] || 0) + 1;
+      });
+
+      const rows = Object.keys(kelasMap).map(kls => {
+        const d = kelasMap[kls];
+        const kes = kesKelas[kls] || 0;
+        const kadarHadir = d.bilangan > 0 ? Math.round((hadirSet[kls] || 0) / d.bilangan * 100) : 0;
+        return {
+          kelas: kls,
+          bilangan: d.bilangan,
+          hadir: hadirSet[kls] || 0,
+          kadarHadir,
+          kes
+        };
+      }).sort((a, b) => {
+        if (a.kadarHadir !== b.kadarHadir) return b.kadarHadir - a.kadarHadir;
+        return a.kes - b.kes;
+      });
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400 code-font">Tiada data kelas.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((r, i) => {
+        const badge = i === 0
+          ? `<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/30">🏆 TERBAIK</span>`
+          : i === rows.length - 1 && rows.length > 1
+            ? `<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/25">PERLU TINDAKAN</span>`
+            : '';
+        const barWarna = r.kadarHadir >= 90 ? 'bg-emerald-500' : r.kadarHadir >= 75 ? 'bg-amber-500' : 'bg-rose-500';
+        return `
+          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="px-1.5 py-2.5 font-black text-slate-500 dark:text-slate-400">${i + 1}</td>
+            <td class="px-1.5 py-2.5 font-bold text-slate-700 dark:text-slate-200">
+              ${escapeHtml(r.kelas)} ${badge}
+              <div class="mt-1 h-1.5 w-full max-w-[140px] rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
+                <div class="h-full rounded-full ${barWarna}" style="width:${r.kadarHadir}%"></div>
+              </div>
+            </td>
+            <td class="px-1.5 py-2.5 text-center code-font text-slate-600 dark:text-slate-300">${r.bilangan}</td>
+            <td class="px-1.5 py-2.5 text-center code-font text-emerald-600 dark:text-emerald-400">${r.hadir} (${r.kadarHadir}%)</td>
+            <td class="px-1.5 py-2.5 text-center code-font ${r.kes > 0 ? 'text-rose-500' : 'text-emerald-500'}">${r.kes}</td>
+          </tr>`;
+      }).join('');
+    }
+
     // Senarai murid berisiko (jadual isih ikut kes + lencana amaran + tindakan intervensi).
     function renderAtRiskStudents() {
       const tbody = document.getElementById('atrisk-tbody');
@@ -1749,9 +1887,11 @@
         const ivNota = iv.nota || '';
 
         const statusOptions = ['Belum', 'Surat 1', 'Surat 2', 'Surat 3', 'Kaunseling', 'Rujuk Pengetua'];
+        const saranan = suggestStatus(m);
         const select = statusOptions.map(opt => {
           const sel = ivStatus === opt ? ' selected' : '';
-          return `<option value="${opt}"${sel}>${opt}</option>`;
+          const saran = opt === saranan && opt !== 'Belum' ? ' ✓ (disyorkan)' : '';
+          return `<option value="${opt}"${sel}${opt === saranan && opt !== 'Belum' ? ' class="font-black text-cyan-600"' : ''}>${opt}${saran}</option>`;
         }).join('');
 
         const statusColor = ivStatus === 'Kaunseling' || ivStatus === 'Rujuk Pengetua' ? 'border-rose-400 text-rose-600 dark:text-rose-300'
@@ -2153,6 +2293,12 @@
           setElementText('kpi-total-kes', totalKesSum);
           setElementText('kpi-bebas-lewat', countBebasLewat);
           setElementText('kpi-tak-hadir', countTakHadir);
+
+          // #11 Ringkasan kehadiran: hadir hari ini (imbas) vs sasaran.
+          const hadirHariIni = calculateHadirCount(activeDate);
+          setElementText('kpi-hadir', hadirHariIni);
+          const hadirNote = document.getElementById('kpi-hadir-note');
+          if (hadirNote) hadirNote.textContent = `dari ${(data.totalSasaran || globalMuridList.length) || 0}`;
 
           // KPI kes mengikut tempoh (dari data Apps Script / failback kiraan lokal)
           let kesMI = 0, kesML = 0, kesBI = 0, kesBL = 0, kesSemua = totalKesSum;
@@ -2743,6 +2889,7 @@
 
     // Paparkan profil murid dalam modal besar (klik pada nama di senarai/ranking).
     function showStudentProfile(idMurid) {
+      activeProfileId = idMurid;
       const m = globalMuridList.find(x => String(x.id) === String(idMurid));
       const modal = document.getElementById('student-profile-modal');
       if (!modal) return;
@@ -2813,34 +2960,145 @@
       modal.classList.remove('hidden');
     }
 
-    // Senarai rekod kelewatan terkini murid (untuk profil).
+    // Kronologi penuh murid (semua imbasan + rekod intervensi) untuk profil.
+    let activeProfileId = '';
     function renderStudentRekod(idMurid) {
       const el = document.getElementById('sp-rekod');
       if (!el) return;
       const recs = (globalRekodList || [])
         .filter(r => String(r.id || '') === String(idMurid))
-        .sort((a, b) => String(b.tarikhMasa || '').localeCompare(String(a.tarikhMasa || '')))
-        .slice(0, 10);
+        .sort((a, b) => String(a.tarikhMasa || '').localeCompare(String(b.tarikhMasa || '')));
+
+      // Blok intervensi semasa (ditunjukkan di atas timeline).
+      const iv = intervensiMap[String(idMurid || '')] || {};
+      const ivStatus = iv.status || '';
+      let ivHtml = '';
+      if (ivStatus && ivStatus !== 'Belum') {
+        const ivWarna = ivStatus === 'Kaunseling' || ivStatus === 'Rujuk Pengetua'
+          ? 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-300'
+          : 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300';
+        ivHtml = `
+          <div class="p-2.5 rounded-xl border ${ivWarna} flex flex-col gap-0.5">
+            <span class="text-[10px] font-black code-font uppercase tracking-wider">📋 Tindakan: ${escapeHtml(ivStatus)}</span>
+            ${iv.tarikh ? `<span class="text-[10px] font-semibold code-font opacity-80">Tarikh tindakan: ${escapeHtml(iv.tarikh)}</span>` : ''}
+            ${iv.nota ? `<span class="text-[10px] font-medium opacity-90">Nota: ${escapeHtml(iv.nota)}</span>` : ''}
+          </div>`;
+      }
 
       if (recs.length === 0) {
-        el.innerHTML = `<div class="text-center text-emerald-500 code-font py-2 text-xs"><i class="fa-solid fa-circle-check mr-1"></i> Tiada rekod kelewatan.</div>`;
+        el.innerHTML = (ivHtml || '') + `<div class="text-center text-emerald-500 code-font py-2 text-xs"><i class="fa-solid fa-circle-check mr-1"></i> Tiada rekod imbasan.</div>`;
         return;
       }
 
-      el.innerHTML = recs.map(r => {
+      const hariMs = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+      el.innerHTML = (ivHtml || '') + recs.map(r => {
         const tm = String(r.tarikhMasa || '');
-        const dateOnly = tm.slice(0, 10);
+        const dt = new Date(tm.replace(' ', 'T'));
+        const tarikhLabel = isNaN(dt.getTime())
+          ? tm.slice(0, 10)
+          : `${(hariMs[dt.getDay()] || '')}, ${dt.toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' })}`;
         const timeOnly = tm.includes(' ') ? tm.split(' ')[1] : '';
         const mm = timeOnly.match(/(\d{1,2}):(\d{2})/);
         const isLate = mm ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21)) : (String(r.status || '').toUpperCase() === 'LEWAT');
-        const warna = isLate ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10';
+        const lencana = isLate
+          ? '<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/25">LEWAT</span>'
+          : '<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/25">HADIR</span>';
         return `
-          <div class="flex items-center justify-between p-2 rounded-xl border ${warna}">
-            <span class="text-[11px] font-bold code-font">${escapeHtml(dateOnly)}</span>
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 code-font">${escapeHtml(r.punca || '—')}</span>
-            <span class="text-[10px] font-black code-font">${timeOnly || '—'}</span>
+          <div class="flex items-center justify-between gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/40">
+            <div class="min-w-0">
+              <div class="text-[11px] font-bold code-font text-slate-700 dark:text-slate-200 truncate">${escapeHtml(tarikhLabel)}</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">${escapeHtml(r.punca || '—')}</div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[10px] font-black code-font text-slate-600 dark:text-slate-300">${timeOnly || '—'}</span>
+              ${lencana}
+            </div>
           </div>`;
       }).join('');
+    }
+
+    // Muat turun kronologi murid sebagai PDF (guna elemen tersembunyi + html2pdf).
+    async function cetakKronologiPDF() {
+      if (typeof html2pdf === 'undefined') {
+        alert("Perpustakaan PDF belum dimuatkan. Sila muat semula halaman ini.");
+        return;
+      }
+      const idMurid = activeProfileId;
+      const murid = (globalMuridList || []).find(m => String(m.id || '') === String(idMurid || '')) || {};
+      if (!murid.id) {
+        alert("Murid tidak ditemui. Sila buka profil dahulu dan cuba lagi.");
+        return;
+      }
+
+      const recs = (globalRekodList || []).filter(r => String(r.id || '') === String(idMurid))
+        .sort((a, b) => String(a.tarikhMasa || '').localeCompare(String(b.tarikhMasa || '')));
+      const iv = intervensiMap[String(idMurid || '')] || {};
+
+      const hariMs = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+      const rows = recs.map((r, i) => {
+        const tm = String(r.tarikhMasa || '');
+        const dt = new Date(tm.replace(' ', 'T'));
+        const tarikhLabel = isNaN(dt.getTime()) ? tm.slice(0, 10) : `${hariMs[dt.getDay()]}, ${dt.toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+        const timeOnly = tm.includes(' ') ? tm.split(' ')[1] : '';
+        const st = String(r.status || '').toUpperCase();
+        const isLate = st === 'LEWAT' || timeOnly >= '07:21';
+        return `<tr><td style="border:1px solid #000;padding:5px;text-align:center;">${i + 1}</td><td style="border:1px solid #000;padding:5px;text-align:center;">${escapeHtml(tarikhLabel)}</td><td style="border:1px solid #000;padding:5px;text-align:center;">${escapeHtml(timeOnly)}</td><td style="border:1px solid #000;padding:5px;text-align:center;">${isLate ? 'LEWAT' : 'HADIR'}</td><td style="border:1px solid #000;padding:5px;">${escapeHtml(r.punca || '—')}</td></tr>`;
+      }).join('');
+
+      const nama = murid.nama || '';
+      const kelas = murid.kelas || '';
+      const dateStr = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
+
+      // Elemen sementara (jangan sentuh pdf-wrapper template surat).
+      const tempDiv = document.createElement('div');
+      tempDiv.id = 'qtiba-kronologi-pdf';
+      tempDiv.style.cssText = 'position: fixed; left: 0; top: 0; background: #ffffff; z-index: 9999;';
+      tempDiv.innerHTML = `
+        <div id="kronologi-pdf" style="width:190mm;font-family:'Times New Roman',Times,serif;color:#000;background:#fff;line-height:1.35;font-size:10.5pt;padding:12px;">
+          <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;">
+            <div style="font-size:14pt;font-weight:bold;">KRONOLOGI KEHADIRAN MURID</div>
+            <div style="font-size:9pt;">Q-TIBA Innovation System &bull; SK Pulau Indah</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+            <tr><td style="width:110px;font-weight:bold;">Nama Murid</td><td>: ${escapeHtml(nama)}</td></tr>
+            <tr><td style="font-weight:bold;">Kelas</td><td>: ${escapeHtml(kelas)}</td></tr>
+            <tr><td style="font-weight:bold;">ID Murid</td><td>: ${escapeHtml(idMurid)}</td></tr>
+            <tr><td style="font-weight:bold;">Tarikh Cetak</td><td>: ${escapeHtml(dateStr)}</td></tr>
+            ${iv.status && iv.status !== 'Belum' ? `<tr><td style="font-weight:bold;">Tindakan Semasa</td><td>: ${escapeHtml(iv.status)}${iv.tarikh ? ' (' + escapeHtml(iv.tarikh) + ')' : ''}</td></tr>` : ''}
+          </table>
+          <div style="font-weight:bold;margin-bottom:4px;">Senarai Imbasan Kehadiran (${recs.length} rekod):</div>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr>
+              <th style="border:1px solid #000;padding:5px;background:#eee;">#</th>
+              <th style="border:1px solid #000;padding:5px;background:#eee;">Tarikh</th>
+              <th style="border:1px solid #000;padding:5px;background:#eee;">Masa</th>
+              <th style="border:1px solid #000;padding:5px;background:#eee;">Status</th>
+              <th style="border:1px solid #000;padding:5px;background:#eee;">Punca</th>
+            </tr></thead>
+            <tbody>${rows || '<tr><td colspan="5" style="border:1px solid #000;padding:6px;text-align:center;">Tiada rekod imbasan.</td></tr>'}</tbody>
+          </table>
+        </div>`;
+      document.body.appendChild(tempDiv);
+
+      await new Promise(r => setTimeout(r, 300));
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `Kronologi_${nama.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['table', 'tr', 'thead', 'tbody'] }
+      };
+
+      try {
+        await html2pdf().set(opt).from(document.getElementById('kronologi-pdf')).save();
+      } catch (err) {
+        console.error("Ralat penjanaan PDF kronologi:", err);
+        alert("Gagal menjana PDF. Sila cuba lagi.");
+      } finally {
+        if (tempDiv && tempDiv.parentNode) tempDiv.parentNode.removeChild(tempDiv);
+      }
     }
 
     function closeStudentProfile() {
