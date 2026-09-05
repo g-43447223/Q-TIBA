@@ -21,6 +21,7 @@ Sistem disiplin sekolah untuk mengesan ketibaan murid menggunakan imbasan QR Cod
 - **Kronologi murid** — profil murid memaparkan timeline penuh semua imbasan + tindakan intervensi, dan boleh dimuat turun sebagai PDF
 - **Ranking kelas** — jadual & bar disiplin per kelas (kadar hadir hari ini, jumlah kes) dalam tab Analitik
 - **KPI Hadir Hari Ini** — kad dashboard menunjukkan bilangan murid hadir berbanding sasaran
+- **Mode Paparan Pintu (Gate Display)** — skrin besar khas (`gate.html`): jam digital masa sebenar, KPI raksasa (Sasaran/Hadir/Lewat/Tak Hadir), senarai lewat yang bergerak automatik, sesuai diletakkan di TV/papan paparan pintu pagar sekolah
 - Tren naik/turun & punca utama per murid untuk ukur keberkesanan intervensi
 - **UI yang hidup** — latar aurora beranimasi, kad glass lift + glow, nombor KPI count-up, skeleton loading, konfeti apabila imbasan berjaya, kontrast peralihan tab & entrance reveal (hormati `prefers-reduced-motion`)
 - **Reka bentuk gaya iOS 26 (Liquid Glass)** — tab navigasi floating kekal di bawah (safe-area iPhone), item tab besar untuk jari (min 48px), font asli sistem iOS, sesuaian fon untuk telefon
@@ -30,6 +31,7 @@ Sistem disiplin sekolah untuk mengesan ketibaan murid menggunakan imbasan QR Cod
 ```
 Q-TIBA/
 ├── index.html              # Dashboard Admin
+├── gate.html               # Mode Paparan Pintu (skrin besar / TV)
 ├── scan.html               # Pemimbas QR Code
 ├── parent.html             # Portal Ibu Bapa
 ├── Panel.html              # UI Panel Pentadbir (HTML Service Apps Script)
@@ -184,6 +186,20 @@ Kelas terbaik ditanda 🏆, kelas paling perlu perhatian ditanda **PERLU TINDAKA
 ### KPI Hadir Hari Ini
 
 Kad baharu **Hadir Hari Ini** pada dashboard menunjukkan bilangan murid yang telah mengimbas (HADIR atau LEWAT) berbanding sasaran ("dari X") untuk tarikh aktif. Ia turut terkini apabila anda bersiar-siar antara tarikh.
+
+### Mode Paparan Pintu (Gate Display)
+
+Halaman **`gate.html`** ialah skrin paparan besar yang boleh dibuka pada **TV / papan paparan** di pintu pagar sekolah:
+
+- **Jam digital** masa sebenar + tarikh & hari, dikemas kini setiap saat.
+- **KPI raksaksa** — Murid Sasaran, Hadir Hari Ini, Lewat Hari Ini, Tak Hadir.
+- **Senarai "Lewat Hari Ini"** berputar automatik (auto-scroll) dengan masa imbas & punca.
+- **Auto-refresh** data setiap **60 saat** — nombor hidup tanpa perlu sentuh.
+- **Fallback offline** — jika rangkaian terputus, paparan terus berfungsi menggunakan data terakhir yang tersimpan di peranti (amaran berstatus ditunjukkan).
+- **Butang Muat Semula** manual & sokongan **Esc** untuk kembali ke dashboard.
+- Hari cuti dikesan automatik (paparan "🎉 Cuti Sekolah").
+
+> **Cara guna:** Buka `gate.html` pada pelayar, tekan **F11** (full-screen) apabila skrin sudah memasuki mod paparan. Pautan "Paparan Pintu" juga terdapat dalam header dashboard admin.
 
 ### Cache Senarai Murid (Offline Penuh)
 

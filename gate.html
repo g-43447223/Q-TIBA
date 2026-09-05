@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+  <link rel="apple-touch-icon" sizes="180x180" href="q-tibalogo.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="q-tibalogo.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Q-TIBA - Paparan Pintu</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      background: #020617;
+      color: #f1f5f9;
+    }
+    .clock-font { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+    /* Auto-scroll senarai lewat */
+    .gate-scroll-wrap { overflow: hidden; position: relative; }
+    .gate-scroll-track { display: flex; flex-direction: column; will-change: transform; }
+    .gate-scroll-running { animation: gateScrollUp linear infinite; }
+    .gate-scroll-wrap:hover .gate-scroll-running { animation-play-state: paused; }
+    @keyframes gateScrollUp {
+      0%   { transform: translateY(0); }
+      100% { transform: translateY(-50%); }
+    }
+
+    /* Teks berjalan bawah */
+    .gate-ticker { display: inline-block; white-space: nowrap; animation: tickerSlide linear infinite; }
+    @keyframes tickerSlide {
+      0%   { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    @media print { body { overflow: visible; } }
+  </style>
+</head>
+
+<body class="aurora-bg min-h-screen flex flex-col relative">
+
+  <!-- BARAM STATUS -->
+  <div id="gate-status-bar" class="hidden w-full text-center text-[13px] font-bold py-1.5 bg-amber-500/90 text-slate-900 z-40">
+    Memuatkan data…
+  </div>
+
+  <!-- HEADER -->
+  <header class="w-full px-6 lg:px-10 py-4 flex items-center justify-between gap-4 relative z-10 border-b border-white/10 bg-slate-950/40 backdrop-blur-xl">
+    <div class="flex items-center gap-4 min-w-0">
+      <img src="logo.png" alt="Q-TIBA" class="w-12 h-12 lg:w-14 lg:h-14 object-contain flex-shrink-0" onerror="this.src='q-tibalogo.png'">
+      <div class="truncate">
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-xl lg:text-3xl font-black tracking-tight text-white truncate">Q-TIBA</h1>
+          <span class="text-[11px] lg:text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> PAPARAN PINTU
+          </span>
+        </div>
+        <p class="text-[11px] lg:text-sm text-cyan-400 font-semibold tracking-wide truncate">SK Pulau Indah · "Menganalisis Data, Mengubah Budaya"</p>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-end gap-1 shrink-0">
+      <div id="gate-clock" class="clock-font text-4xl lg:text-6xl font-black text-white leading-none tracking-tighter">--:--:--</div>
+      <div id="gate-date" class="text-[13px] lg:text-base text-slate-300 font-semibold">—</div>
+    </div>
+  </header>
+
+  <!-- KPI RAKSASA -->
+  <section class="w-full px-6 lg:px-10 pt-5 grid grid-cols-2 lg:grid-cols-5 gap-4 relative z-10">
+    <div class="glass-card rounded-3xl p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[11px] lg:text-sm text-slate-400 dark:text-slate-400 font-bold uppercase tracking-widest mb-2">Murid Sasaran</div>
+      <div id="kpi-sasaran-gate" class="clock-font text-5xl lg:text-7xl font-black text-white leading-none">0</div>
+    </div>
+    <div class="glass-card rounded-3xl p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[11px] lg:text-sm text-emerald-400 font-bold uppercase tracking-widest mb-2">Hadir Hari Ini</div>
+      <div id="kpi-hadir-gate" class="clock-font text-5xl lg:text-7xl font-black text-emerald-400 leading-none">0</div>
+      <div id="kpi-hadir-note-gate" class="clock-font text-xs lg:text-base text-slate-400 font-bold mt-2">dari 0</div>
+    </div>
+    <div class="glass-card rounded-3xl p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[11px] lg:text-sm text-amber-400 font-bold uppercase tracking-widest mb-2">Lewat Hari Ini</div>
+      <div id="kpi-lewat-gate" class="clock-font text-5xl lg:text-7xl font-black text-amber-400 leading-none">0</div>
+    </div>
+    <div class="glass-card rounded-3xl p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[11px] lg:text-sm text-rose-400 font-bold uppercase tracking-widest mb-2">Tak Hadir</div>
+      <div id="kpi-tak-hadir-gate" class="clock-font text-5xl lg:text-7xl font-black text-rose-400 leading-none">0</div>
+    </div>
+    <div class="col-span-2 lg:col-span-1 glass-card rounded-3xl p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[11px] lg:text-sm text-slate-400 dark:text-slate-400 font-bold uppercase tracking-widest mb-2">Kemas Kini</div>
+      <div id="gate-last-updated" class="clock-font text-lg lg:text-3xl font-black text-slate-300 leading-none">--:--</div>
+      <button onclick="muatSemula()" class="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-xs font-bold hover:bg-cyan-500/25 transition-colors">
+        <i id="gate-refresh-icon" class="fa-solid fa-rotate"></i> Muat Semula
+      </button>
+    </div>
+  </section>
+
+  <!-- SENARAI LEWAT + UITLAN -->
+  <section class="w-full flex-1 px-6 lg:px-10 py-5 grid grid-cols-1 lg:grid-cols-3 gap-5 relative z-10 min-h-0">
+    <div class="lg:col-span-2 glass-card rounded-3xl p-5 flex flex-col min-h-0">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base lg:text-lg font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Senarai Lewat Hari Ini
+        </h2>
+        <span id="gate-lewat-count" class="clock-font text-xs lg:text-sm font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">0 orang</span>
+      </div>
+
+      <div id="gate-lewat-list" class="gate-scroll-wrap flex-1 min-h-0 rounded-2xl">
+        <div class="flex items-center justify-center h-full text-slate-400 clock-font">Memuatkan…</div>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-3xl p-5 flex flex-col min-h-0">
+      <h2 class="text-base lg:text-lg font-extrabold text-white flex items-center gap-2 mb-3">
+        <i class="fa-solid fa-door-open text-cyan-400"></i> Selamat Datang!
+      </h2>
+      <div id="gate-cutiban" class="hidden mb-3 rounded-2xl border border-violet-500/40 bg-violet-500/10 text-violet-300 text-sm lg:text-base font-bold p-4 text-center">
+        🎉 Cuti Sekolah — tiada sesi imbasan hari ini.
+      </div>
+      <div id="gate-uitl" class="flex-1 overflow-y-auto pr-1 text-[13px] lg:text-[15px] text-slate-300 leading-relaxed">
+        <p class="mb-2"><i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i><b id="gate-uitl-hadir">0</b> murid telah masuk ke pagar</p>
+        <p class="mb-2"><i class="fa-solid fa-clock text-amber-400 mr-2"></i><b id="gate-uitl-lewat">0</b> murid lewat selepas 7:21 pagi</p>
+        <p class="mb-2"><i class="fa-solid fa-user-slash text-rose-400 mr-2"></i><b id="gate-uitl-tak-hadir">0</b> murid belum dilihat hari ini</p>
+        <p class="mt-4"><i class="fa-solid fa-bullhorn text-cyan-400 mr-2"></i>Murid lewat akan dicatat &amp; dipantau oleh guru. Jaga disiplin, marilah ke sekolah awal!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKER BAWAH -->
+  <footer class="w-full overflow-hidden relative z-10 border-t border-white/10 bg-slate-950/50 backdrop-blur-xl py-2.5">
+    <div class="gate-ticker clock-font text-sm lg:text-base font-bold text-cyan-300 tracking-wide" id="gate-ticker">
+      • • • Q-TIBA • • • Disiplin &amp; kehadiran murid dipantau secara digital • • • Hadir awal sekolah elakkan kelewatan • • • Setiap kes direkod, setiap murid dijaga
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    let globalMuridList = [];
+    let globalRekodList = [];
+    let totalSasaran = 0;
+    let lastData = null;
+    let refreshTimer = null;
+
+    const IDX_HARI_CUTI_MINGGU = [0, 6];
+    const IDX_HARI_CUTI_TARIKH = [
+      { tarikh: "2026-01-01", nama: "Tahun Baru" },
+      { tarikh: "2026-02-17", nama: "Tahun Baru Cina" },
+      { tarikh: "2026-02-18", nama: "Tahun Baru Cina" },
+      { tarikh: "2026-03-21", nama: "Hari Raya Aidilfitri" },
+      { tarikh: "2026-03-22", nama: "Hari Raya Aidilfitri" },
+      { tarikh: "2026-03-23", nama: "Hari Raya Aidilfitri (Cuti Ganti)" },
+      { tarikh: "2026-05-01", nama: "Hari Pekerja" },
+      { tarikh: "2026-05-27", nama: "Hari Raya Aidiladha" },
+      { tarikh: "2026-05-31", nama: "Hari Wesak" },
+      { tarikh: "2026-06-01", nama: "Hari Keputeraan YDP Agong" },
+      { tarikh: "2026-06-02", nama: "Hari Wesak (Cuti Ganti)" },
+      { tarikh: "2026-06-17", nama: "Awal Muharam" },
+      { tarikh: "2026-08-25", nama: "Maulidur Rasul" },
+      { tarikh: "2026-08-31", nama: "Hari Kebangsaan" },
+      { tarikh: "2026-09-16", nama: "Hari Malaysia" },
+      { tarikh: "2026-11-08", nama: "Hari Deepavali" },
+      { tarikh: "2026-11-09", nama: "Hari Deepavali (Cuti Ganti)" },
+      { tarikh: "2026-12-25", nama: "Hari Krismas" }
+    ];
+    const IDX_HARI_CUTI_JULAT = [
+      { mulai: "2026-03-21", akhir: "2026-03-29", nama: "Cuti Penggal 1" },
+      { mulai: "2026-05-23", akhir: "2026-06-07", nama: "Cuti Pertengahan Tahun" },
+      { mulai: "2026-08-29", akhir: "2026-09-06", nama: "Cuti Penggal 2" },
+      { mulai: "2026-12-05", akhir: "2026-12-31", nama: "Cuti Akhir Tahun" }
+    ];
+    let idxHujungMingguServer = null;
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function buildApiUrl(params) {
+      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      return `${API_URL}?${new URLSearchParams(p).toString()}`;
+    }
+
+    function getTodayDateStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function getNamaCuti(dateStr) {
+      if (!dateStr) return null;
+      for (let i = 0; i < IDX_HARI_CUTI_TARIKH.length; i++) {
+        if (IDX_HARI_CUTI_TARIKH[i].tarikh === dateStr) return IDX_HARI_CUTI_TARIKH[i].nama;
+      }
+      for (let i = 0; i < IDX_HARI_CUTI_JULAT.length; i++) {
+        const j = IDX_HARI_CUTI_JULAT[i];
+        if (dateStr >= j.mulai && dateStr <= j.akhir) return j.nama;
+      }
+      const hujung = idxHujungMingguServer ? idxHujungMingguServer : IDX_HARI_CUTI_MINGGU;
+      const day = new Date(String(dateStr).replace(/-/g, '/') + ' 00:00:00').getDay();
+      if (hujung.indexOf(day) !== -1) return "Hujung Minggu";
+      return null;
+    }
+
+    function isTarikhCuti(dateStr) {
+      return !!getNamaCuti(dateStr);
+    }
+
+    function getRekodUntukHari(dateStr) {
+      const targetDate = dateStr || getTodayDateStr();
+      return (globalRekodList || []).filter(r => {
+        const t = String(r.tarikhMasa || '');
+        return t.startsWith(targetDate);
+      });
+    }
+
+    function calculateHadirCount(dateStr) {
+      const tgl = dateStr || getTodayDateStr();
+      const scannedIds = new Set();
+      getRekodUntukHari(tgl).forEach(r => {
+        if (r.id) scannedIds.add(r.id.trim().toUpperCase());
+      });
+      if (scannedIds.size === 0 && tgl === getTodayDateStr()) {
+        (globalMuridList || []).forEach(m => {
+          if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
+            scannedIds.add(m.id.trim().toUpperCase());
+          }
+        });
+      }
+      return scannedIds.size;
+    }
+
+    function getLewatHariIniList(dateStr) {
+      const tgl = dateStr || getTodayDateStr();
+      const records = getRekodUntukHari(tgl);
+      const map = new Map();
+      records.forEach(r => {
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        if (st === 'HADIR' || r.punca === 'Tepat Masa') return;
+        const timeStr = String(r.tarikhMasa || '').split(' ')[1] || r.waktuHariIni || '';
+        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          const hours = parseInt(match[1], 10);
+          const minutes = parseInt(match[2], 10);
+          if (hours < 7 || (hours === 7 && minutes < 21)) return;
+        }
+        const key = r.id || r.nama;
+        if (!map.has(key)) {
+          const murid = globalMuridList.find(m => String(m.id) === String(r.id)) || {};
+          map.set(key, {
+            id: r.id || r.nama,
+            nama: r.nama || murid.nama || 'Tanpa Nama',
+            kelas: r.kelas || murid.kelas || 'N/A',
+            urlGambar: murid.urlGambar || '',
+            waktuHariIni: timeStr,
+            punca: r.punca || 'Kelewatan',
+            kiraan: murid.kiraan || 0
+          });
+        }
+      });
+
+      const fn = new Date();
+      const todayStrFx = `${fn.getFullYear()}-${String(fn.getMonth() + 1).padStart(2, '0')}-${String(fn.getDate()).padStart(2, '0')}`;
+      if (tgl === todayStrFx && records.length === 0 && map.size === 0) {
+        (globalMuridList || []).forEach(m => {
+          if (!m.lewatHariIni || m.punca === "Tepat Masa" || m.status === "HADIR") return;
+          const timeStr = m.waktuHariIni || '';
+          const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            const hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            if (hours < 7 || (hours === 7 && minutes < 21)) return;
+          }
+          map.set(m.id, {
+            id: m.id,
+            nama: m.nama,
+            kelas: m.kelas,
+            urlGambar: m.urlGambar || '',
+            waktuHariIni: timeStr,
+            punca: m.punca || 'Kelewatan',
+            kiraan: m.kiraan || 0
+          });
+        });
+      }
+      return Array.from(map.values());
+    }
+
+    // JAM DIGITAL MASA SEBENAR
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('gate-clock').textContent = `${h}:${m}:${s}`;
+      const dayName = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"][now.getDay()];
+      document.getElementById('gate-date').textContent =
+        `${dayName}, ${now.toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+    }
+
+    function setStatusBar(msg, isOffline) {
+      const bar = document.getElementById('gate-status-bar');
+      if (!msg) { bar.classList.add('hidden'); return; }
+      bar.classList.remove('hidden');
+      bar.textContent = msg;
+      bar.className = 'w-full text-center text-[13px] font-bold py-1.5 z-40 ' + (isOffline
+        ? 'bg-amber-500/90 text-slate-900'
+        : 'bg-cyan-500/90 text-white');
+    }
+
+    // BINA SENARAI LEWAT (dengan auto-scroll)
+    function renderLewatList(list) {
+      const wrap = document.getElementById('gate-lewat-list');
+      const countEl = document.getElementById('gate-lewat-count');
+      countEl.textContent = `${list.length} orang`;
+
+      const isCuti = isTarikhCuti(getTodayDateStr());
+
+      if (isCuti) {
+        wrap.innerHTML = `<div class="flex items-center justify-center h-full text-emerald-400 text-xl font-black">🎉 Cuti Sekolah hari ini</div>`;
+        return;
+      }
+
+      if (list.length === 0) {
+        wrap.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-5xl mb-3"></i>
+            <div class="text-emerald-400 text-xl lg:text-2xl font-black">TIADA KELEWATAN</div>
+            <div class="text-slate-400 text-sm lg:text-base font-semibold mt-1">Semua murid hadir tepat pada masa. Hebat! 👏</div>
+          </div>`;
+        return;
+      }
+
+      const itemHtml = list.map((m, i) => `
+        <div class="flex items-center gap-4 px-4 py-3 rounded-2xl ${i % 2 === 0 ? 'bg-slate-800/40' : 'bg-slate-800/20'} border border-white/5">
+          <div class="w-8 h-8 flex items-center justify-center">
+            <i class="fa-solid fa-user text-amber-400 text-xl"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="text-base lg:text-lg font-extrabold text-white truncate">${escapeHtml(m.nama)}</div>
+            <div class="text-xs lg:text-sm text-slate-400 font-semibold truncate">${escapeHtml(m.kelas)} · ${escapeHtml(m.punca)}</div>
+          </div>
+          <div class="clock-font text-lg lg:text-2xl font-black text-amber-400 leading-none">${escapeHtml(m.waktuHariIni || '—')}</div>
+        </div>`).join('');
+
+      // Gerak auto-scroll bila senarai panjang; jika pendek (≤4) duplikasi untuk gelung rapat.
+      const perluDuplikasi = list.length <= 4;
+      const berAnimasi = list.length > 8 || perluDuplikasi;
+      const content = perluDuplikasi ? itemHtml + itemHtml : itemHtml;
+      const durasi = Math.max(10, list.length * 4);
+
+      wrap.innerHTML = `<div class="gate-scroll-track ${berAnimasi ? 'gate-scroll-running' : ''}" style="animation-duration:${durasi}s">${content}</div>`;
+    }
+
+    // PAPAR DATA
+    function paparkanData() {
+      const todayStr = getTodayDateStr();
+      const hadir = calculateHadirCount(todayStr);
+      const lewat = getLewatHariIniList(todayStr);
+      const takHadir = isTarikhCuti(todayStr) ? 0 : Math.max(0, totalSasaran - hadir);
+
+      document.getElementById('kpi-sasaran-gate').textContent = totalSasaran;
+      document.getElementById('kpi-hadir-gate').textContent = hadir;
+      document.getElementById('kpi-hadir-note-gate').textContent = `dari ${totalSasaran}`;
+      document.getElementById('kpi-lewat-gate').textContent = lewat.length;
+      document.getElementById('kpi-tak-hadir-gate').textContent = takHadir;
+
+      document.getElementById('gate-uitl-hadir').textContent = hadir;
+      document.getElementById('gate-uitl-lewat').textContent = lewat.length;
+      document.getElementById('gate-uitl-tak-hadir').textContent = takHadir;
+
+      const cutiban = document.getElementById('gate-cutiban');
+      const namaCuti = getNamaCuti(todayStr);
+      if (namaCuti) {
+        cutiban.classList.remove('hidden');
+        cutiban.textContent = `🎉 ${namaCuti} — Cuti sekolah, tiada sesi imbasan hari ini.`;
+      } else {
+        cutiban.classList.add('hidden');
+      }
+
+      renderLewatList(lewat);
+      document.getElementById('gate-last-updated').textContent = new Date()
+        .toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // MUAT DATA DARI SERVER (dengan fallback cache)
+    async function muatSemula() {
+      const icon = document.getElementById('gate-refresh-icon');
+      if (icon) icon.classList.add('fa-spin');
+      setStatusBar("Memuatkan data…", false);
+
+      if (!API_URL || API_URL.includes('MASUKKAN_URL')) {
+        setStatusBar("⚠ URL API belum diset (config.js).", true);
+        if (icon) icon.classList.remove('fa-spin');
+        return;
+      }
+
+      try {
+        const res = await fetch(buildApiUrl({}));
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.status === 'Success') {
+          globalMuridList = data.muridList || [];
+          globalRekodList = data.rekodList || data.logs || [];
+          totalSasaran = data.totalSasaran || globalMuridList.length || 0;
+          lastData = { globalMuridList, globalRekodList, totalSasaran };
+          try {
+            localStorage.setItem('qtiba_gate_cache', JSON.stringify(lastData));
+          } catch (e) { /* abaikan */ }
+          setStatusBar('', false);
+          paparkanData();
+        } else {
+          gunaCache("Respons server tidak berjaya.");
+        }
+      } catch (err) {
+        gunaCache("Rangkaian terputus — menggunakan data terkini yang tersimpan.");
+      } finally {
+        if (icon) icon.classList.remove('fa-spin');
+      }
+    }
+
+    function gunaCache(sebab) {
+      if (lastData) {
+        globalMuridList = lastData.globalMuridList;
+        globalRekodList = lastData.globalRekodList;
+        totalSasaran = lastData.totalSasaran;
+        setStatusBar(`⚠ ${sebab} Paparan guna cache: ${new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}`, true);
+        paparkanData();
+        return;
+      }
+      try {
+        const raw = localStorage.getItem('qtiba_gate_cache');
+        if (raw) {
+          const c = JSON.parse(raw);
+          globalMuridList = c.globalMuridList || [];
+          globalRekodList = c.globalRekodList || [];
+          totalSasaran = c.totalSasaran || 0;
+          setStatusBar(`⚠ ${sebab} Paparan guna cache tersimpan.`, true);
+          paparkanData();
+          return;
+        }
+      } catch (e) { /* abaikan */ }
+      setStatusBar(`⚠ ${sebab}`, true);
+    }
+
+    // Muat konfigurasi cuti dari server (tab Tetapan) sebagai sumber utama.
+    async function muatKonfigurasiCuti() {
+      try {
+        if (!API_URL || API_URL.includes('MASUKKAN_URL')) return;
+        const res = await fetch(buildApiUrl({ action: 'settings' }));
+        const data = await res.json();
+        if (data && data.status === 'Success' && Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
+          idxHujungMingguServer = data.hujungMinggu;
+        }
+      } catch (e) { /* abaikan — guna fallback */ }
+    }
+
+    // AUTO-REFRESH (setiap 60 saat)
+    function mulaRefresh() {
+      refreshTimer = setInterval(muatSemula, 60000);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const c = confirm("Tutup paparan pintu dan kembali ke dashboard?");
+        if (c) window.location.href = 'index.html';
+      }
+    });
+
+    updateClock();
+    setInterval(updateClock, 1000);
+    muatKonfigurasiCuti().then(() => {
+      muatSemula();
+      mulaRefresh();
+    });
+  </script>
+</body>
+</html>
