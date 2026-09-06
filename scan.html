@@ -504,6 +504,7 @@
       checkAdminAuth();
       updateAudioToggleUI();
       checkNetworkStatus();
+      updateScanStatusBadge(null);
       loadSessionLog();
       // Muat konfigurasi pusat (cuti & cutoff) dari server, then semak semula hari cuti.
       muatKonfigurasi().then(() => {
@@ -1231,18 +1232,26 @@
         apiKey: QTIBA_API_KEY || ''
       };
 
-      sendDataToBackend(payload);
+      sendDataToBackend(payload).then(cloudOk => updateScanStatusBadge(cloudOk));
     }
 
     // HANTAR REKOD KE GOOGLE APPS SCRIPT (boleh baca respons sebenar)
     async function postToBackend(payload) {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return { result: 'skip' };
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      let res;
+      try {
+        res = await fetch(API_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timer);
+      }
       let data = {};
       try { data = await res.json(); } catch (err) { /* bukan JSON */ }
       if (res.ok) return data;
@@ -1253,27 +1262,30 @@
     // - success  : sudah tersimpan di cloud.
     // - duplicate: rekod sudah wujud untuk hari ini (jangan simpan lagi).
     // - error    : server tolak / gagal -> simpan ke queue offline untuk cuba semula.
+    // Pulangkan true jika rekod telah sampai ke cloud, false jika disimpan dalam peranti sahaja.
     async function sendDataToBackend(payload) {
-      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return false;
 
       if (navigator.onLine) {
         try {
           const data = await postToBackend(payload);
           const result = data && data.result;
-          if (result === 'success') {
+          if (result === 'success' || result === 'duplicate') {
             console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
-          } else if (result === 'duplicate') {
-            console.log("Q-TIBA: Rekod duplikat, tidak disimpan dua kali.");
+            return true;
           } else {
             console.warn("Q-TIBA: Server tolak rekod, simpan ke queue:", data && data.message);
             saveOffline(payload);
+            return false;
           }
         } catch (err) {
           console.error("Gagal hantar data:", err);
           saveOffline(payload);
+          return false;
         }
       } else {
         saveOffline(payload);
+        return false;
       }
     }
 
@@ -1300,9 +1312,25 @@
       }
     }
 
+    function updateScanStatusBadge(cloudOk) {
+      const badge = document.getElementById('scan-status-badge');
+      if (!badge) return;
+      const queue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      if (cloudOk || queue.length === 0) {
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> CLOUD OK`;
+        badge.className = "text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold code-font flex items-center gap-1.5";
+      } else {
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> OFFLINE (${queue.length})`;
+        badge.className = "text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold code-font flex items-center gap-1.5";
+      }
+    }
+
+    let isSyncingQueue = false;
     function syncOfflineQueue() {
       let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
       if (offlineQueue.length === 0 || !API_URL || API_URL.includes("MASUKKAN_URL")) return;
+      if (isSyncingQueue) return;
+      isSyncingQueue = true;
 
       const pending = [...offlineQueue];
       const remaining = [];
@@ -1316,6 +1344,8 @@
             localStorage.removeItem('qtiba_offline_queue');
           }
           checkNetworkStatus();
+          updateScanStatusBadge(remaining.length === 0);
+          isSyncingQueue = false;
           if (sentCount > 0) speakText(`${sentCount} data offline telah dikemas kini ke cloud.`);
           return;
         }
@@ -1339,6 +1369,10 @@
 
       sendNext(0);
     }
+
+    // Auto-kemas kini antrian offline setiap 15 saat supaya data di pintu pagar
+    // sampai ke cloud walaupun rangkaian sekejap (tiada perlu tekan butang).
+    setInterval(() => { syncOfflineQueue(); }, 15000);
 
     window.addEventListener('online', () => {
       checkNetworkStatus();
