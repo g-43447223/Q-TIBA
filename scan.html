@@ -1178,9 +1178,10 @@
 
       playAudioBeep('success');
       scannedTodaySet.add(data.id);
-      burstConfetti(isHadir ? 26 : 14);
 
       const isHadir = data.status === "HADIR";
+      burstConfetti(isHadir ? 26 : 14);
+
       const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
       const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
       const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
