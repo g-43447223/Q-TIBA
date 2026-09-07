@@ -2503,20 +2503,25 @@
           muatIntervensi();
 
           if (heroContainer && globalMuridList.length > 0) {
-            const attendedIds = new Set();
-            globalRekodList.forEach(r => { if (r.id) attendedIds.add(r.id.trim().toUpperCase()); });
+            const skor = kiraSkorHadir(globalRekodList);
 
-            const heroCandidates = globalMuridList.filter(m => {
-              const hasScannedToday = m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '');
-              const hasAnyRecord = attendedIds.has(m.id.trim().toUpperCase());
-              return hasScannedToday || hasAnyRecord;
-            });
+            // Ranking ikut disiplin: (1) bilangan hari hadir, (2) bilangan hari
+            // tepat waktu, (3) purata masa tiba terawal. Murid yang TIDAK PERNAH
+            // hadir langsung dikecualikan daripada top ranking.
+            const heroCandidates = globalMuridList
+              .filter(m => (skor[String(m.id).trim().toUpperCase()] || {}).hadir > 0)
+              .map(m => {
+                const s = skor[String(m.id).trim().toUpperCase()] || { hadir: 0, tepat: 0, purata: null };
+                return { m, s };
+              })
+              .sort((A, B) => bandingSkor(A.m, B.m, A.s, B.s));
 
-            const sortedMurid = heroCandidates.sort((a, b) => a.kiraan - b.kiraan);
-            const topHeroes = sortedMurid.slice(0, 4);
+            const topHeroes = heroCandidates.slice(0, 4);
 
             heroContainer.innerHTML = '';
-            topHeroes.forEach((m, idx) => {
+            topHeroes.forEach((it, idx) => {
+              const m = it.m;
+              const s = it.s;
               const avatarUrl = (m.urlGambar && m.urlGambar !== "") 
                 ? m.urlGambar 
                 : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
@@ -2536,7 +2541,7 @@
                   <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${escapeHtml(m.nama)}</h4>
                   <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate w-full">${escapeHtml(m.kelas)}</p>
                   <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
-                    <i class="fa-solid fa-shield-check mr-1"></i>${m.kiraan === 0 ? '0 Kes (Sempurna)' : m.kiraan + ' Kes Kelewatan'}
+                    <i class="fa-solid fa-shield-check mr-1"></i>${s.hadir} Hari Hadir · ${s.tepat} Tepat Waktu
                   </p>
                 </div>`;
             });
@@ -3137,30 +3142,87 @@
       const stats = {};
       weekRecords.forEach(r => {
         const key = r.id || r.nama;
-        if (!stats[key]) stats[key] = { kes: 0, awalSet: new Set(), hadirSet: new Set() };
+        if (!stats[key]) stats[key] = { kes: 0, awalSet: new Set(), hadirSet: new Set(), times: [] };
         const s = stats[key];
         if (r.id) s.hadirSet.add(r.id.trim().toUpperCase() + '|' + String(r.tarikhMasa || '').slice(0, 10));
         if (isKesLewatRec(r)) s.kes += 1;
         if (isAwal(r)) s.awalSet.add(String(r.tarikhMasa || '').slice(0, 10));
+        const tm = String(r.tarikhMasa || '').match(/(\d{1,2}):(\d{2})/);
+        if (tm) s.times.push(parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10));
       });
 
       const heroes = (globalMuridList || []).map(m => {
-        const s = stats[m.id || m.nama] || { kes: 0, awalSet: new Set(), hadirSet: new Set() };
+        const s = stats[m.id || m.nama] || { kes: 0, awalSet: new Set(), hadirSet: new Set(), times: [] };
+        const purata = s.times.length > 0 ? s.times.reduce((a, b) => a + b, 0) / s.times.length : null;
         return {
           ...m,
           _kes: s.kes,
           _hariAwal: s.awalSet.size,
-          _hariHadir: s.hadirSet.size
+          _hariHadir: s.hadirSet.size,
+          _hariTepat: s.hadirSet.size,
+          _purata: purata
         };
       }).filter(m => m._kes === 0 && m._hariHadir > 0);
 
       heroes.sort((a, b) => {
+        if (b._hariHadir !== a._hariHadir) return b._hariHadir - a._hariHadir;
         if (b._hariAwal !== a._hariAwal) return b._hariAwal - a._hariAwal;
-        if (a._kes !== b._kes) return a._kes - b._kes;
+        if (a._purata !== null && b._purata !== null && a._purata !== b._purata) return a._purata - b._purata;
         return (a.nama || '').localeCompare(b.nama || '');
       });
 
       return heroes;
+    }
+
+    // Kira skor disiplin murid daripada rekod:
+    //   hadir  = bilangan hari berbeza murid hadir (ada rekod)
+    //   tepat  = bilangan hari murid hadir TEPAT WAKTU (sebelum cutoff)
+    //   purata = purata masa tiba (minit) — lebih awal lebih tinggi ranking
+    function kiraSkorHadir(rekodList) {
+      const skor = {};
+      (rekodList || []).forEach(r => {
+        if (!r || !r.id) return;
+        const id = String(r.id).trim().toUpperCase();
+        const day = String(r.tarikhMasa || '').slice(0, 10);
+        if (!day) return;
+        if (!skor[id]) skor[id] = { hariHadir: new Set(), hariTepat: new Set(), times: [] };
+        const s = skor[id];
+        s.hariHadir.add(day);
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        let isTepat = (st === 'HADIR') || (r.punca === 'Tepat Masa');
+        if (!isTepat) {
+          const tm = String(r.tarikhMasa || '').match(/(\d{1,2}):(\d{2})/);
+          if (tm) {
+            const mins = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+            if (mins < 7 * 60 + 21) isTepat = true;
+          }
+        }
+        if (isTepat) s.hariTepat.add(day);
+        const tm2 = String(r.tarikhMasa || '').match(/(\d{1,2}):(\d{2})/);
+        if (tm2) s.times.push(parseInt(tm2[1], 10) * 60 + parseInt(tm2[2], 10));
+      });
+      const out = {};
+      Object.keys(skor).forEach(id => {
+        const s = skor[id];
+        out[id] = {
+          hadir: s.hariHadir.size,
+          tepat: s.hariTepat.size,
+          purata: s.times.length > 0 ? s.times.reduce((a, b) => a + b, 0) / s.times.length : null
+        };
+      });
+      return out;
+    }
+
+    // Bandingkan dua murid untuk ranking disiplin:
+    // (1) lebih banyak hari hadir, (2) lebih banyak hari tepat waktu,
+    // (3) purata masa tiba lebih awal.
+    function bandingSkor(a, b, sa, sb) {
+      if (sb.hadir !== sa.hadir) return sb.hadir - sa.hadir;
+      if (sb.tepat !== sa.tepat) return sb.tepat - sa.tepat;
+      if (sa.purata !== null && sb.purata !== null && sa.purata !== sb.purata) return sa.purata - sb.purata;
+      if (sa.purata === null && sb.purata !== null) return 1;
+      if (sa.purata !== null && sb.purata === null) return -1;
+      return (a.nama || '').localeCompare(b.nama || '');
     }
 
     // CETAK SIJIL PENGHARGAAN PDF (murid bebas lewat minggu ini)
@@ -3263,21 +3325,22 @@
       }
 
       weeklyHeroes.sort((a, b) => {
+        if (b._hariHadir !== a._hariHadir) return b._hariHadir - a._hariHadir;
         if (b._hariAwal !== a._hariAwal) return b._hariAwal - a._hariAwal;
-        if (a._kes !== b._kes) return a._kes - b._kes;
+        if (a._purata !== null && b._purata !== null && a._purata !== b._purata) return a._purata - b._purata;
         return (a.nama || '').localeCompare(b.nama || '');
       });
 
       container.innerHTML = '';
 
       weeklyHeroes.forEach((m, index) => {
-        const streakSemasa = m._hariAwal || 0;
-        const daysInWeek = streakSemasa > 5 ? 5 : streakSemasa;
-        const isFullWeek = daysInWeek === 5;
+        const hariHadir = m._hariHadir || 0;
+        const hariTepat = m._hariTepat || 0;
+        const isFullWeek = hariHadir >= 5;
 
         let badgeColor = isFullWeek ? 'from-amber-500 to-orange-500' : 'from-emerald-500 to-teal-500';
-        let badgeTitle = isFullWeek ? '🏆 Bintang Mingguan (Lengkap 5 Hari)' : '⭐ Istiqamah Minggu Ini';
-        let statusText = isFullWeek ? '5/5 Hari Awal' : `${daysInWeek}/5 Hari Awal`;
+        let badgeTitle = isFullWeek ? '🏆 Bintang Mingguan (Hadir Penuh 5 Hari)' : '⭐ Istiqamah Minggu Ini';
+        let statusText = isFullWeek ? '5/5 Hari Hadir' : `${hariHadir}/5 Hari Hadir`;
 
         let rankBadge = '';
         if (index === 0) rankBadge = '<span class="text-xs font-bold text-amber-500 mr-2">🥇 #1</span>';
@@ -3305,7 +3368,7 @@
                   ✨ ${statusText}
                 </span>
               </div>
-              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">${badgeTitle}</p>
+              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">${badgeTitle} · ${hariTepat} hari tepat waktu</p>
             </div>
           </div>
         `;
