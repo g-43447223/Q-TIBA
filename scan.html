@@ -323,7 +323,7 @@
 
   <!-- FOOTER -->
   <footer class="w-full text-center text-[10px] sm:text-[11px] text-slate-500 code-font pt-4 pb-6 z-10">
-    <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH</div>
+    <div>Q-TIBA INNOVATION SCANNER &copy; 2026 SK PULAU INDAH <span id="build-version" class="text-cyan-500"></span></div>
   </footer>
 
   <!-- MODAL ADMIN LOGIN (MENGGANTIKAN PROMPT NATIVE) -->
@@ -436,6 +436,11 @@
     let scannedTodaySet = new Set();
     let sessionScannedList = [];
     let pendingScanData = null;
+
+    const BUILD_VERSION = 'v3.1';
+    const versionEl = document.getElementById('build-version');
+    if (versionEl) versionEl.innerText = BUILD_VERSION;
+    console.log('Q-TIBA Scanner build:', BUILD_VERSION);
 
     // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
 
@@ -1172,56 +1177,37 @@
     }
 
     // SIMPAN REKOD & HANTAR KE BACKEND
+    // Susunan penting: hantaran ke cloud & log sesi diutamakan. Bahagian kosmetik
+    // (beep, konfeti, kad hasil) dibungkus try/catch supaya bila-bila ralat kecil
+    // tidak lagi menghalang data daripada sampai ke Google Sheet.
     function finalizeScanProcess(data) {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-      playAudioBeep('success');
-      scannedTodaySet.add(data.id);
-
       const isHadir = data.status === "HADIR";
-      burstConfetti(isHadir ? 26 : 14);
-
-      const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
-      const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
-      const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
-      const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${escapeHtml(timeStr)} &bull; ${escapeHtml(data.punca)}`;
-
-      const resultBox = document.getElementById('scanned-result-box');
-      resultBox.innerHTML = `
-        <div class="pop-in flex flex-col items-center w-full">
-          <div class="relative my-2">
-            <img src="${data.img}" 
-                 class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
-                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
-            <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
-              <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
-            </span>
-          </div>
-          <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${escapeHtml(data.nama)}</h3>
-          <p class="text-xs font-bold ${textColor} code-font mt-0.5">${escapeHtml(data.kelas)} &bull; ${escapeHtml(data.id)}</p>
-          <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
-            ${statusBadge}
-          </div>
-        </div>
-      `;
-
       const guruScan = localStorage.getItem('qtiba_admin_email') || 'Admin';
 
-      sessionScannedList.unshift({
-        id: data.id,
-        nama: data.nama,
-        kelas: data.kelas,
-        masa: timeStr,
-        punca: data.punca || "Tepat Masa",
-        status: data.status || "HADIR",
-        img: data.img,
-        guru: guruScan
-      });
+      scannedTodaySet.add(data.id);
 
-      persistSessionLog();
-      renderSessionLog();
+      // 1. SIMPAN KE LOG SESI & PERSIST (keutamaan).
+      try {
+        sessionScannedList.unshift({
+          id: data.id,
+          nama: data.nama,
+          kelas: data.kelas,
+          masa: timeStr,
+          punca: data.punca || "Tepat Masa",
+          status: data.status || "HADIR",
+          img: data.img,
+          guru: guruScan
+        });
 
+        persistSessionLog();
+        renderSessionLog();
+      } catch (err) {
+        console.error("Q-TIBA: Gagal simpan log sesi:", err);
+      }
+
+      // 2. HANTAR KE BACKEND (mesti jalan walau apa pun berlaku).
       const payload = {
         id: data.id,
         nama: data.nama,
@@ -1232,8 +1218,41 @@
         guru: guruScan,
         apiKey: QTIBA_API_KEY || ''
       };
-
       sendDataToBackend(payload).then(cloudOk => updateScanStatusBadge(cloudOk));
+
+      // 3. KOSMETIK (beep, konfeti, kad hasil imbasan) — tidak boleh hentikan hantaran.
+      try {
+        playAudioBeep('success');
+
+        const borderColor = isHadir ? "border-emerald-500" : "border-amber-500";
+        const textColor = isHadir ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
+        const bgColor = isHadir ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20";
+        const statusBadge = isHadir ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA` : `<i class="fa-solid fa-clock mr-1"></i>${escapeHtml(timeStr)} &bull; ${escapeHtml(data.punca)}`;
+
+        const resultBox = document.getElementById('scanned-result-box');
+        if (resultBox) {
+          resultBox.innerHTML = `
+            <div class="pop-in flex flex-col items-center w-full">
+              <div class="relative my-2">
+                <img src="${data.img}" 
+                     class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
+                     onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+                <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
+                  <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
+                </span>
+              </div>
+              <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${escapeHtml(data.nama)}</h3>
+              <p class="text-xs font-bold ${textColor} code-font mt-0.5">${escapeHtml(data.kelas)} &bull; ${escapeHtml(data.id)}</p>
+              <div class="mt-2 text-[10px] ${bgColor} border px-3 py-1 rounded-full font-bold code-font">
+                ${statusBadge}
+              </div>
+            </div>
+          `;
+        }
+        burstConfetti(isHadir ? 26 : 14);
+      } catch (err) {
+        console.error("Q-TIBA: Ralat paparan selepas imbasan:", err);
+      }
     }
 
     // HANTAR REKOD KE GOOGLE APPS SCRIPT (boleh baca respons sebenar)
