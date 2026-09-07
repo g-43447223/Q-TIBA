@@ -437,7 +437,7 @@
     let sessionScannedList = [];
     let pendingScanData = null;
 
-    const BUILD_VERSION = 'v4.1';
+    const BUILD_VERSION = 'v4.2';
     const versionEl = document.getElementById('build-version');
     if (versionEl) versionEl.innerText = BUILD_VERSION;
     console.log('Q-TIBA Scanner build:', BUILD_VERSION);
@@ -1480,9 +1480,19 @@
     // sampai ke cloud walaupun rangkaian sekejap (tiada perlu tekan butang).
     setInterval(() => { syncOfflineQueue(); }, 15000);
 
+    // Retry muat senarai murid secara berkala jika masih kosong (contoh: rangkaian
+    // lambat pada kali pertama). Ini memastikan padanan nombor -> ID penuh (SKPI001)
+    // boleh berfungsi walaupun cache murid belum sempat diisi semasa halaman dimuat.
+    setInterval(() => {
+      if (Object.keys(studentCacheMap).length === 0) {
+        preloadStudentData();
+      }
+    }, 30000);
+
     window.addEventListener('online', () => {
       checkNetworkStatus();
       syncOfflineQueue();
+      if (Object.keys(studentCacheMap).length === 0) preloadStudentData();
     });
     window.addEventListener('offline', checkNetworkStatus);
 
