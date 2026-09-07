@@ -437,7 +437,7 @@
     let sessionScannedList = [];
     let pendingScanData = null;
 
-    const BUILD_VERSION = 'v4.0';
+    const BUILD_VERSION = 'v4.1';
     const versionEl = document.getElementById('build-version');
     if (versionEl) versionEl.innerText = BUILD_VERSION;
     console.log('Q-TIBA Scanner build:', BUILD_VERSION);
@@ -1147,21 +1147,40 @@
 
     // MEMULA PROSES IMBASAN
     function initiateScanProcess(scannedId) {
-      const matchedStudent = studentCacheMap[scannedId] || {
-        id: scannedId,
-        nama: "MURID DIIMBAS",
-        kelas: "SASARAN",
-        urlGambar: ""
-      };
+      // Padanan ID fleksibel: jika kod (cth. "1") tidak jumpa terus, cuba padankan
+      // dengan ID murid yang berakhir dengan nombor tersebut, supaya QR yang hanya
+      // membawa angka (1, 2, 3) masih mengecam murid ber-ID "SKPI001", "SKPI002" dll.
+      let rawId = String(scannedId || "").trim().toUpperCase();
+      if (rawId === "") return;
+
+      let matchedStudent = studentCacheMap[rawId];
+      let effectiveId = rawId;
+
+      if (!matchedStudent && /^\d+$/.test(rawId)) {
+        // Cari mana-mana ID dalam senarai yang berakhir dengan angka "rawId" itu.
+        const num = rawId;
+        const candidates = Object.keys(studentCacheMap).filter(id => {
+          const m = id.match(/(\d+)$/);
+          return m && m[1] === num;
+        });
+        if (candidates.length === 1) {
+          matchedStudent = studentCacheMap[candidates[0]];
+          effectiveId = candidates[0];
+        }
+      }
+
+      if (!matchedStudent) {
+        matchedStudent = { id: effectiveId, nama: "MURID DIIMBAS", kelas: "SASARAN", urlGambar: "" };
+      }
 
       const userImg = (matchedStudent.urlGambar && matchedStudent.urlGambar !== "") 
         ? matchedStudent.urlGambar 
-        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}`;
+        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(effectiveId)}`;
 
       const resultBox = document.getElementById('scanned-result-box');
 
       // 1. Semak Jika Sudah Diimbas Hari Ini
-      if (scannedTodaySet.has(scannedId)) {
+      if (scannedTodaySet.has(effectiveId)) {
         playAudioBeep('error');
         speakText(`Amaran. ${matchedStudent.nama} telah diimbas hari ini.`);
 
@@ -1170,13 +1189,13 @@
             <div class="relative my-2">
               <img src="${userImg}" 
                    class="w-20 h-20 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scannedId)}'">
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(effectiveId)}'">
               <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1 text-[10px]">
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </span>
             </div>
             <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">${escapeHtml(matchedStudent.nama)}</h3>
-            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${escapeHtml(matchedStudent.kelas)} &bull; ${escapeHtml(scannedId)}</p>
+            <p class="text-xs font-bold text-rose-600 dark:text-rose-400 code-font mt-0.5">${escapeHtml(matchedStudent.kelas)} &bull; ${escapeHtml(effectiveId)}</p>
             <div class="mt-2 text-[10px] bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full font-bold code-font flex items-center gap-1.5">
               <i class="fa-solid fa-ban"></i> SUDAH DIIMBAS HARI INI!
             </div>
@@ -1195,7 +1214,7 @@
         // Tepat masa (Sebelum 7:21 AM)
         speakText(`Terima kasih ${matchedStudent.nama}. Hadir tepat masa.`);
         finalizeScanProcess({
-          id: scannedId,
+          id: effectiveId,
           nama: matchedStudent.nama,
           kelas: matchedStudent.kelas,
           img: userImg,
@@ -1205,7 +1224,7 @@
       } else {
         // Lewat (7:21 AM ke atas)
         pendingScanData = {
-          id: scannedId,
+          id: effectiveId,
           nama: matchedStudent.nama,
           kelas: matchedStudent.kelas,
           img: userImg,
