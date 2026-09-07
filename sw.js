@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qtiba-v3';
+const CACHE_NAME = 'qtiba-v4';
 
 // Senarai fail penting untuk kedua-dua paparan (Guru & Ibu Bapa)
 const ASSETS_TO_CACHE = [

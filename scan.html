@@ -437,7 +437,7 @@
     let sessionScannedList = [];
     let pendingScanData = null;
 
-    const BUILD_VERSION = 'v3.1';
+    const BUILD_VERSION = 'v4.0';
     const versionEl = document.getElementById('build-version');
     if (versionEl) versionEl.innerText = BUILD_VERSION;
     console.log('Q-TIBA Scanner build:', BUILD_VERSION);
@@ -1071,12 +1071,79 @@
     function handleManualSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('manual-id');
-      const val = input.value.trim().toUpperCase();
+      let val = input.value.trim().toUpperCase();
+      input.value = '';
       if (val) {
         initiateScanProcess(val);
-        input.value = '';
       }
     }
+
+    // ===== PEMBACA BARCODE USB / HID (scanner USB bertindak sebagai papan kekunci) =====
+    // Scanner murah (Shopee) menimbulkan taipan laju: kod dihantar satu-per-satu dalam
+    // julat yang sangat singkat (< 30ms), kemudian dikunci dengan Enter atau terminator.
+    // Kod ini mengumpul aksara pantas tersebut dan, sebaik sahaja ada jeda (siap bagi
+    // keseluruhan kod), terus memanggil initiateScanProcess() sama seperti imbasan kamera.
+    // Dengan ini scanner USB boleh diguna di pintu tanpa perlu tekan kotak input manual.
+    let barcodeKeyBuffer = '';
+    let barcodeLastKeyTime = 0;
+    const BARCODE_KEY_GAP_MS = 40;      // selang maksimum antara aksara scanner
+    const BARCODE_ENTER_MS = 250;       // jeda untuk menganggap kod sudah lengkap
+
+    function barcodeIsIdle() {
+      return Date.now() - barcodeLastKeyTime >= BARCODE_ENTER_MS;
+    }
+
+    function barcodeFlush() {
+      if (barcodeKeyBuffer === '') return;
+      const scannedId = barcodeKeyBuffer.toUpperCase();
+      barcodeKeyBuffer = '';
+      if (!scannedId || !/^[A-Z0-9-_]+$/.test(scannedId)) return;
+      // Elak bercanggah dengan imbasan kamera yang sedang diproses.
+      if (isProcessingScan) return;
+      isProcessingScan = true;
+      initiateScanProcess(scannedId);
+      setTimeout(() => { isProcessingScan = false; }, 1000);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      // Jangan ganggu jika sedang isi borang/modal/menu.
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+
+      const now = Date.now();
+      const key = e.key;
+
+      // Enter menamatkan imbasan scanner (hanya jika ada buffer aktif).
+      if (key === 'Enter') {
+        if (barcodeKeyBuffer !== '') {
+          barcodeLastKeyTime = now;
+          barcodeFlush();
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // Abaikan kekunci khas/kawalan.
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // Hanya terima aksara kod yang boleh ditaip scanner.
+      if (key.length === 1) {
+        const ch = key;
+        if (!/^[A-Za-z0-9_\-]$/.test(ch)) return;
+        // Jika jeda terlalu lama, mula kod baharu.
+        if (barcodeKeyBuffer !== '' && now - barcodeLastKeyTime > BARCODE_KEY_GAP_MS) {
+          barcodeKeyBuffer = '';
+        }
+        barcodeKeyBuffer += ch;
+        barcodeLastKeyTime = now;
+        e.preventDefault();
+      }
+    });
+
+    // Auto-flush: jika scanner tidak menghantar Enter, proses kod sebaik sahaja
+    // ada jeda cukup panjang (supaya tidak perlu menunggu kekunci Enter).
+    setInterval(() => {
+      if (barcodeKeyBuffer !== '' && barcodeIsIdle()) barcodeFlush();
+    }, 120);
 
     // MEMULA PROSES IMBASAN
     function initiateScanProcess(scannedId) {
