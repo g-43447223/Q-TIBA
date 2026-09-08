@@ -35,6 +35,22 @@
       100% { transform: translateY(-50%); }
     }
 
+    /* Overlay imbasan: kad hasil imbas muncul di atas paparan gate */
+    .gate-overlay {
+      position: fixed; inset: 0; z-index: 60;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(6px);
+      padding: 1rem;
+    }
+    .gate-overlay-card {
+      animation: gatePopIn .3s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes gatePopIn {
+      0%   { transform: scale(.85) translateY(12px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
     /* Teks berjalan bawah (seamless, kandungan diduplikasi oleh JS) */
     .gate-ticker-wrap { overflow: hidden; }
     .gate-ticker-track {
@@ -153,6 +169,11 @@
     </div>
   </footer>
 
+  <!-- OVERLAY IMBASAN (muncul bila scanner USB baca kad QR) -->
+  <div id="gate-scan-overlay" class="gate-overlay hidden">
+    <div id="gate-scan-overlay-card" class="gate-overlay-card glass-card w-full max-w-2xl rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-white/10 shadow-2xl text-center"></div>
+  </div>
+
   <script src="config.js"></script>
   <script>
     let globalMuridList = [];
@@ -160,6 +181,7 @@
     let totalSasaran = 0;
     let lastData = null;
     let refreshTimer = null;
+    let CUTOFF_MIN = 7 * 60 + 21; // default 7:21 AM
 
     const IDX_HARI_CUTI_MINGGU = [0, 6];
     const IDX_HARI_CUTI_TARIKH = [
@@ -470,8 +492,15 @@
         if (!API_URL || API_URL.includes('MASUKKAN_URL')) return;
         const res = await fetch(buildApiUrl({ action: 'settings' }));
         const data = await res.json();
-        if (data && data.status === 'Success' && Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
-          idxHujungMingguServer = data.hujungMinggu;
+        if (data && data.status === 'Success') {
+          if (Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
+            idxHujungMingguServer = data.hujungMinggu;
+          }
+          if (data.cutoffMin) {
+            CUTOFF_MIN = parseInt(data.cutoffMin, 10) || CUTOFF_MIN;
+          } else if (data.cutoff) {
+            CUTOFF_MIN = parseInt(data.cutoff, 10) || CUTOFF_MIN;
+          }
         }
       } catch (e) { /* abaikan — guna fallback */ }
     }
@@ -498,8 +527,424 @@
       track.style.animationDuration = durasi + 's';
     }
 
+    // ==== IMBASAN PINTU: SCANNER USB / HID (bertindak sebagai papan kekunci) =====
+    // Bilik sambungan ke gate.html: serasi dengan scanner USB murah (Shopee) yang
+    // menaip kod laju kemudian Enter. Gabungan padanan ID (nombor -> ID penuh) dan
+    // cache murid daripada preloadStudentData() membolehkan imbasan konsisten.
+    let studentCacheMap = {};
+    let scannedTodaySet = new Set();
+    let isProcessingGateScan = false;
+    let pendingScanData = null;
+    let scanAutoCloseTimer = null;
+    const GATE_CACHE_KEY = 'qtiba_murid_cache_v1';
+
+    let barcodeKeyBuffer = '';
+    let barcodeLastKeyTime = 0;
+    const BARCODE_KEY_GAP_MS = 250;
+    const BARCODE_ENTER_MS = 250;
+
+    function barcodeIsIdle() {
+      return Date.now() - barcodeLastKeyTime >= BARCODE_ENTER_MS;
+    }
+
+    function barcodeFlush() {
+      if (barcodeKeyBuffer === '') return;
+      const scannedId = barcodeKeyBuffer.toUpperCase();
+      barcodeKeyBuffer = '';
+      if (isProcessingGateScan) return;
+      try { console.log('Q-TIBA gate barcode raw:', JSON.stringify(scannedId)); } catch (e) {}
+      isProcessingGateScan = true;
+      initiateGateScanProcess(scannedId);
+      setTimeout(() => { isProcessingGateScan = false; }, 1000);
+    }
+
     document.addEventListener('keydown', (e) => {
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      const now = Date.now();
+      const key = e.key;
+
+      if (key === 'Enter') {
+        if (barcodeKeyBuffer !== '') {
+          barcodeLastKeyTime = now;
+          barcodeFlush();
+          e.preventDefault();
+        }
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (key.length === 1) {
+        const ch = key;
+        if (!/^[A-Za-z0-9_\-]$/.test(ch)) return;
+        if (barcodeKeyBuffer !== '' && now - barcodeLastKeyTime > BARCODE_KEY_GAP_MS) {
+          barcodeKeyBuffer = '';
+        }
+        barcodeKeyBuffer += ch;
+        barcodeLastKeyTime = now;
+        e.preventDefault();
+      }
+    });
+
+    setInterval(() => {
+      if (barcodeKeyBuffer !== '' && barcodeIsIdle()) barcodeFlush();
+    }, 120);
+
+    // PADAMAN ID: guna NILAI nombor berbanding teks penuh supaya "3", "03",
+    // "003" atau "I003" semua sepadan dengan SKPI003 dalam senarai MuridSasaran.
+    function initiateGateScanProcess(scannedId) {
+      let rawId = String(scannedId || '').trim().toUpperCase();
+      if (rawId === '') return;
+
+      const numOnly = (s) => (String(s || '').replace(/[^0-9]/g, ''));
+      const targetNum = numOnly(rawId);
+      const targetInt = targetNum === '' ? NaN : parseInt(targetNum, 10);
+
+      let matchedStudent = studentCacheMap[rawId];
+      let effectiveId = rawId;
+
+      if (!matchedStudent && !isNaN(targetInt)) {
+        const candidates = Object.keys(studentCacheMap).filter(id => {
+          const m = id.match(/(\d+)$/);
+          const idTail = m ? m[1] : numOnly(id);
+          if (idTail === '') return false;
+          return parseInt(idTail, 10) === targetInt;
+        });
+        if (candidates.length === 1) {
+          matchedStudent = studentCacheMap[candidates[0]];
+          effectiveId = candidates[0];
+        }
+      }
+
+      if (!matchedStudent) {
+        playGateBeep('error');
+        paparOverlay(`
+          <div class="flex flex-col items-center">
+            <div class="w-14 h-14 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mb-3 text-2xl border border-rose-500/20">
+              <i class="fa-solid fa-circle-question"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white">ID TIDAK DIKENALI</h3>
+            <p class="mt-1 text-sm font-bold text-slate-500 dark:text-slate-400 code-font">${escapeHtml(rawId)}</p>
+            <p class="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-md">Kad/QR tidak jumpa dalam senarai Murid Sasaran. Sila semak semula kad murid.</p>
+          </div>`);
+        autoTutupOverlay(4000);
+        return;
+      }
+
+      const userImg = (matchedStudent.urlGambar && matchedStudent.urlGambar !== '')
+        ? matchedStudent.urlGambar
+        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(effectiveId)}`;
+
+      // Semak jika sudah diimbas hari ini.
+      if (scannedTodaySet.has(effectiveId)) {
+        playGateBeep('error');
+        paparOverlay(`
+          <div class="flex flex-col items-center">
+            <div class="relative my-2">
+              <img src="${userImg}"
+                   class="w-24 h-24 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(effectiveId)}'">
+              <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1.5 text-xs"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white uppercase">${escapeHtml(matchedStudent.nama)}</h3>
+            <p class="text-sm font-bold text-slate-500 dark:text-slate-400 code-font mt-1">${escapeHtml(matchedStudent.kelas)} &bull; ${escapeHtml(effectiveId)}</p>
+            <div class="mt-3 text-sm bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-4 py-1.5 rounded-full font-bold code-font">
+              <i class="fa-solid fa-ban mr-1"></i> SUDAH DIIMBAS HARI INI!
+            </div>
+          </div>`);
+        autoTutupOverlay(4000);
+        return;
+      }
+
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const isLate = (hours * 60 + minutes) >= CUTOFF_MIN;
+      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      if (!isLate) {
+        // Tepat masa: rekod terus, tiada perlu pilih punca.
+        playGateBeep('success');
+        gateSpeak(`Terima kasih ${matchedStudent.nama}. Hadir tepat masa.`);
+        finalizeGateScan({
+          id: effectiveId,
+          nama: matchedStudent.nama,
+          kelas: matchedStudent.kelas,
+          img: userImg,
+          status: 'HADIR',
+          punca: 'Tepat Masa'
+        });
+      } else {
+        // Lewat: perlu pilih punca (guru bertugas klik butang besar di overlay).
+        pendingScanData = {
+          id: effectiveId,
+          nama: matchedStudent.nama,
+          kelas: matchedStudent.kelas,
+          img: userImg,
+          status: 'LEWAT'
+        };
+        playGateBeep('success');
+        paparPuncaLewat(pendingScanData, timeStr);
+      }
+    }
+
+    // Kad LEWAT dengan butang punca besar — murid/guru pilih, atau auto-rekod selepas 20 saat.
+    function paparPuncaLewat(data, timeStr) {
+      paparOverlay(`
+        <div class="flex flex-col">
+          <div class="flex items-center gap-4 text-left">
+            <div class="relative shrink-0">
+              <img src="${data.img}"
+                   class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-amber-500 shadow-md bg-slate-200 dark:bg-slate-800"
+                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+              <span class="absolute bottom-0 right-0 bg-amber-500 text-white rounded-full p-1.5 text-xs"><i class="fa-solid fa-clock"></i></span>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase leading-tight break-words">${escapeHtml(data.nama)}</h3>
+              <p class="text-sm font-bold text-amber-600 dark:text-amber-400 code-font mt-1">${escapeHtml(data.kelas)} &bull; ${timeStr} &bull; LEWAT</p>
+              <p class="mt-2 text-sm sm:text-base font-extrabold text-slate-600 dark:text-slate-300">Sila pilih punca kelewatan:</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-6 text-sm sm:text-base font-bold">
+            <button onclick="submitGateReason('Bangun Lewat')" class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700 text-left flex items-center gap-3">
+              <span class="text-xl">⏰</span> Bangun Lewat
+            </button>
+            <button onclick="submitGateReason('Kesesakan Trafik')" class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700 text-left flex items-center gap-3">
+              <span class="text-xl">🚗</span> Trafik Jam
+            </button>
+            <button onclick="submitGateReason('Masalah Kenderaan')" class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700 text-left flex items-center gap-3">
+              <span class="text-xl">🔧</span> Kenderaan Rosak
+            </button>
+            <button onclick="submitGateReason('Cuaca / Hujan')" class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700 text-left flex items-center gap-3">
+              <span class="text-xl">🌧️</span> Faktor Cuaca
+            </button>
+          </div>
+
+          <div class="mt-3 flex flex-col sm:flex-row gap-2.5 text-sm sm:text-base font-bold">
+            <button onclick="submitGateReason('Kenderaan Ayah / Ibu Sibuk')" class="flex-1 p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700 text-left">🚙 Ibubapa Sibuk</button>
+            <button onclick="submitGateReason('Lain-lain / Tiada Alasan')" class="flex-1 p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white dark:hover:bg-cyan-500 transition-all border border-slate-200 dark:border-slate-700 text-left">📝 Lain-lain</button>
+          </div>
+
+          <div class="mt-3 text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 font-semibold animate-pulse">
+            Auto-rekod selepas 20 saat jika tiada pilihan.
+          </div>
+        </div>`);
+
+      clearTimeout(scanAutoCloseTimer);
+      scanAutoCloseTimer = setTimeout(() => submitGateReason('Lain-lain / Tiada Alasan'), 20000);
+    }
+
+    function submitGateReason(reason) {
+      if (!pendingScanData) return;
+      const data = Object.assign({}, pendingScanData, { punca: reason });
+      pendingScanData = null;
+      clearTimeout(scanAutoCloseTimer);
+      finalizeGateScan(data);
+    }
+
+    // SIMPAN & HANTAR REKOD. Hantaran ke cloud diutamakan; kosmetik tidak mengganggu.
+    function finalizeGateScan(data) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const isHadir = data.status === 'HADIR';
+      scannedTodaySet.add(data.id);
+
+      const borderColor = isHadir ? 'border-emerald-500' : 'border-amber-500';
+      const textColor = isHadir ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400';
+      const bgColor = isHadir ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20';
+      const statusBadge = isHadir
+        ? `<i class="fa-solid fa-circle-check mr-1"></i>HADIR TEPAT MASA`
+        : `<i class="fa-solid fa-clock mr-1"></i>${escapeHtml(timeStr)} &bull; ${escapeHtml(data.punca)}`;
+
+      playGateBeep('success');
+      paparOverlay(`
+        <div class="flex flex-col items-center">
+          <div class="relative my-2">
+            <img src="${data.img}"
+                 class="w-28 h-28 rounded-full object-cover border-4 ${borderColor} shadow-lg bg-slate-200 dark:bg-slate-800"
+                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+            <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-2 text-sm"><i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i></span>
+          </div>
+          <h3 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight text-center">${escapeHtml(data.nama)}</h3>
+          <p class="text-base font-bold ${textColor} code-font mt-1">${escapeHtml(data.kelas)} &bull; ${escapeHtml(data.id)}</p>
+          <div class="mt-3 text-sm ${bgColor} border px-5 py-2 rounded-full font-bold code-font">${statusBadge}</div>
+        </div>`);
+      autoTutupOverlay(isHadir ? 4500 : 6000);
+
+      // HANTAR KE BACKEND.
+      const payload = {
+        id: data.id,
+        nama: data.nama,
+        kelas: data.kelas,
+        status: data.status || 'HADIR',
+        punca: data.punca || 'Tepat Masa',
+        masa: timeStr,
+        guru: 'Paparan Pintu',
+        apiKey: QTIBA_API_KEY || ''
+      };
+      postGateToBackend(payload).then(() => {
+        // Segera segarnya nombor KPI supaya paparan up-to-date.
+        if (typeof muatSemula === 'function') muatSemula();
+      });
+    }
+
+    async function postGateToBackend(payload) {
+      if (!API_URL || API_URL.includes('MASUKKAN_URL')) return;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        const result = data && data.result;
+        if (result !== 'success' && result !== 'duplicate') {
+          // Server tolak / error — simpan ke antrian offline untuk cuba semula.
+          saveGateOffline(payload);
+        }
+      } catch (err) {
+        saveGateOffline(payload);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function saveGateOffline(payload) {
+      try {
+        const queue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+        queue.push(payload);
+        localStorage.setItem('qtiba_offline_queue', JSON.stringify(queue));
+      } catch (e) {}
+    }
+
+    // PRELOAD SENARAI MURID supaya padanan ID & semakan "sudah imbas" berfungsi.
+    function simpanMuridCache(muridList) {
+      try {
+        localStorage.setItem(GATE_CACHE_KEY, JSON.stringify({ bila: new Date().toISOString(), muridList: muridList }));
+      } catch (e) {}
+    }
+
+    function bacaMuridCache() {
+      try {
+        const raw = localStorage.getItem(GATE_CACHE_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || !Array.isArray(obj.muridList)) return null;
+        return obj;
+      } catch (e) { return null; }
+    }
+
+    async function preloadStudentData() {
+      if (!API_URL || API_URL.includes('MASUKKAN_URL')) return;
+      try {
+        const response = await fetch(buildApiUrl({}));
+        const data = await response.json();
+        if (data.status === 'Success' && data.muridList) {
+          data.muridList.forEach(m => {
+            const cleanId = m.id.trim().toUpperCase();
+            studentCacheMap[cleanId] = m;
+            if (m.lewatHariIni || (m.waktuHariIni && String(m.waktuHariIni).trim() !== '')) {
+              scannedTodaySet.add(cleanId);
+            }
+          });
+          simpanMuridCache(data.muridList);
+          console.log('Q-TIBA gate: Loaded', Object.keys(studentCacheMap).length, 'students.');
+        } else {
+          // Server reply tak berjaya — guna cache.
+          const cache = bacaMuridCache();
+          if (cache) cache.muridList.forEach(m => {
+            const cleanId = m.id.trim().toUpperCase();
+            studentCacheMap[cleanId] = m;
+            if (m.lewatHariIni || (m.waktuHariIni && String(m.waktuHariIni).trim() !== '')) scannedTodaySet.add(cleanId);
+          });
+        }
+      } catch (err) {
+        const cache = bacaMuridCache();
+        if (cache) cache.muridList.forEach(m => {
+          const cleanId = m.id.trim().toUpperCase();
+          studentCacheMap[cleanId] = m;
+          if (m.lewatHariIni || (m.waktuHariIni && String(m.waktuHariIni).trim() !== '')) scannedTodaySet.add(cleanId);
+        });
+        console.warn('Q-TIBA gate preload failed:', err);
+      }
+    }
+
+    function playGateBeep(type) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (type === 'success') {
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.15);
+        } else {
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          gain.gain.setValueAtTime(0.4, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+        }
+      } catch (e) {}
+    }
+
+    function gateSpeak(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ms-MY';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function paparOverlay(html) {
+      const overlay = document.getElementById('gate-scan-overlay');
+      const card = document.getElementById('gate-scan-overlay-card');
+      if (!overlay || !card) return;
+      card.innerHTML = html;
+      overlay.classList.remove('hidden');
+    }
+
+    function autoTutupOverlay(ms) {
+      clearTimeout(scanAutoCloseTimer);
+      scanAutoCloseTimer = setTimeout(tutupOverlay, ms);
+    }
+
+    function tutupOverlay() {
+      clearTimeout(scanAutoCloseTimer);
+      const overlay = document.getElementById('gate-scan-overlay');
+      if (overlay) overlay.classList.add('hidden');
+    }
+
+    // berjalan selepas muatan awal supaya imbas pintu bersedia.
+    preloadStudentData();
+    setInterval(() => {
+      if (Object.keys(studentCacheMap).length === 0) preloadStudentData();
+    }, 30000);
+    window.addEventListener('online', () => {
+      if (Object.keys(studentCacheMap).length === 0) preloadStudentData();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      // Jika overlay imbasan sedang dibuka, Escape menutupnya dahulu (tidak keluar).
+      const overlay = document.getElementById('gate-scan-overlay');
       if (e.key === 'Escape') {
+        if (overlay && !overlay.classList.contains('hidden')) {
+          tutupOverlay();
+          if (pendingScanData) pendingScanData = null;
+          return;
+        }
         const c = confirm("Tutup paparan pintu dan kembali ke dashboard?");
         if (c) window.location.href = 'index.html';
       }
