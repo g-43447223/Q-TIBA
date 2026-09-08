@@ -129,9 +129,30 @@
     </div>
   </section>
 
-  <!-- SENARAI LEWAT + UITLAN -->
-  <section class="w-full flex-1 px-4 sm:px-6 lg:px-10 pb-4 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5 relative z-10">
-    <div class="lg:col-span-2 glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col">
+  <!-- SENARAI DATANG AWAL + SENARAI LEWAT (padat satu skrin penuh) -->
+  <section class="w-full flex-1 min-h-0 px-4 sm:px-6 lg:px-10 pb-3 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5 relative z-10">
+
+    <!-- Banner cuti (penuh lebar) -->
+    <div id="gate-cutiban" class="hidden col-span-1 lg:col-span-2 rounded-2xl border border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-sm lg:text-base font-bold p-4 text-center">
+      🎉 Cuti Sekolah — tiada sesi imbasan hari ini.
+    </div>
+
+    <!-- DATANG AWAL / TEPAT MASA -->
+    <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col min-h-0">
+      <div class="flex items-center justify-between mb-2.5 sm:mb-3">
+        <h2 class="text-sm sm:text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-sun text-emerald-500 dark:text-emerald-400"></i> Datang Awal Hari Ini
+        </h2>
+        <span id="gate-tepat-count" class="clock-font text-[10px] sm:text-sm font-black text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">0 orang</span>
+      </div>
+
+      <div id="gate-tepat-list" class="gate-scroll-wrap flex-1 min-h-0 rounded-2xl">
+        <div class="flex items-center justify-center h-full text-slate-400 dark:text-slate-500 clock-font">Memuatkan…</div>
+      </div>
+    </div>
+
+    <!-- SENARAI LEWAT -->
+    <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col min-h-0">
       <div class="flex items-center justify-between mb-2.5 sm:mb-3">
         <h2 class="text-sm sm:text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
           <i class="fa-solid fa-triangle-exclamation text-amber-500 dark:text-amber-400"></i> Senarai Lewat Hari Ini
@@ -139,23 +160,8 @@
         <span id="gate-lewat-count" class="clock-font text-[10px] sm:text-sm font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">0 orang</span>
       </div>
 
-      <div id="gate-lewat-list" class="gate-scroll-wrap h-[44vh] sm:h-[46vh] lg:h-[52vh] rounded-2xl">
+      <div id="gate-lewat-list" class="gate-scroll-wrap flex-1 min-h-0 rounded-2xl">
         <div class="flex items-center justify-center h-full text-slate-400 dark:text-slate-500 clock-font">Memuatkan…</div>
-      </div>
-    </div>
-
-    <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col">
-      <h2 class="text-sm sm:text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2 mb-2.5 sm:mb-3">
-        <i class="fa-solid fa-door-open text-cyan-500 dark:text-cyan-400"></i> Selamat Datang!
-      </h2>
-      <div id="gate-cutiban" class="hidden mb-3 rounded-2xl border border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-sm lg:text-base font-bold p-4 text-center">
-        🎉 Cuti Sekolah — tiada sesi imbasan hari ini.
-      </div>
-      <div id="gate-uitl" class="flex-1 overflow-y-auto pr-1 text-[12px] sm:text-[13px] lg:text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed">
-        <p class="mb-2"><i class="fa-solid fa-circle-check text-emerald-500 dark:text-emerald-400 mr-2"></i><b id="gate-uitl-hadir">0</b> murid telah masuk ke pagar</p>
-        <p class="mb-2"><i class="fa-solid fa-clock text-amber-500 dark:text-amber-400 mr-2"></i><b id="gate-uitl-lewat">0</b> murid lewat selepas 7:21 pagi</p>
-        <p class="mb-2"><i class="fa-solid fa-user-slash text-rose-500 dark:text-rose-400 mr-2"></i><b id="gate-uitl-tak-hadir">0</b> murid belum dilihat hari ini</p>
-        <p class="mt-4"><i class="fa-solid fa-bullhorn text-cyan-500 dark:text-cyan-400 mr-2"></i>Murid lewat akan dicatat &amp; dipantau oleh guru. Jaga disiplin, marilah ke sekolah awal!</p>
       </div>
     </div>
   </section>
@@ -329,7 +335,61 @@
       return Array.from(map.values());
     }
 
-    // JAM DIGITAL MASA SEBENAR
+    // SENARAI MURID YANG DATANG AWAL (TEPAT MASA) hari ini.
+    function getTepatHariIniList(dateStr) {
+      const tgl = dateStr || getTodayDateStr();
+      const records = getRekodUntukHari(tgl);
+      const map = new Map();
+      records.forEach(r => {
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        if (st === 'LEWAT' && r.punca !== 'Tepat Masa') return;
+        const timeStr = String(r.tarikhMasa || '').split(' ')[1] || r.waktuHariIni || '';
+        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          const hours = parseInt(match[1], 10);
+          const minutes = parseInt(match[2], 10);
+          if (hours > 7 || (hours === 7 && minutes >= 21)) return;
+        }
+        const key = r.id || r.nama;
+        if (!map.has(key)) {
+          const murid = globalMuridList.find(m => String(m.id) === String(r.id)) || {};
+          map.set(key, {
+            id: r.id || r.nama,
+            nama: r.nama || murid.nama || 'Tanpa Nama',
+            kelas: r.kelas || murid.kelas || 'N/A',
+            urlGambar: murid.urlGambar || '',
+            waktuHariIni: timeStr,
+            punca: 'Tepat Masa',
+            kiraan: murid.kiraan || 0
+          });
+        }
+      });
+
+      const fn = new Date();
+      const todayStrFx = `${fn.getFullYear()}-${String(fn.getMonth() + 1).padStart(2, '0')}-${String(fn.getDate()).padStart(2, '0')}`;
+      if (tgl === todayStrFx && records.length === 0 && map.size === 0) {
+        (globalMuridList || []).forEach(m => {
+          if ((m.lewatHariIni && m.punca !== "Tepat Masa") && m.status !== "HADIR") return;
+          const timeStr = m.waktuHariIni || '';
+          const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            const hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            if (hours > 7 || (hours === 7 && minutes >= 21)) return;
+          }
+          map.set(m.id, {
+            id: m.id,
+            nama: m.nama,
+            kelas: m.kelas,
+            urlGambar: m.urlGambar || '',
+            waktuHariIni: timeStr,
+            punca: 'Tepat Masa',
+            kiraan: m.kiraan || 0
+          });
+        });
+      }
+      return Array.from(map.values());
+    }
     function updateClock() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
@@ -395,11 +455,57 @@
       wrap.innerHTML = `<div class="gate-scroll-track ${berAnimasi ? 'gate-scroll-running' : ''}" style="animation-duration:${durasi}s">${content}</div>`;
     }
 
+    // BINA SENARAI DATANG AWAL (dengan auto-scroll, tema hijau)
+    function renderTepatList(list) {
+      const wrap = document.getElementById('gate-tepat-list');
+      const countEl = document.getElementById('gate-tepat-count');
+      if (!wrap || !countEl) return;
+      countEl.textContent = `${list.length} orang`;
+
+      const isCuti = isTarikhCuti(getTodayDateStr());
+
+      if (isCuti) {
+        wrap.innerHTML = `<div class="flex items-center justify-center h-full text-emerald-600 dark:text-emerald-400 text-xl font-black">🎉 Cuti Sekolah hari ini</div>`;
+        return;
+      }
+
+      if (list.length === 0) {
+        wrap.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center">
+            <i class="fa-solid fa-mug-hot text-cyan-500 dark:text-cyan-400 text-5xl mb-3"></i>
+            <div class="text-cyan-600 dark:text-cyan-400 text-xl lg:text-2xl font-black">BELUM ADA MURID DATANG</div>
+            <div class="text-slate-500 dark:text-slate-400 text-sm lg:text-base font-semibold mt-1">Nama murid yang tiba tepat masa akan muncul di sini.</div>
+          </div>`;
+        return;
+      }
+
+      const itemHtml = list.map((m, i) => `
+        <div class="flex items-center gap-4 px-4 py-3 rounded-2xl ${i % 2 === 0 ? 'bg-slate-100/70 dark:bg-slate-800/40' : 'bg-slate-50/50 dark:bg-slate-800/20'} border border-slate-200/60 dark:border-white/5">
+          <div class="w-8 h-8 flex items-center justify-center">
+            <i class="fa-solid fa-circle-check text-emerald-500 dark:text-emerald-400 text-xl"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="text-base lg:text-lg font-extrabold text-slate-800 dark:text-white truncate">${escapeHtml(m.nama)}</div>
+            <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-semibold truncate">${escapeHtml(m.kelas)} · ${escapeHtml(m.punca)}</div>
+          </div>
+          <div class="clock-font text-lg lg:text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">${escapeHtml(m.waktuHariIni || '—')}</div>
+        </div>`).join('');
+
+      // Gerak auto-scroll bila senarai panjang; jika pendek (≤4) duplikasi untuk gelung rapat.
+      const perluDuplikasi = list.length <= 4;
+      const berAnimasi = list.length > 8 || perluDuplikasi;
+      const content = perluDuplikasi ? itemHtml + itemHtml : itemHtml;
+      const durasi = Math.max(10, list.length * 4);
+
+      wrap.innerHTML = `<div class="gate-scroll-track ${berAnimasi ? 'gate-scroll-running' : ''}" style="animation-duration:${durasi}s">${content}</div>`;
+    }
+
     // PAPAR DATA
     function paparkanData() {
       const todayStr = getTodayDateStr();
       const hadir = calculateHadirCount(todayStr);
       const lewat = getLewatHariIniList(todayStr);
+      const tepat = getTepatHariIniList(todayStr);
       const takHadir = isTarikhCuti(todayStr) ? 0 : Math.max(0, totalSasaran - hadir);
 
       document.getElementById('kpi-sasaran-gate').textContent = totalSasaran;
@@ -407,10 +513,6 @@
       document.getElementById('kpi-hadir-note-gate').textContent = `dari ${totalSasaran}`;
       document.getElementById('kpi-lewat-gate').textContent = lewat.length;
       document.getElementById('kpi-tak-hadir-gate').textContent = takHadir;
-
-      document.getElementById('gate-uitl-hadir').textContent = hadir;
-      document.getElementById('gate-uitl-lewat').textContent = lewat.length;
-      document.getElementById('gate-uitl-tak-hadir').textContent = takHadir;
 
       const cutiban = document.getElementById('gate-cutiban');
       const namaCuti = getNamaCuti(todayStr);
@@ -421,6 +523,7 @@
         cutiban.classList.add('hidden');
       }
 
+      renderTepatList(tepat);
       renderLewatList(lewat);
       document.getElementById('gate-last-updated').textContent = new Date()
         .toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
