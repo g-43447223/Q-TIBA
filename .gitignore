@@ -21,7 +21,6 @@ npm-debug.log*
 .env
 .env.local
 .env.*.local
-config.js
 
 # Dependencies
 node_modules/
