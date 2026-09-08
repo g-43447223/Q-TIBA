@@ -12,7 +12,7 @@ var LATE_MINUTE = 21;
 // !!! WAJIB GANTI dengan nilai yang unik sebelum deploy !!!
 // Ini menghalang orang luar dari memanggil Web App tanpa kebenaran.
 // ============================================================
-var API_KEY = "QTiba-336244-CHANGE-ME-SEKRET"; // GANTI INI dengan key yang sama dalam config.js
+var API_KEY = "QTiba-918800f61817b8b676e903f10b03903b50c62a5c98332ae8"; // GANTI INI dengan key yang sama dalam config.js
 
 // Sahkan request datang dengan API key yang betul.
 // Key dihantar sebagai query parameter: ?apiKey=xxx&action=yyy
