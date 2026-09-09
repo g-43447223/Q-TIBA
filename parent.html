@@ -30,6 +30,7 @@
   <meta name="theme-color" content="#0f172a">
 
   <link rel="stylesheet" href="theme.css?v=2">
+  <script src="splash.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -1240,6 +1241,7 @@
           renderAbsentStudents();
           renderTodayTable();
           renderStreakTracker(data.streakList || globalMuridList);
+          if (window.QTIBA_Splash) window.QTIBA_Splash.done();
 
         } else {
           updateSyncStatus("Ralat Google Sheets", "text-rose-500");

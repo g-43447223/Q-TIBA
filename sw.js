@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qtiba-v11';
+const CACHE_NAME = 'qtiba-v12';
 
 // Senarai fail penting untuk kedua-dua paparan (Guru & Ibu Bapa)
 const ASSETS_TO_CACHE = [
@@ -6,6 +6,7 @@ const ASSETS_TO_CACHE = [
   './index.html',
   './scan.html',
   './parent.html',
+  './splash.js',
   './manifest.json',
   './manifest-parent.json',
   './q-tibalogo.png',

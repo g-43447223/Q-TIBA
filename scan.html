@@ -23,6 +23,7 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <link rel="stylesheet" href="theme.css?v=2">
+  <script src="splash.js"></script>
 
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -1584,6 +1585,7 @@
     window.addEventListener('load', () => {
       initCameraDevices();
       preloadStudentData();
+      if (window.QTIBA_Splash) window.QTIBA_Splash.done();
 
       if (isIOS && !isStandalone && !isPwaDismissed) {
         document.getElementById('pwa-android-btn-container')?.classList.add('hidden');

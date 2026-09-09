@@ -32,6 +32,7 @@
   <meta name="theme-color" content="#0f172a">
 
   <link rel="stylesheet" href="theme.css?v=2">
+  <script src="splash.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -2556,6 +2557,7 @@
           applyFilters();
           renderLaporanBulanan();
 
+          if (window.QTIBA_Splash) window.QTIBA_Splash.done();
         } else {
           updateSyncStatus("Ralat Google Sheets", "text-rose-500");
           if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Ralat Apps Script: ${data.message}</td></tr>`;
@@ -3680,6 +3682,7 @@
       // Semak status pendaftaran masuk admin
       if (localStorage.getItem('qtiba_admin_auth') !== 'true') {
         document.getElementById('login-modal').classList.remove('hidden');
+        if (window.QTIBA_Splash) window.QTIBA_Splash.done();
       } else {
         fetchLiveData();
       }
