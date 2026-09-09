@@ -1105,6 +1105,7 @@
     let idxHujungMingguServer = null;
     let idxCutiServerTarikh = [];
     let idxCutiServerJulat = [];
+    let CUTOFF_MIN = 7 * 60 + 21; // default 07:21
 
     // Muat senarai cuti dari backend (action=settings). Tak batal jika gagal.
     async function muatKonfigurasiCuti() {
@@ -1113,6 +1114,7 @@
         const res = await fetch(buildApiUrl({ action: 'settings' }));
         const data = await res.json();
         if (!data || data.status !== 'Success') return;
+        if (typeof data.cutoffMin === 'number' && data.cutoffMin >= 0) CUTOFF_MIN = data.cutoffMin;
         if (Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
           idxHujungMingguServer = data.hujungMinggu;
         }
@@ -1675,7 +1677,7 @@
         if (match) {
           const hours = parseInt(match[1], 10);
           const minutes = parseInt(match[2], 10);
-          return (hours < 7 || (hours === 7 && minutes < 21));
+          return (hours * 60 + minutes) < CUTOFF_MIN;
         }
 
         return false;
@@ -2201,12 +2203,6 @@
         const st = String(r.status || 'LEWAT').trim().toUpperCase();
         if (st === 'HADIR' || r.punca === 'Tepat Masa') return;
         const timeStr = String(r.tarikhMasa || '').split(' ')[1] || r.waktuHariIni || '';
-        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-        if (match) {
-          const hours = parseInt(match[1], 10);
-          const minutes = parseInt(match[2], 10);
-          if (hours < 7 || (hours === 7 && minutes < 21)) return;
-        }
         const key = r.id || r.nama;
         if (!map.has(key)) {
           const murid = globalMuridList.find(m => String(m.id) === String(r.id)) || {};
@@ -2229,12 +2225,6 @@
         (globalMuridList || []).forEach(m => {
           if (!m.lewatHariIni || m.punca === "Tepat Masa" || m.status === "HADIR") return;
           const timeStr = m.waktuHariIni || '';
-          const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-          if (match) {
-            const hours = parseInt(match[1], 10);
-            const minutes = parseInt(match[2], 10);
-            if (hours < 7 || (hours === 7 && minutes < 21)) return;
-          }
           map.set(m.id, {
             id: m.id,
             nama: m.nama,
@@ -2402,26 +2392,7 @@
           setElementText('last-updated', `Masa: ${masaSekarang}`);
 
           globalMuridList = data.muridList || [];
-          globalRekodList = data.rekodList || data.logs || [];
-
-          if (globalRekodList.length === 0 && globalMuridList.length > 0) {
-            const fbDate = activeDate;
-            globalMuridList.forEach(m => {
-              if (m.kiraan > 0) {
-                for (let i = 0; i < m.kiraan; i++) {
-                  globalRekodList.push({
-                    tarikhMasa: (fbDate + ' ' + (m.waktuHariIni || '07:30:00')),
-                    id: m.id,
-                    nama: m.nama,
-                    kelas: m.kelas,
-                    status: 'LEWAT',
-                    punca: m.punca || "Bangun Lewat",
-                    kekerapan: m.kiraan
-                  });
-                }
-              }
-            });
-          }
+          globalRekodList = data.rekodList || [];
 
           setElementText('kpi-sasaran', data.totalSasaran || globalMuridList.length || 0);
           setElementText('kpi-hari-ini', getLewatHariIniList().length);
@@ -2432,9 +2403,12 @@
           let countBebasLewat = 0;
           let countTakHadir = 0;
 
-          // Bilangan tak hadir: gunakan logik yang SAMA dengan renderAbsentStudents.
+          // Total kes: kira terus daripada rekod sheet (sama sumber dengan graf).
+          (globalRekodList || []).forEach(r => {
+            if (isKesLewat(r)) totalKesSum++;
+          });
+
           globalMuridList.forEach(m => {
-            totalKesSum += (m.kiraan || 0);
             if ((m.kiraan || 0) === 0) countBebasLewat++;
           });
 
@@ -3196,7 +3170,7 @@
           const tm = String(r.tarikhMasa || '').match(/(\d{1,2}):(\d{2})/);
           if (tm) {
             const mins = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
-            if (mins < 7 * 60 + 21) isTepat = true;
+            if (mins < CUTOFF_MIN) isTepat = true;
           }
         }
         if (isTepat) s.hariTepat.add(day);

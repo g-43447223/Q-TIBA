@@ -659,7 +659,7 @@
         if (match) {
           const hours = parseInt(match[1], 10);
           const minutes = parseInt(match[2], 10);
-          return (hours < 7 || (hours === 7 && minutes < 21));
+          return (hours * 60 + minutes) < CUTOFF_MIN;
         }
 
         return false;
@@ -753,22 +753,42 @@
     }
 
     function getLewatHariIniList() {
-      return globalMuridList.filter(m => {
-        if (!m.lewatHariIni) return false;
-        if (m.punca === "Tepat Masa" || m.status === "HADIR") return false;
-
-        const timeStr = m.waktuHariIni || '';
-        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-        if (match) {
-          const hours = parseInt(match[1], 10);
-          const minutes = parseInt(match[2], 10);
-          if (hours < 7 || (hours === 7 && minutes < 21)) {
-            return false;
-          }
+      const records = getRekodUntukHari();
+      const map = new Map();
+      records.forEach(r => {
+        const st = String(r.status || 'LEWAT').trim().toUpperCase();
+        if (st === 'HADIR' || r.punca === 'Tepat Masa') return;
+        const key = r.id || r.nama;
+        if (!map.has(key)) {
+          const murid = globalMuridList.find(m => String(m.id) === String(r.id)) || {};
+          map.set(key, {
+            id: r.id || r.nama,
+            nama: r.nama || murid.nama || 'Tanpa Nama',
+            kelas: r.kelas || murid.kelas || 'N/A',
+            urlGambar: murid.urlGambar || '',
+            waktuHariIni: String(r.tarikhMasa || '').split(' ')[1] || r.waktuHariIni || '',
+            punca: r.punca || 'Kelewatan',
+            kiraan: murid.kiraan || 0
+          });
         }
-
-        return true;
       });
+
+      const todayStr = getTodayDateStr();
+      if (getRekodUntukHari(todayStr).length === 0 && map.size === 0) {
+        (globalMuridList || []).forEach(m => {
+          if (!m.lewatHariIni || m.punca === "Tepat Masa" || m.status === "HADIR") return;
+          map.set(m.id, {
+            id: m.id,
+            nama: m.nama,
+            kelas: m.kelas,
+            urlGambar: m.urlGambar || '',
+            waktuHariIni: m.waktuHariIni || '',
+            punca: m.punca || 'Kelewatan',
+            kiraan: m.kiraan || 0
+          });
+        });
+      }
+      return Array.from(map.values());
     }
 
     function renderTodayTable() {
@@ -855,6 +875,7 @@
     let parHujungMingguServer = null;
     let parCutiServerTarikh = [];
     let parCutiServerJulat = [];
+    let CUTOFF_MIN = 7 * 60 + 21; // default 07:21
 
     // Muat senarai cuti dari backend (action=settings). Tak batal jika gagal.
     async function muatKonfigurasiCuti() {
@@ -863,6 +884,7 @@
         const res = await fetch(`${API_URL}?action=settings&apiKey=${encodeURIComponent(QTIBA_API_KEY || '')}`);
         const data = await res.json();
         if (!data || data.status !== 'Success') return;
+        if (typeof data.cutoffMin === 'number' && data.cutoffMin >= 0) CUTOFF_MIN = data.cutoffMin;
         if (Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
           parHujungMingguServer = data.hujungMinggu;
         }
@@ -1027,7 +1049,7 @@
           const tm = String(r.tarikhMasa || '').match(/(\d{1,2}):(\d{2})/);
           if (tm) {
             const mins = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
-            if (mins < 7 * 60 + 21) isTepat = true;
+            if (mins < CUTOFF_MIN) isTepat = true;
           }
         }
         if (isTepat) s.hariTepat.add(day);
@@ -1170,8 +1192,14 @@
           getRekodUntukHari().forEach(r => { if (r.id) scannedIdsToday.add(r.id.trim().toUpperCase()); });
 
           globalMuridList.forEach(m => {
-            totalKesSum += (m.kiraan || 0);
             if ((m.kiraan || 0) === 0) countBebasLewat++;
+          });
+
+          // Total kes: kira terus daripada rekod sheet (sama sumber dengan graf).
+          (globalRekodList || []).forEach(r => {
+            const st = String(r.status || 'LEWAT').trim().toUpperCase();
+            if (st === 'HADIR' || r.punca === 'Tepat Masa') return;
+            totalKesSum++;
           });
 
           // Fallback field server (waktu/lewat hari ini) hanya jika tiada rekod — sama seperti senarai bawah.

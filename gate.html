@@ -325,12 +325,6 @@
         const st = String(r.status || 'LEWAT').trim().toUpperCase();
         if (st === 'HADIR' || r.punca === 'Tepat Masa') return;
         const timeStr = String(r.tarikhMasa || '').split(' ')[1] || r.waktuHariIni || '';
-        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-        if (match) {
-          const hours = parseInt(match[1], 10);
-          const minutes = parseInt(match[2], 10);
-          if (hours < 7 || (hours === 7 && minutes < 21)) return;
-        }
         const key = r.id || r.nama;
         if (!map.has(key)) {
           const murid = globalMuridList.find(m => String(m.id) === String(r.id)) || {};
@@ -352,12 +346,6 @@
         (globalMuridList || []).forEach(m => {
           if (!m.lewatHariIni || m.punca === "Tepat Masa" || m.status === "HADIR") return;
           const timeStr = m.waktuHariIni || '';
-          const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-          if (match) {
-            const hours = parseInt(match[1], 10);
-            const minutes = parseInt(match[2], 10);
-            if (hours < 7 || (hours === 7 && minutes < 21)) return;
-          }
           map.set(m.id, {
             id: m.id,
             nama: m.nama,
