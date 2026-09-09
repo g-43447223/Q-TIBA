@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qtiba-v10';
+const CACHE_NAME = 'qtiba-v11';
 
 // Senarai fail penting untuk kedua-dua paparan (Guru & Ibu Bapa)
 const ASSETS_TO_CACHE = [
@@ -40,8 +40,8 @@ self.addEventListener('activate', (e) => {
 
 // 3. Fetch: Ambil data live, guna cache jika offline
 self.addEventListener('fetch', (e) => {
-  // Abaikan simpanan cache untuk Google Sheets API supaya data sentiasa LIVE
-  if (e.request.url.includes('script.google.com')) {
+  // Abaikan simpanan cache untuk Google Sheets API & proxy API supaya data sentiasa LIVE
+  if (e.request.url.includes('script.google.com') || e.request.url.includes('/api/')) {
     return;
   }
 

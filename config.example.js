@@ -1,9 +1,10 @@
-// Q-TIBA Configuration
-// Salin fail ini kepada config.js dan masukkan URL Google Apps Script Web App anda
-// serta pastikan QTIBA_API_KEY SAMA dengan kod dalam code.gs (var API_KEY).
+// Q-TIBA Configuration (Vercel / api/exec.js proxy)
+// Browser hanya bersentuh dengan Vercel (sama origin). URL & key sebenar
+// Apps Script disimpan dalam environment variable Vercel:
+//   GAS_API_URL  -> https://script.google.com/macros/s/.../exec
+//   QTIBA_API_KEY -> key yang sama dengan var API_KEY dalam code.gs
 
-const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+const API_URL = "/api/exec";
 
-// API Key untuk akses back end. WAJIB sama dengan var API_KEY dalam code.gs!
-// Gantikan dengan nilai yang sukar diteka (huruf + nombor panjang) sebelum deploy.
-const QTIBA_API_KEY = "QTiba-0000-CHANGE-ME-SEKRET";
+// Wajib KOSONG. api/exec.js masukkan apiKey sebenar dari env var.
+const QTIBA_API_KEY = "";
