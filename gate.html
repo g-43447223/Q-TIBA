@@ -95,43 +95,48 @@
     </div>
 
     <div class="flex flex-col items-end gap-0.5 shrink-0">
-      <div id="gate-clock" class="clock-font text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">--:--:--</div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button onclick="toggleGateTheme()" title="Tukar Mod Siang / Malam" class="p-2 sm:p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-amber-500 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all border border-slate-300/50 dark:border-slate-700">
+          <i id="gate-theme-icon" class="fa-solid fa-moon text-sm sm:text-lg"></i>
+        </button>
+        <div id="gate-clock" class="clock-font text-2xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">--:--:--</div>
+      </div>
       <div id="gate-date" class="text-[12px] sm:text-base text-slate-500 dark:text-slate-300 font-semibold">—</div>
     </div>
   </header>
 
-  <!-- KPI RAKSASA -->
-  <section class="w-full px-4 sm:px-6 lg:px-10 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4 relative z-10">
-    <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
-      <div class="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Murid Sasaran</div>
-      <div id="kpi-sasaran-gate" class="clock-font text-4xl sm:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white leading-none">0</div>
+  <!-- KPI RAKSASA (padat pada fon kecil — 2 baris; besar pada skrin TV) -->
+  <section class="w-full px-3 sm:px-6 lg:px-10 py-2 sm:py-4 grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 relative z-10">
+    <div class="glass-card rounded-xl sm:rounded-3xl p-2 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[9px] sm:text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Sasaran</div>
+      <div id="kpi-sasaran-gate" class="clock-font text-2xl sm:text-6xl lg:text-7xl font-black text-slate-900 dark:text-white leading-none">0</div>
     </div>
-    <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
-      <div class="text-[10px] sm:text-sm text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Hadir Hari Ini</div>
-      <div id="kpi-hadir-gate" class="clock-font text-4xl sm:text-6xl lg:text-7xl font-black text-emerald-600 dark:text-emerald-400 leading-none">0</div>
-      <div id="kpi-hadir-note-gate" class="clock-font text-[10px] sm:text-base text-slate-500 dark:text-slate-400 font-bold mt-1">dari 0</div>
+    <div class="glass-card rounded-xl sm:rounded-3xl p-2 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[9px] sm:text-sm text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest mb-1">Hadir Hari Ini</div>
+      <div id="kpi-hadir-gate" class="clock-font text-2xl sm:text-6xl lg:text-7xl font-black text-emerald-600 dark:text-emerald-400 leading-none">0</div>
+      <div id="kpi-hadir-note-gate" class="clock-font text-[9px] sm:text-base text-slate-500 dark:text-slate-400 font-bold mt-0.5">dari 0</div>
     </div>
-    <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
-      <div class="text-[10px] sm:text-sm text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Lewat Hari Ini</div>
-      <div id="kpi-lewat-gate" class="clock-font text-4xl sm:text-6xl lg:text-7xl font-black text-amber-600 dark:text-amber-400 leading-none">0</div>
+    <div class="glass-card rounded-xl sm:rounded-3xl p-2 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[9px] sm:text-sm text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mb-1">Lewat</div>
+      <div id="kpi-lewat-gate" class="clock-font text-2xl sm:text-6xl lg:text-7xl font-black text-amber-600 dark:text-amber-400 leading-none">0</div>
     </div>
-    <div class="col-span-2 sm:col-span-1 glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
-      <div class="text-[10px] sm:text-sm text-rose-600 dark:text-rose-400 font-bold uppercase tracking-widest mb-1 sm:mb-2">Tak Hadir</div>
-      <div id="kpi-tak-hadir-gate" class="clock-font text-4xl sm:text-6xl lg:text-7xl font-black text-rose-600 dark:text-rose-400 leading-none">0</div>
+    <div class="col-span-1 glass-card rounded-xl sm:rounded-3xl p-2 sm:p-5 lg:p-6 flex flex-col items-center justify-center text-center">
+      <div class="text-[9px] sm:text-sm text-rose-600 dark:text-rose-400 font-bold uppercase tracking-widest mb-1">Tak Hadir</div>
+      <div id="kpi-tak-hadir-gate" class="clock-font text-2xl sm:text-6xl lg:text-7xl font-black text-rose-600 dark:text-rose-400 leading-none">0</div>
     </div>
-    <div class="col-span-2 sm:col-span-3 lg:col-span-1 glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 flex flex-col sm:flex-row lg:flex-col items-center justify-center text-center gap-2 sm:gap-3 lg:gap-1">
+    <div class="col-span-2 sm:col-span-3 lg:col-span-1 glass-card rounded-xl sm:rounded-3xl p-2 sm:p-5 lg:p-6 flex flex-col sm:flex-row lg:flex-col items-center justify-center text-center gap-1.5 sm:gap-3 lg:gap-1">
       <div class="sm:flex-1 lg:flex-none">
-        <div class="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Kemas Kini</div>
-        <div id="gate-last-updated" class="clock-font text-xl sm:text-3xl lg:text-3xl font-black text-slate-700 dark:text-slate-300 leading-none">--:--</div>
+        <div class="text-[9px] sm:text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-1">Kemas Kini</div>
+        <div id="gate-last-updated" class="clock-font text-base sm:text-3xl lg:text-3xl font-black text-slate-700 dark:text-slate-300 leading-none">--:--</div>
       </div>
-      <button onclick="muatSemula()" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 text-xs font-bold hover:bg-cyan-500/20 dark:hover:bg-cyan-500/25 transition-colors">
-        <i id="gate-refresh-icon" class="fa-solid fa-rotate"></i> Muat Semula
+      <button onclick="muatSemula()" class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 text-[10px] sm:text-xs font-bold hover:bg-cyan-500/20 dark:hover:bg-cyan-500/25 transition-colors">
+        <i id="gate-refresh-icon" class="fa-solid fa-rotate"></i> <span class="hidden sm:inline">Muat Semula</span><span class="sm:hidden">Semula</span>
       </button>
     </div>
   </section>
 
   <!-- SENARAI DATANG AWAL + SENARAI LEWAT (padat satu skrin penuh) -->
-  <section class="w-full flex-1 min-h-0 px-4 sm:px-6 lg:px-10 pb-3 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5 relative z-10">
+  <section class="w-full flex-1 min-h-0 px-3 sm:px-6 lg:px-10 pb-2 sm:pb-3 grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-5 relative z-10">
 
     <!-- Banner cuti (penuh lebar) -->
     <div id="gate-cutiban" class="hidden col-span-1 lg:col-span-2 rounded-2xl border border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-300 text-sm lg:text-base font-bold p-4 text-center">
@@ -226,6 +231,37 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    // ===== MOD SIANG / MALAM (butang di header) =====
+    function updateGateThemeIcon() {
+      const icon = document.getElementById('gate-theme-icon');
+      if (!icon) return;
+      const isDark = document.documentElement.classList.contains('dark');
+      icon.className = isDark ? 'fa-solid fa-moon text-sm sm:text-lg' : 'fa-solid fa-sun text-sm sm:text-lg';
+    }
+
+    function toggleGateTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('qtiba_gate_theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('qtiba_gate_theme', 'dark');
+      }
+      requestAnimationFrame(updateGateThemeIcon);
+    }
+
+    function initGateTheme() {
+      const saved = localStorage.getItem('qtiba_gate_theme');
+      // Default: malam (skrin pintu biasanya di bilik gelap/tayang lebih terang).
+      if (saved === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+      updateGateThemeIcon();
     }
 
     function buildApiUrl(params) {
@@ -1065,6 +1101,7 @@
     }
 
     // berjalan selepas muatan awal supaya imbas pintu bersedia.
+    initGateTheme();
     preloadStudentData();
     setInterval(() => {
       if (Object.keys(studentCacheMap).length === 0) preloadStudentData();
