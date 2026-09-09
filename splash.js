@@ -1,5 +1,5 @@
 /* ============================================================
-   Q-TIBA SPLASH SCREEN — skrin pemuatan interaktif berkongsi
+   Q-TIBA SPLASH SCREEN — skrin pemuatan berkongsi
    Dikongsi oleh index.html, scan.html, gate.html, parent.html
    Auto-inject CSS + DOM, tanpa kebergantungan luar.
    ============================================================ */
@@ -49,8 +49,6 @@
     '#qtiba-splash .qs-tip{margin-top:18px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;',
     '  font-size:11px;font-weight:500;line-height:1.55;color:#475569;}',
     '#qtiba-splash .qs-tip b{color:#22d3ee;font-weight:700;}',
-    '#qtiba-splash .qs-skip{display:none;margin-top:16px;font-size:11px;font-weight:700;color:#64748b;',
-    '  letter-spacing:.5px;text-transform:uppercase;cursor:pointer;user-select:none;padding:8px 0;}',
     '@keyframes qs-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}',
     '@keyframes qs-glow{0%,100%{box-shadow:0 0 0 0 rgba(6,182,212,.0),0 0 24px rgba(6,182,212,.14)}',
     '  50%{box-shadow:0 0 0 10px rgba(6,182,212,0),0 0 42px rgba(6,182,212,.34)}}',
@@ -71,7 +69,6 @@
   ];
   var autoProgress = 3;
   var autoTimer = null;
-  var skipTimer = null;
 
   function selectTip(seed) {
     var random = ((seed * 9301 + 49297) % 233280) / 233280;
@@ -106,10 +103,6 @@
     if (!isAuto) msgEl.innerHTML = messageFor(state.progress);
   }
 
-  function showSkip() {
-    skipEl.style.display = 'block';
-  }
-
   function forceProgress() {
     if (state.progress < 100) setProgress(100, false);
   }
@@ -119,9 +112,7 @@
     state.done = true;
     if (text) msgEl.innerHTML = text;
     forceProgress();
-    skipEl.style.display = 'none';
     clearInterval(autoTimer);
-    clearTimeout(skipTimer);
     overlay.style.pointerEvents = 'none';
     setTimeout(function () {
       overlay.style.opacity = '0';
@@ -175,11 +166,10 @@
     '  <div class="qs-pct" id="qs-pct">0%</div>',
     '  <div class="qs-msg" id="qs-msg">Menyambung ke pelayan&hellip;</div>',
     '  <div class="qs-tip" id="qs-tip"></div>',
-    '  <div class="qs-skip" id="qs-skip">Ketuk untuk teruskan &rarr;</div>',
     '</div>'
   ].join('');
 
-  var fillEl, pctEl, msgEl, tipEl, skipEl;
+  var fillEl, pctEl, msgEl, tipEl;
 
   function mountOverlay() {
     document.body.appendChild(overlay);
@@ -188,17 +178,8 @@
     pctEl = overlay.querySelector('#qs-pct');
     msgEl = overlay.querySelector('#qs-msg');
     tipEl = overlay.querySelector('#qs-tip');
-    skipEl = overlay.querySelector('#qs-skip');
 
     tipEl.innerHTML = 'Petua: ' + selectTip(Math.floor(Math.random() * 100));
-
-    // Butang "ketuk untuk teruskan" — interaktif, muncul selepas 1.3s
-    skipTimer = setTimeout(showSkip, 1300);
-    overlay.addEventListener('click', function (ev) {
-      if (ev.target === skipEl || ev.target.closest('#qs-skip')) {
-        if (!state.done && Date.now() - state.tsStart >= MIN_MS) fadeOut('Sedia!');
-      }
-    });
 
     // Pintu keselamatan: tak kira apa pun, splash mesti hilang dalam MAX_MS.
     setTimeout(function () {
