@@ -299,6 +299,9 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/20">Carta Minggu Ini</span>
+            <button onclick="eksportSenaraiMingguan()" title="Cetak senarai penerima untuk semakan & perkongsian token (ruang tick)" class="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-md transition-all flex items-center gap-1.5">
+              <i class="fa-solid fa-print text-xs"></i> Eksport Senarai
+            </button>
             <button onclick="cetakSijilPenghargaan()" title="Cetak sijil PDF untuk penerima minggu ini" class="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] shadow-md transition-all flex items-center gap-1.5">
               <i class="fa-solid fa-award text-xs"></i> Cetak Sijil
             </button>
@@ -3285,6 +3288,86 @@
       }
     }
 
+    // Eksport senarai penerima Penghargaan Sahsiah mingguan (PDF boleh print + ruang tick token).
+    async function eksportSenaraiMingguan() {
+      if (typeof html2pdf === 'undefined') {
+        alert("Perpustakaan PDF belum dimuatkan. Sila muat semula halaman ini.");
+        return;
+      }
+
+      const heroes = kiraWeeklyHeroes();
+      if (heroes.length === 0) {
+        alert("Tiada penerima Penghargaan Sahsiah pada minggu ini.");
+        return;
+      }
+
+      const dateLabel = formatTarikhLabel(activeDate);
+      const tarikhCetak = new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' });
+
+      const senaraiHero = heroes.map((m, i) => {
+        const rush = m._hariAwal || 0;
+        const hariHadir = m._hariHadir || 0;
+        const status = hariHadir >= 5 ? 'Bintang Mingguan' : `Istiqamah ${hariHadir}/5`;
+        return `
+          <tr>
+            <td style="border:1px solid #000;padding:6px;text-align:center;">${i + 1}</td>
+            <td style="border:1px solid #000;padding:6px;">${escapeHtml(m.nama || '')}</td>
+            <td style="border:1px solid #000;padding:6px;text-align:center;">${escapeHtml(m.kelas || '')}</td>
+            <td style="border:1px solid #000;padding:6px;text-align:center;">${status}</td>
+            <td style="border:1px solid #000;padding:6px;text-align:center;"></td>
+          </tr>`;
+      }).join('');
+
+      const tempDiv = document.createElement('div');
+      tempDiv.id = 'qtiba-senarai-pdf';
+      tempDiv.style.cssText = 'position: fixed; left: 0; top: 0; background: #ffffff; z-index: 9999;';
+      tempDiv.innerHTML = `
+        <div id="senarai-pdf" style="width:210mm;font-family:'Times New Roman',Times,serif;color:#000;background:#fff;padding:12px;">
+          <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;">
+            <div style="font-size:14pt;font-weight:bold;">SENARAI PENERIMA PENGHARGAAN SAHSIAH MINGGUAN</div>
+            <div style="font-size:9pt;">Q-TIBA Innovation System &bull; SK Pulau Indah &bull; Bebas Kelewatan Minggu ${escapeHtml(dateLabel)}</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="border:1px solid #000;padding:6px;background:#eee;width:7%;">#</th>
+                <th style="border:1px solid #000;padding:6px;background:#eee;">Nama Murid</th>
+                <th style="border:1px solid #000;padding:6px;background:#eee;width:18%;">Kelas</th>
+                <th style="border:1px solid #000;padding:6px;background:#eee;width:30%;">Gelaran</th>
+                <th style="border:1px solid #000;padding:6px;background:#eee;width:16%;">Token Diterima (✓)</th>
+              </tr>
+            </thead>
+            <tbody>${senaraiHero}</tbody>
+          </table>
+          <div style="margin-top:10px;font-size:9pt;color:#333;">&bull; Tandakan (<b>✓</b>) untuk murid yang telah menerima token penghargaan daripada sekolah.</div>
+          <div style="margin-top:14px;display:flex;justify-content:space-between;padding:0 10px;">
+            <div style="text-align:center;font-size:10pt;">Disediakan oleh,<br><br><br><div style="border-top:1px solid #000;width:180px;"></div>Guru Disiplin / Guru Bertugas</div>
+            <div style="text-align:center;font-size:10pt;">Tarikh cetak: ${escapeHtml(tarikhCetak)}</div>
+          </div>
+        </div>`;
+      document.body.appendChild(tempDiv);
+
+      await new Promise(r => setTimeout(r, 300));
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `QTIBA_Penghargaan_Mingguan_${activeDate}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['table', 'tr', 'thead', 'tbody'] }
+      };
+
+      try {
+        await html2pdf().set(opt).from(document.getElementById('senarai-pdf')).save();
+      } catch (err) {
+        console.error("Ralat penjanaan PDF senarai mingguan:", err);
+        alert("Gagal menjana PDF senarai. Sila cuba lagi.");
+      } finally {
+        if (tempDiv && tempDiv.parentNode) tempDiv.parentNode.removeChild(tempDiv);
+      }
+    }
+
     function renderStreakTracker() {
       const container = document.getElementById('streak-container');
       if (!container) return;
@@ -3329,22 +3412,22 @@
           : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
 
         container.innerHTML += `
-          <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all cursor-pointer">
-            <div class="flex items-center gap-3 overflow-hidden min-w-0">
-              <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
-              <div class="truncate min-w-0">
-                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide">${escapeHtml(m.nama)}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate">${escapeHtml(m.kelas)}</p>
+          <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all cursor-pointer">
+            <div class="flex items-center gap-3 min-w-0 mb-2">
+              <img src="${userImg}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  ${rankBadge}
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate tracking-wide min-w-0">${escapeHtml(m.nama)}</h4>
+                </div>
               </div>
             </div>
-            <div class="text-right flex-shrink-0 ml-2 flex flex-col items-end gap-1">
-              <div class="flex items-center gap-1">
-                ${rankBadge}
-                <span class="text-[10px] sm:text-[11px] font-black text-white px-2.5 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font whitespace-nowrap">
-                  ✨ ${statusText}
-                </span>
-              </div>
-              <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">${badgeTitle} · ${hariTepat} hari tepat waktu</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold truncate px-0.5">${escapeHtml(m.kelas)}</p>
+            <div class="mt-1.5 flex flex-wrap items-center gap-1.5 px-0.5">
+              <span class="text-[10px] sm:text-[11px] font-black text-white px-2.5 py-1 rounded-lg bg-gradient-to-r ${badgeColor} shadow-sm code-font whitespace-nowrap">
+                ✨ ${statusText}
+              </span>
+              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">${badgeTitle} · ${hariTepat} hari tepat waktu</span>
             </div>
           </div>
         `;
