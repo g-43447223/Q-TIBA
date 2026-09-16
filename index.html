@@ -3065,9 +3065,9 @@
         margin:       [8, 8, 8, 8],
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['table', 'tr', 'thead', 'tbody'] }
+html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 900 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       try {
@@ -3322,19 +3322,26 @@
       tempDiv.id = 'qtiba-senarai-pdf';
       tempDiv.style.cssText = 'position: fixed; left: 0; top: 0; background: #ffffff; z-index: 9999;';
       tempDiv.innerHTML = `
-        <div id="senarai-pdf" style="width:210mm;font-family:'Times New Roman',Times,serif;color:#000;background:#fff;padding:12px;">
+        <div id="senarai-pdf" style="box-sizing:border-box;width:194mm;max-width:194mm;font-family:'Times New Roman',Times,serif;color:#000;background:#fff;padding:10px;">
           <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px;">
             <div style="font-size:14pt;font-weight:bold;">SENARAI PENERIMA PENGHARGAAN SAHSIAH MINGGUAN</div>
             <div style="font-size:9pt;">Q-TIBA Innovation System &bull; SK Pulau Indah &bull; Bebas Kelewatan Minggu ${escapeHtml(dateLabel)}</div>
           </div>
-          <table style="width:100%;border-collapse:collapse;">
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+            <colgroup>
+              <col style="width:6%;">
+              <col style="width:34%;">
+              <col style="width:16%;">
+              <col style="width:28%;">
+              <col style="width:16%;">
+            </colgroup>
             <thead>
               <tr>
-                <th style="border:1px solid #000;padding:6px;background:#eee;width:7%;">#</th>
-                <th style="border:1px solid #000;padding:6px;background:#eee;">Nama Murid</th>
-                <th style="border:1px solid #000;padding:6px;background:#eee;width:18%;">Kelas</th>
-                <th style="border:1px solid #000;padding:6px;background:#eee;width:30%;">Gelaran</th>
-                <th style="border:1px solid #000;padding:6px;background:#eee;width:16%;">Token Diterima (✓)</th>
+                <th style="border:1px solid #000;padding:5px;background:#eee;">#</th>
+                <th style="border:1px solid #000;padding:5px;background:#eee;">Nama Murid</th>
+                <th style="border:1px solid #000;padding:5px;background:#eee;">Kelas</th>
+                <th style="border:1px solid #000;padding:5px;background:#eee;">Gelaran</th>
+                <th style="border:1px solid #000;padding:5px;background:#eee;">Token Diterima (✓)</th>
               </tr>
             </thead>
             <tbody>${senaraiHero}</tbody>
