@@ -1469,14 +1469,19 @@
       options: { 
         responsive: true, 
         maintainAspectRatio: false,
-        onClick: (evt, items) => {
-          if (items && items.length > 0) {
-            const idx = items[0].index;
+        interaction: { mode: 'nearest', intersect: false },
+        onClick: (evt) => {
+          const els = classChart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
+          if (els && els.length > 0) {
+            const idx = els[0].index;
             const label = classChart.data.labels[idx];
             if (label) showClassDrilldown(label);
           }
         },
-        plugins: { legend: { display: false } },
+        onHover: (evt, els) => {
+          evt.native.target.style.cursor = (els && els.length > 0) ? 'pointer' : 'default';
+        },
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
         scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
       }
     }) : null;
