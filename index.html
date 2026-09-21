@@ -1405,11 +1405,29 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     }) : null;
 
+    // Label tarikh untuk graf trend 6 minggu (julat setiap bar dipaparkan).
+    // Backend: trendMingguan[0] = minggu paling lama (35-41 hari lalu) ... [5] = minggu ini (0-6 hari).
+    function labelTrend() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const mk = d => new Date(today.getTime() - d * 86400000);
+      const label = [];
+      for (let p = 0; p < 6; p++) {
+        const mulaiDays = (5 - p) * 7 + 6;
+        const akhirDays = (5 - p) * 7;
+        const start = mk(mulaiDays);
+        const end = mk(akhirDays);
+        const fm = end.toLocaleDateString('ms-MY', { month: 'short' });
+        label.push(`M${p + 1} (${start.getDate()}-${end.getDate()} ${fm})`);
+      }
+      return label;
+    }
+
     const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
     let trendChart = ctxTrend ? new Chart(ctxTrend, {
       type: 'line',
       data: {
-        labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6 (Minggu Ini)'],
+        labels: labelTrend(),
         datasets: [{ data: [0, 0, 0, 0, 0, 0], borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.15)', fill: true, tension: 0.35, borderWidth: 2 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
@@ -2472,6 +2490,7 @@
           }
 
           if (trendChart && data.trendMingguan) {
+            trendChart.data.labels = labelTrend();
             trendChart.data.datasets[0].data = data.trendMingguan;
             trendChart.update();
           }
