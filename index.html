@@ -1405,20 +1405,22 @@
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     }) : null;
 
-    // Label tarikh untuk graf trend 6 minggu (julat setiap bar dipaparkan).
-    // Backend: trendMingguan[0] = minggu paling lama (35-41 hari lalu) ... [5] = minggu ini (0-6 hari).
+    // Label tarikh untuk graf trend 6 minggu (bermula Isnin, minggu sekolah Isnin-Jumaat).
+    // Backend: trendMingguan[0] = minggu paling lama (5 minggu lepas) ... [5] = minggu ini.
     function labelTrend() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const mk = d => new Date(today.getTime() - d * 86400000);
+      const thisMonday = new Date(today);
+      thisMonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
       const label = [];
       for (let p = 0; p < 6; p++) {
-        const mulaiDays = (5 - p) * 7 + 6;
-        const akhirDays = (5 - p) * 7;
-        const start = mk(mulaiDays);
-        const end = mk(akhirDays);
-        const fm = end.toLocaleDateString('ms-MY', { month: 'short' });
-        label.push(`M${p + 1} (${start.getDate()}-${end.getDate()} ${fm})`);
+        const weekDiff = 5 - p; // 0 = minggu ini, 5 = 5 minggu lepas
+        const monday = new Date(thisMonday);
+        monday.setDate(thisMonday.getDate() - weekDiff * 7);
+        const friday = new Date(monday);
+        friday.setDate(monday.getDate() + 4);
+        const fm = friday.toLocaleDateString('ms-MY', { month: 'short' });
+        label.push(`M${p + 1} (${monday.getDate()}-${friday.getDate()} ${fm})`);
       }
       return label;
     }

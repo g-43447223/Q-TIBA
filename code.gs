@@ -598,13 +598,14 @@ function doGet(e) {
               }
             }
 
-            // Trend Mingguan Kelewatan (6 minggu)
-            var diffDays = Math.floor((now - rawDate) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0 && diffDays < 42) {
-              var weekIndex = 5 - Math.floor(diffDays / 7);
-              if (weekIndex >= 0 && weekIndex < 6) {
-                trendMingguan[weekIndex]++;
-              }
+            // Trend Mingguan Kelewatan (6 minggu bermula Isnin, sekolah Isnin-Jumaat)
+            var weekStart = new Date(rawDate);
+            weekStart.setHours(0, 0, 0, 0);
+            var weekDow = weekStart.getDay();
+            weekStart.setDate(weekStart.getDate() - ((weekDow + 6) % 7)); // minggu itu bermula Isnin
+            var weekDiff = Math.round((startOfThisWeek - weekStart) / (7 * 24 * 60 * 60 * 1000));
+            if (weekDiff >= 0 && weekDiff < 6) {
+              trendMingguan[5 - weekDiff]++;
             }
           }
 
