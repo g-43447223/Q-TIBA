@@ -2,7 +2,7 @@
   "functions": {
     "api/exec.js": {
       "memory": 256,
-      "maxDuration": 60
+      "maxDuration": 120
     }
   }
 }
