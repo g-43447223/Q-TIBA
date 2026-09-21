@@ -1292,8 +1292,10 @@
       });
       fetchLiveData();
 
-      // Kemaskini automatik setiap 60 saat (jimat kuota Vercel)
+      // Kemaskini automatik setiap 60 saat (jimat kuota Vercel; hanya waktu sekolah)
       setInterval(() => {
+        const jam = new Date().getHours();
+        if (jam < 5 || jam >= 19) return;
         if (!document.hidden) {
           fetchLiveData();
         }

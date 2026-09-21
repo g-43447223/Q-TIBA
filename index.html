@@ -3751,8 +3751,10 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
         fetchLiveData();
       }
 
-      // Kemaskini automatik data setiap 60 saat (jimat kuota Vercel)
+      // Kemaskini automatik data setiap 60 saat (jimat kuota Vercel; hanya waktu sekolah)
       setInterval(() => {
+        const jam = new Date().getHours();
+        if (jam < 5 || jam >= 19) return;
         if (document.hidden) return;
         if (localStorage.getItem('qtiba_admin_auth') === 'true') {
           fetchLiveData();
