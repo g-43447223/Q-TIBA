@@ -1292,10 +1292,19 @@
       });
       fetchLiveData();
 
-      // Kemaskini automatik setiap 10 saat
+      // Kemaskini automatik setiap 60 saat (jimat kuota Vercel)
       setInterval(() => {
-        fetchLiveData();
-      }, 10000);
+        if (!document.hidden) {
+          fetchLiveData();
+        }
+      }, 60000);
+
+      // Refresh serta-merta bila tab kembali dilihat, henti bila tersembunyi
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          fetchLiveData();
+        }
+      });
 
       // PWA SETUP (popup pasang aplikasi, sama corak scan.html)
       initPwa();

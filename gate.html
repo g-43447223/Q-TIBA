@@ -635,9 +635,18 @@
       } catch (e) { /* abaikan — guna fallback */ }
     }
 
-    // AUTO-REFRESH (setiap 60 saat)
+    // AUTO-REFRESH (setiap 60 saat; henti bila tab tersembunyi supaya jimat kuota Vercel)
     function mulaRefresh() {
-      refreshTimer = setInterval(muatSemula, 60000);
+      refreshTimer = setInterval(() => {
+        if (!document.hidden) {
+          muatSemula();
+        }
+      }, 60000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          muatSemula();
+        }
+      });
     }
 
     // Ticker bawah: duplikasi kandungan supaya translateX(-50%) berjalan tanpa lompat.
