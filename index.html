@@ -411,29 +411,6 @@
             <div id="dd-list" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1"></div>
           </div>
         </div>
-
-        <div class="lg:col-span-5 glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-          <div class="mb-3">
-            <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-ranking-star text-violet-500"></i> Ranking Disiplin Kelas
-            </h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">Kelas paling disiplin berdasarkan kadar kehadiran &amp; kes kelewatan</p>
-          </div>
-          <div class="overflow-x-auto -mx-1">
-            <table class="w-full text-left text-[11px]">
-              <thead>
-                <tr class="text-[9px] uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-700/60">
-                  <th class="px-1.5 py-2">#</th>
-                  <th class="px-1.5 py-2">Kelas</th>
-                  <th class="px-1.5 py-2 text-center">Murid</th>
-                  <th class="px-1.5 py-2 text-center">Hadir Hari Ini</th>
-                  <th class="px-1.5 py-2 text-center">Jumlah Kes</th>
-                </tr>
-              </thead>
-              <tbody id="class-ranking-body"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       <!-- RINGKASAN INTERVENSI (nota auto) -->
@@ -1819,9 +1796,6 @@
         classChart.update();
       }
 
-      // #6 Ranking kelas (rangle didipline per kelas).
-      renderClassRanking();
-
       // Kekerapan per murid + perbandingan hari dalam minggu.
       const freqMap = new Map();
       const dayCounts = [0, 0, 0, 0, 0]; // Isnin..Jumaat
@@ -1955,76 +1929,6 @@
     }
 
     // Ranking kelas mengikut disiplin (#6): kadar hadir hari ini & jumlah kes.
-    function renderClassRanking() {
-      const tbody = document.getElementById('class-ranking-body');
-      if (!tbody) return;
-      const kelasMap = {};
-      (globalMuridList || []).forEach(m => {
-        const kls = m.kelas || 'Tiada Kelas';
-        if (!kelasMap[kls]) kelasMap[kls] = { bilangan: 0, kes: 0, hadir: 0 };
-        kelasMap[kls].bilangan++;
-        kelasMap[kls].kes += (m.kiraan || 0);
-      });
-      // Kilang kes terbaru daripada rekod global supaya padan carta.
-      const kesKelas = {};
-      (globalRekodList || []).forEach(r => {
-        const kls = r.kelas || 'Tiada Kelas';
-        kesKelas[kls] = (kesKelas[kls] || 0) + 1;
-      });
-      // Kadar hadir hari ini (imbas), ikut tarikh aktif.
-      const todayRecs = getRekodUntukHari(activeDate);
-      const hadirSet = {};
-      todayRecs.forEach(r => {
-        if (!r.id) return;
-        const m = (globalMuridList || []).find(x => String(x.id || '') === String(r.id));
-        const kls = (m && m.kelas) || r.kelas || 'Tiada Kelas';
-        hadirSet[kls] = (hadirSet[kls] || 0) + 1;
-      });
-
-      const rows = Object.keys(kelasMap).map(kls => {
-        const d = kelasMap[kls];
-        const kes = kesKelas[kls] || 0;
-        const kadarHadir = d.bilangan > 0 ? Math.round((hadirSet[kls] || 0) / d.bilangan * 100) : 0;
-        return {
-          kelas: kls,
-          bilangan: d.bilangan,
-          hadir: hadirSet[kls] || 0,
-          kadarHadir,
-          kes
-        };
-      }).sort((a, b) => {
-        if (a.kadarHadir !== b.kadarHadir) return b.kadarHadir - a.kadarHadir;
-        return a.kes - b.kes;
-      });
-
-      if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400 code-font">Tiada data kelas.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = rows.map((r, i) => {
-        const badge = i === 0
-          ? `<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/30">🏆 TERBAIK</span>`
-          : i === rows.length - 1 && rows.length > 1
-            ? `<span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/25">PERLU TINDAKAN</span>`
-            : '';
-        const barWarna = r.kadarHadir >= 90 ? 'bg-emerald-500' : r.kadarHadir >= 75 ? 'bg-amber-500' : 'bg-rose-500';
-        return `
-          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40">
-            <td class="px-1.5 py-2.5 font-black text-slate-500 dark:text-slate-400">${i + 1}</td>
-            <td class="px-1.5 py-2.5 font-bold text-slate-700 dark:text-slate-200">
-              ${escapeHtml(r.kelas)} ${badge}
-              <div class="mt-1 h-1.5 w-full max-w-[140px] rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
-                <div class="h-full rounded-full ${barWarna}" style="width:${r.kadarHadir}%"></div>
-              </div>
-            </td>
-            <td class="px-1.5 py-2.5 text-center code-font text-slate-600 dark:text-slate-300">${r.bilangan}</td>
-            <td class="px-1.5 py-2.5 text-center code-font text-emerald-600 dark:text-emerald-400">${r.hadir} (${r.kadarHadir}%)</td>
-            <td class="px-1.5 py-2.5 text-center code-font ${r.kes > 0 ? 'text-rose-500' : 'text-emerald-500'}">${r.kes}</td>
-          </tr>`;
-      }).join('');
-    }
-
     // Senarai murid berisiko (jadual isih ikut kes + lencana amaran + tindakan intervensi).
     function renderAtRiskStudents() {
       const tbody = document.getElementById('atrisk-tbody');
