@@ -389,7 +389,7 @@
           </div>
         </div>
 
-        <div class="lg:col-span-7 glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+        <div class="lg:col-span-7 glass-card rounded-2xl p-4 sm:p-5 flex flex-col">
           <div class="mb-3">
             <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-chart-column text-cyan-500"></i> Analisis Kelewatan Mengikut Kelas
@@ -400,6 +400,16 @@
             <canvas id="classChart"></canvas>
           </div>
           <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 code-font">💡 Klik pada bar kelas untuk lihat senarai murid.</p>
+
+          <div id="class-drilldown" class="hidden mt-3 border-t border-slate-200 dark:border-slate-700/60 pt-3">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <i class="fa-solid fa-users-gear mr-1.5 text-cyan-500"></i> Murid Lepas dalam Kelas <span id="dd-kelas-name" class="text-cyan-500">—</span>
+              </h3>
+              <button onclick="closeClassDrilldown()" class="text-[10px] font-bold text-rose-500 hover:text-rose-600 transition-colors"><i class="fa-solid fa-xmark mr-1"></i>Tutup</button>
+            </div>
+            <div id="dd-list" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1"></div>
+          </div>
         </div>
 
         <div class="lg:col-span-5 glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
@@ -448,17 +458,6 @@
             <canvas id="dayChart"></canvas>
           </div>
         </div>
-      </div>
-
-      <!-- DRILL-DOWN KELAS -->
-      <div id="class-drilldown" class="glass-card rounded-2xl p-4 sm:p-5 hidden">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-            <i class="fa-solid fa-users-gear mr-1.5 text-cyan-500"></i> Murid Lepas dalam Kelas <span id="dd-kelas-name" class="text-cyan-500">—</span>
-          </h3>
-          <button onclick="closeClassDrilldown()" class="text-[11px] font-bold text-rose-500 hover:text-rose-600 transition-colors"><i class="fa-solid fa-xmark mr-1"></i>Tutup</button>
-        </div>
-        <div id="dd-list" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1"></div>
       </div>
 
       <!-- SENARAI MURID BERISIKO -->
