@@ -1827,16 +1827,16 @@
       const freqMap = new Map();
       const dayCounts = [0, 0, 0, 0, 0]; // Isnin..Jumaat
       rekodList.forEach(r => {
+        const isKes = !(r.status === "HADIR" || r.punca === "Tepat Masa");
+        if (!isKes) return;
         const timeStr = String(r.tarikhMasa || '').slice(0, 10);
         const dt = timeStr ? new Date(timeStr + 'T00:00:00') : null;
         if (dt) {
           let dow = dt.getDay(); // 0=Ahad
           if (dow >= 1 && dow <= 5) dayCounts[dow - 1]++;
         }
-        if (!(r.status === "HADIR" || r.punca === "Tepat Masa")) {
-          const key = String(r.id || '').toUpperCase();
-          freqMap.set(key, (freqMap.get(key) || 0) + 1);
-        }
+        const key = String(r.id || '').toUpperCase();
+        freqMap.set(key, (freqMap.get(key) || 0) + 1);
       });
 
       if (dayChart) {
