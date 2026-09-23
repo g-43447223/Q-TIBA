@@ -638,7 +638,7 @@
       } catch (e) { /* abaikan — guna fallback */ }
     }
 
-    // AUTO-REFRESH (setiap 60 saat; henti bila tab tersembunyi/waktu luar sekolah supaya jimat kuota Vercel)
+    // AUTO-REFRESH (setiap 60 saat; henti bila tab tersembunyi/waktu luar sekolah supaya jimat kuota)
     function mulaRefresh() {
       refreshTimer = setInterval(() => {
         const jam = new Date().getHours();

@@ -45,8 +45,6 @@ Q-TIBA/
 ├── manifest-parent.json    # PWA Manifest (Ibu Bapa)
 ├── logo.png                # Logo Sekolah
 ├── q-tibalogo.png          # Logo Q-TIBA
-├── api/
-│   └── exec.js             # Fungsi proxy serverless (Vercel)
 ├── functions/
 │   └── api/exec.js         # Fungsi proxy Pages Functions (Cloudflare)
 └── assets/
@@ -61,7 +59,7 @@ Q-TIBA/
 - html5-qrcode (CDN)
 - html2pdf.js (CDN)
 - Google Apps Script + Google Sheets (Backend)
-- Cloudflare Pages (Pages Functions proxy) atau Vercel (Function proxy)
+- Cloudflare Pages (Pages Functions proxy)
 
 ## Cara Deploy
 
@@ -88,7 +86,7 @@ Hosting sedia ada projek ini ialah **Cloudflare Pages** (project `qtiba`). Ia me
 4. Klik **Save**
 
 ### Hosting Lain (dengan proksi)
-Fail-fail ini adalah statik, tetapi **apa-apa hosting tanpa proksi serverless perlu menyediakan semula `functions/api/exec.js`** (atau `api/exec.js`) supaya `"/api/exec"` berfungsi. Tanpa proksi, key API akan terdedah. Hosting yang menyokong Pages Functions (Cloudflare), Vercel Functions, atau Netlify Functions boleh digunakan.
+Fail-fail ini adalah statik, tetapi **apa-apa hosting tanpa proksi serverless perlu menyediakan semula `functions/api/exec.js`** (atau fail fungsi setara) supaya `"/api/exec"` berfungsi. Tanpa proksi, key API akan terdedah. Hosting yang menyokong Pages Functions (Cloudflare), atau Netlify Functions boleh digunakan.
 
 ## Backend
 
@@ -154,13 +152,13 @@ Panel pentadbir menyediakan **UI dalam Google Sheets** untuk mengurus tetapan da
 3. **Tetapkan API Key** — nilai `QTIBA_API_KEY` di platform hosting **MESTI sama** dengan `var API_KEY` dalam `code.gs`.
 4. Deploy dan buka fail HTML dalam pelayar.
 
-**Penting:** `config.js` tidak dikomit ke repo (dalam `.gitignore`). Hanya `config.example.js` yang akan ada dalam repo sebagai template. Nilai `QTIBA_API_KEY` dalam `config.js` mesti **kosong** — proksi (`api/exec.js` di Vercel atau `functions/api/exec.js` di Cloudflare) yang menyuntik key sebenar daripada environment variable. Jangan simpan key dalam fail yang dideploy.
+**Penting:** `config.js` tidak dikomit ke repo (dalam `.gitignore`). Hanya `config.example.js` yang akan ada dalam repo sebagai template. Nilai `QTIBA_API_KEY` dalam `config.js` mesti **kosong** — proksi (`functions/api/exec.js` di Cloudflare) yang menyuntik key sebenar daripada environment variable. Jangan simpan key dalam fail yang dideploy.
 
 ### Nota Deploy Backend (Apps Script)
 
 1. **Akses "Anyone"** — Semasa deploy Web App, pilih **"Anyone"** (akaun Google boleh akses / sahaja). Ini perlu supaya `fetch` dengan `mode: 'cors'` dapat **membaca respons** daripada backend (untuk mengesahkan status hantar & menyingkirkan antrian offline). Jika dideploy secara private, frontend tidak boleh membaca respons dan semua rekod akan masuk ke antrian offline.
 2. **Redeploy setiap kali `code.gs` diubah** — Tidak lupa klik **Deploy > Manage deployments** untuk mengemas kini versi Web App selepas sebarang perubahan.
-3. **API Key** — Pastikan nilai `var API_KEY` dalam `code.gs` **sama** dengan `QTIBA_API_KEY` (environment variable di Cloudflare/Vercel). Jika tidak, semua permintaan ditolak.
+3. **API Key** — Pastikan nilai `var API_KEY` dalam `code.gs` **sama** dengan `QTIBA_API_KEY` (environment variable di Cloudflare). Jika tidak, semua permintaan ditolak.
 
 ### Cegah Rekod Duplikat
 
