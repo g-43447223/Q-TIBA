@@ -443,21 +443,26 @@
           <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             <i class="fa-solid fa-user-slash mr-1.5 text-rose-500"></i> Murid Tidak Hadir (Analitik)
           </h3>
-          <span class="text-[10px] text-slate-400 code-font">Rujuk tarikh: <span id="absent-analytics-date">—</span></span>
+          <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 code-font">
+            <i class="fa-solid fa-calendar-days"></i> Bulan:
+            <input type="month" id="absent-month" value="" onchange="renderAbsentAnalytics()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400">
+          </label>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           <div class="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-3">
             <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tak Hadir</p>
             <p class="text-xl sm:text-2xl font-black code-font text-rose-600 dark:text-rose-400" id="analytics-absent-count">0</p>
+            <p class="text-[10px] text-slate-400 code-font">sesi (murid×hari)</p>
           </div>
           <div class="rounded-2xl bg-indigo-500/10 border border-indigo-500/20 p-3">
             <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">% Kehadiran</p>
             <p class="text-xl sm:text-2xl font-black code-font text-indigo-600 dark:text-indigo-400" id="analytics-hadir-percent">0%</p>
           </div>
           <div class="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 col-span-2 sm:col-span-1">
-            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sehari Sebelum</p>
-            <p class="text-lg sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400" id="analytics-prev-diff">—</p>
+            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hari Sekolah</p>
+            <p class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400" id="analytics-school-days">0</p>
+            <p class="text-[10px] text-slate-400 code-font">dalam bulan terpilih</p>
           </div>
         </div>
 
@@ -465,7 +470,7 @@
           <h4 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <i class="fa-solid fa-user-xmark text-rose-500"></i> Murid Sering Tidak Hadir
           </h4>
-          <span class="text-[10px] text-slate-400 code-font">30 hari persekolahan terakhir (sehingga tarikh aktif)</span>
+          <span class="text-[10px] text-slate-400 code-font" id="absent-month-label">—</span>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left">
@@ -1191,56 +1196,34 @@
       return !!getNamaCuti(dateStr);
     }
 
-    // Pulangkan senarai tarikh persekolahan (bukan cuti/hujung minggu) bermula
-    // dari tarikh diberi menuju ke belakang, sebanyak `count` hari persekolahan.
-    function senaraiHariSekolah(hinggaDate, count) {
+    // Pulangkan senarai tarikh persekolahan (bukan cuti/hujung minggu) dalam satu
+// bulan "YYYY-MM", disusun menaik dari 1 hingga akhir bulan.
+    function senaraiHariSekolahBulan(bulanStr) {
       const hasil = [];
-      const cursor = new Date(String(hinggaDate).replace(/-/g, '/') + ' 00:00:00');
-      let guard = 0;
-      while (hasil.length < count && guard < 900) {
-        const dStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
-        if (!isTarikhCuti(dStr)) hasil.unshift(dStr);
-        cursor.setDate(cursor.getDate() - 1);
-        guard++;
+      if (!bulanStr) return hasil;
+      const [thn, bln] = bulanStr.split('-').map(Number);
+      if (!thn || !bln || bln < 1 || bln > 12) return hasil;
+      const hariDalamBulan = new Date(thn, bln, 0).getDate();
+      for (let d = 1; d <= hariDalamBulan; d++) {
+        const dStr = `${thn}-${String(bln).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (!isTarikhCuti(dStr)) hasil.push(dStr);
       }
       return hasil;
     }
 
-    // Hari persekolahan terdekat sebelum tarikh diberi (bukan cuti/hujung minggu).
-    // Pulangkan null jika tiada dalam tetingkap carian (10 hari kalendar).
-    function hariSekolahSebelum(dateStr) {
-      const cursor = new Date(String(dateStr).replace(/-/g, '/') + ' 00:00:00');
-      for (let i = 1; i <= 10; i++) {
-        cursor.setDate(cursor.getDate() - 1);
-        const dStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
-        if (!isTarikhCuti(dStr)) return dStr;
-      }
-      return null;
+    // Label bulan "YYYY-MM" menjadi "September 2026".
+    function formatBulanLabel(bulanStr) {
+      const [thn, bln] = (bulanStr || '').split('-').map(Number);
+      if (!thn || !bln) return bulanStr;
+      const d = new Date(thn, bln - 1, 1);
+      if (isNaN(d.getTime())) return bulanStr;
+      return d.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' });
     }
 
-    // Set ID murid yang sudah mengimbas pada satu tarikh (konsisten dengan calculateAbsentCount).
-    function getScannedIdsHari(dateStr) {
-      const scanned = new Set();
-      getRekodUntukHari(dateStr).forEach(r => {
-        if (r.id) scanned.add(String(r.id).trim().toUpperCase());
-      });
-      const tgl = dateStr || activeDate;
-      if (scanned.size === 0 && tgl === getTodayDateStr()) {
-        (globalMuridList || []).forEach(m => {
-          if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
-            scanned.add(String(m.id || '').trim().toUpperCase());
-          }
-        });
-      }
-      return scanned;
-    }
-
-    // Kira senarai murid tak hadir untuk satu tarikh (senarai, bukan hanya bilangan).
-    function senaraiMuridTakHadir(dateStr) {
-      const tgl = dateStr || activeDate;
-      if (isTarikhCuti(tgl)) return [];
-      const scanned = getScannedIdsHari(tgl);
-      return (globalMuridList || []).filter(m => !scanned.has(String(m.id || '').trim().toUpperCase()));
+    // Bulan semasa dalam format "YYYY-MM" (untuk lalai pemilih bulan).
+    function getCurrentMonthStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
 
     // Tunjukkan/sembunyikan banner cuti di atas dashboard (ikut tarikh aktif).
@@ -2397,64 +2380,28 @@
       });
     }
 
-    // Kaki analitik: ringkasan tak hadir untuk tarikh aktif + senarai murid sering tak hadir.
+    // Kaki analitik: ringkasan ketidakhadiran + senarai murid sering tak hadir (ikut bulan).
     function renderAbsentAnalytics() {
-      const dateEl = document.getElementById('absent-analytics-date');
+      const monthInput = document.getElementById('absent-month');
       const countEl = document.getElementById('analytics-absent-count');
       const pctEl = document.getElementById('analytics-hadir-percent');
-      const prevEl = document.getElementById('analytics-prev-diff');
+      const daysEl = document.getElementById('analytics-school-days');
+      const labelEl = document.getElementById('absent-month-label');
       const tbody = document.getElementById('freq-absent-tbody');
-      if (!dateEl || !tbody) return;
+      if (!monthInput || !tbody) return;
 
-      dateEl.textContent = formatTarikhLabel(activeDate);
+      // Pemilih bulan: lalai bulan semasa jika kosong.
+      if (!monthInput.value) monthInput.value = getCurrentMonthStr();
+      const bulan = monthInput.value;
 
+      const hariSekolah = senaraiHariSekolahBulan(bulan);
+      const totalHari = hariSekolah.length;
       const jumlah = (globalMuridList || []).length;
-      const takHadir = senaraiMuridTakHadir(activeDate).length;
-      const hadir = Math.max(0, jumlah - takHadir);
-      const pct = jumlah > 0 ? ((hadir / jumlah) * 100).toFixed(1) : '0.0';
 
-      if (countEl) countEl.textContent = String(takHadir);
-      if (pctEl) pctEl.textContent = isTarikhCuti(activeDate) ? '—' : `${pct}%`;
-
-      if (prevEl) {
-        if (isTarikhCuti(activeDate)) {
-          prevEl.textContent = '—';
-        } else {
-          const prevDay = hariSekolahSebelum(activeDate);
-          const prevCount = prevDay ? senaraiMuridTakHadir(prevDay).length : null;
-          if (prevCount === null) {
-            prevEl.textContent = '—';
-          } else {
-            const diff = takHadir - prevCount;
-            const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '＝';
-            prevEl.innerHTML = `<span class="text-[11px] text-slate-500 dark:text-slate-400">${prevCount} →</span> ${Math.abs(diff)} ${arrow}`;
-          }
-        }
-      }
-
-      renderFrequentAbsent(tbody);
-    }
-
-    // Senarai murid paling kerap tidak hadir dalam 30 hari persekolahan terakhir.
-    function renderFrequentAbsent(tbody) {
-      if (!tbody) return;
-      const jumlah = (globalMuridList || []).length;
-      if (jumlah === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada data murid.</td></tr>`;
-        return;
-      }
-
-      if (isTarikhCuti(activeDate)) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-amber-500 dark:text-amber-400 code-font"><i class="fa-solid fa-face-smile-beam mr-2"></i>Hari cuti pada ${formatTarikhLabel(activeDate)} — tiada sesi kehadiran. Murid tidak dikira tak hadir.</td></tr>`;
-        return;
-      }
-
-      const hariSekolah = senaraiHariSekolah(activeDate, 30);
-
-      // Peta tarikh ke Set ID yang mengimbas (sekali sahaja untuk 30 hari).
+      // Peta tarikh -> Set ID yang mengimbas (untuk keseluruhan bulan).
       const scannedByDay = {};
       const rekod = globalRekodList || [];
-      for (let i = 0; i < hariSekolah.length; i++) {
+      for (let i = 0; i < totalHari; i++) {
         const dStr = hariSekolah[i];
         if (!scannedByDay[dStr]) scannedByDay[dStr] = new Set();
       }
@@ -2464,39 +2411,64 @@
         const t = String(r.tarikhMasa || '').slice(0, 10);
         if (scannedByDay[t]) scannedByDay[t].add(String(r.id).trim().toUpperCase());
       }
-      // Fallback untuk hari (tarikh aktif) jika tiada rekod lagi (hanya hari ini).
-      if (activeDate === getTodayDateStr() && scannedByDay[activeDate] && scannedByDay[activeDate].size === 0) {
+      // Fallback: jika tiada rekod untuk hari ini (masih awal), guna field server.
+      const todayStr = getTodayDateStr();
+      if (scannedByDay[todayStr] && scannedByDay[todayStr].size === 0) {
         (globalMuridList || []).forEach(m => {
           if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
-            scannedByDay[activeDate].add(String(m.id || '').trim().toUpperCase());
+            scannedByDay[todayStr].add(String(m.id || '').trim().toUpperCase());
           }
         });
+      }
+
+      // Sesi sepanjang bulan: murid x hari persekolahan.
+      const totalSesi = jumlah * totalHari;
+      let sesiHadir = 0;
+      for (let i = 0; i < totalHari; i++) sesiHadir += scannedByDay[hariSekolah[i]].size;
+      const sesiTakHadir = Math.max(0, totalSesi - sesiHadir);
+      const pct = totalSesi > 0 ? ((sesiHadir / totalSesi) * 100).toFixed(1) : '0.0';
+
+      if (countEl) countEl.textContent = String(sesiTakHadir);
+      if (pctEl) pctEl.textContent = totalHari === 0 ? '—' : `${pct}%`;
+      if (daysEl) daysEl.textContent = String(totalHari);
+      if (labelEl) labelEl.textContent = `${formatBulanLabel(bulan)} · ${totalHari} hari sekolah`;
+
+      renderFrequentAbsent(tbody, bulan, hariSekolah, scannedByDay);
+    }
+
+    // Senarai murid paling kerap tidak hadir dalam bulan terpilih.
+    function renderFrequentAbsent(tbody, bulan, hariSekolah, scannedByDay) {
+      if (!tbody) return;
+      const jumlah = (globalMuridList || []).length;
+      if (jumlah === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada data murid.</td></tr>`;
+        return;
+      }
+
+      const totalHari = hariSekolah.length;
+      if (totalHari === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-amber-500 dark:text-amber-400 code-font"><i class="fa-solid fa-calendar-xmark mr-2"></i>Tiada hari persekolahan pada ${formatBulanLabel(bulan)} (bulan cuti).</td></tr>`;
+        return;
       }
 
       const stats = (globalMuridList || []).map(m => {
         const idM = String(m.id || '').trim().toUpperCase();
         let hadir = 0;
-        for (let i = 0; i < hariSekolah.length; i++) {
+        for (let i = 0; i < totalHari; i++) {
           const setHari = scannedByDay[hariSekolah[i]];
           if (setHari && setHari.has(idM)) hadir++;
         }
         return {
           m: m,
           hadir: hadir,
-          takHadir: hariSekolah.length - hadir
+          takHadir: totalHari - hadir
         };
       });
 
       stats.sort((a, b) => b.takHadir - a.takHadir || a.m.nama.localeCompare(b.m.nama, 'ms'));
 
-      const totalHari = hariSekolah.length;
-      if (totalHari === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 code-font">Tiada hari persekolahan dalam tetingkap.</td></tr>`;
-        return;
-      }
-
       if (stats.every(s => s.takHadir === 0)) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-emerald-600 dark:text-emerald-400 code-font"><i class="fa-solid fa-circle-check mr-2"></i>Semua murid hadir dalam ${totalHari} hari persekolahan terakhir!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-emerald-600 dark:text-emerald-400 code-font"><i class="fa-solid fa-circle-check mr-2"></i>Semua murid hadir sepanjang ${totalHari} hari persekolahan pada ${formatBulanLabel(bulan)}!</td></tr>`;
         return;
       }
 
