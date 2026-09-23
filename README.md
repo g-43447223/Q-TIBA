@@ -22,6 +22,8 @@ Sistem disiplin sekolah untuk mengesan ketibaan murid menggunakan imbasan QR Cod
 - **Ranking kelas** — jadual & bar disiplin per kelas (kadar hadir hari ini, jumlah kes) dalam tab Analitik
 - **KPI Hadir Hari Ini** — kad dashboard menunjukkan bilangan murid hadir berbanding sasaran
 - **Mode Paparan Pintu (Gate Display)** — skrin besar khas (`gate.html`): jam digital masa sebenar, KPI raksasa (Sasaran/Hadir/Lewat/Tak Hadir), senarai lewat yang bergerak automatik, sesuai diletakkan di TV/papan paparan pintu pagar sekolah
+- **Analisis Ketidakhadiran** — kad analitik "Murid Tidak Hadir" dengan **pemilih bulan**: ringkasan sesi tak hadir, % kehadiran & bilangan hari sekolah (mengira **hari persekolahan yang sudah berlaku setakat ini**, bukan jumlah penuh bulan), ditambah senarai **murid sering tak hadir** (isih mengikut paling kerap tiada) untuk intervensi
+- **Graf kelas diisih** — graf "Analisis Kelewatan Mengikut Kelas" diisih **menurun mengikut jumlah kes** supaya kelas paling bermasalah di kiri (bukan urutan rawak data)
 - Tren naik/turun & punca utama per murid untuk ukur keberkesanan intervensi
 - **UI yang hidup** — latar aurora beranimasi, kad glass lift + glow, nombor KPI count-up, skeleton loading, konfeti apabila imbasan berjaya, kontrast peralihan tab & entrance reveal (hormati `prefers-reduced-motion`)
 - **Reka bentuk gaya iOS 26 (Liquid Glass)** — tab navigasi floating kekal di bawah (safe-area iPhone), item tab besar untuk jari (min 48px), font asli sistem iOS, sesuaian fon untuk telefon
@@ -43,6 +45,10 @@ Q-TIBA/
 ├── manifest-parent.json    # PWA Manifest (Ibu Bapa)
 ├── logo.png                # Logo Sekolah
 ├── q-tibalogo.png          # Logo Q-TIBA
+├── api/
+│   └── exec.js             # Fungsi proxy serverless (Vercel)
+├── functions/
+│   └── api/exec.js         # Fungsi proxy Pages Functions (Cloudflare)
 └── assets/
     └── images/             # Gambar guru
 ```
@@ -55,8 +61,25 @@ Q-TIBA/
 - html5-qrcode (CDN)
 - html2pdf.js (CDN)
 - Google Apps Script + Google Sheets (Backend)
+- Cloudflare Pages (Pages Functions proxy) atau Vercel (Function proxy)
 
 ## Cara Deploy
+
+### Cloudflare Pages (disyorkan)
+
+Hosting sedia ada projek ini ialah **Cloudflare Pages** (project `qtiba`). Ia menggunakan **Pages Functions** (`functions/api/exec.js`) sebagai proksi ke Apps Script, jadi key API sebenar tidak terdedah kepada pelayar.
+
+1. **Set environment variable** dalam Cloudflare Pages:
+   - `GAS_API_URL` — URL web app Apps Script (`https://script.google.com/macros/s/.../exec`)
+   - `QTIBA_API_KEY` — key yang sama dengan `var API_KEY` dalam `code.gs`
+2. **Deploy** (diperintah manual, bukan auto dari GitHub):
+   ```
+   npx wrangler pages deploy <folder> --project-name=qtiba --commit-dirty=true --branch=main
+   ```
+   `<folder>` ialah folder *bersih* yang hanya mengandungi fail awam (html, css, js, assets, `functions/`) — jangan deploy dari akar repo kerana `config.js`/`.env*` mengandungi key.
+3. Akses `https://qtiba.pages.dev`.
+
+> **Nota:** Ini berbeza dengan deploy `code.gs` — Apps Script **tetap perlu di-redeploy secara manual** (Deploy > Manage deployments) selepas ada perubahan pada backend.
 
 ### GitHub Pages
 1. Fork atau push repo ini ke GitHub
@@ -64,8 +87,8 @@ Q-TIBA/
 3. Pilih branch `main` dan folder `/ (root)`
 4. Klik **Save**
 
-### Hosting Lain
-Fail-fail ini adalah statik. Muat naik semua fail ke mana-mana pelayan web statik (Netlify, Firebase Hosting, dsb.).
+### Hosting Lain (dengan proksi)
+Fail-fail ini adalah statik, tetapi **apa-apa hosting tanpa proksi serverless perlu menyediakan semula `functions/api/exec.js`** (atau `api/exec.js`) supaya `"/api/exec"` berfungsi. Tanpa proksi, key API akan terdedah. Hosting yang menyokong Pages Functions (Cloudflare), Vercel Functions, atau Netlify Functions boleh digunakan.
 
 ## Backend
 
@@ -124,18 +147,20 @@ Panel pentadbir menyediakan **UI dalam Google Sheets** untuk mengurus tetapan da
 
 ## Persediaan
 
-1. Salin `config.example.js` kepada `config.js`
-2. Masukkan URL Google Apps Script Web App anda dalam `config.js`
-3. **Tetapkan API Key** — nilai `QTIBA_API_KEY` dalam `config.js` **MESTI sama** dengan `var API_KEY` dalam `code.gs`. Gunakan nilai yang panjang & sukar diteka sebelum deploy.
-4. Buka fail HTML dalam pelayar
+1. Salin `config.example.js` kepada `config.js`. Tiada perubahan perlu dibuat — `config.js` hanya menunjuk ke `"/api/exec"` (proksi domain sendiri); URL & key sebenar disimpan sebagai environment variable di platform hosting.
+2. Set **environment variable** di platform hosting anda (lihat "Cara Deploy" → **Cloudflare Pages**):
+   - `GAS_API_URL` — URL web app Apps Script (`https://script.google.com/macros/s/.../exec`)
+   - `QTIBA_API_KEY` — key yang sama dengan `var API_KEY` dalam `code.gs`. Gunakan nilai yang panjang & sukar diteka.
+3. **Tetapkan API Key** — nilai `QTIBA_API_KEY` di platform hosting **MESTI sama** dengan `var API_KEY` dalam `code.gs`.
+4. Deploy dan buka fail HTML dalam pelayar.
 
-**Penting:** `config.js` tidak dikomit ke repo (dalam `.gitignore`). Hanya `config.example.js` yang akan ada dalam repo sebagai template.
+**Penting:** `config.js` tidak dikomit ke repo (dalam `.gitignore`). Hanya `config.example.js` yang akan ada dalam repo sebagai template. Nilai `QTIBA_API_KEY` dalam `config.js` mesti **kosong** — proksi (`api/exec.js` di Vercel atau `functions/api/exec.js` di Cloudflare) yang menyuntik key sebenar daripada environment variable. Jangan simpan key dalam fail yang dideploy.
 
 ### Nota Deploy Backend (Apps Script)
 
 1. **Akses "Anyone"** — Semasa deploy Web App, pilih **"Anyone"** (akaun Google boleh akses / sahaja). Ini perlu supaya `fetch` dengan `mode: 'cors'` dapat **membaca respons** daripada backend (untuk mengesahkan status hantar & menyingkirkan antrian offline). Jika dideploy secara private, frontend tidak boleh membaca respons dan semua rekod akan masuk ke antrian offline.
 2. **Redeploy setiap kali `code.gs` diubah** — Tidak lupa klik **Deploy > Manage deployments** untuk mengemas kini versi Web App selepas sebarang perubahan.
-3. **API Key** — Pastikan nilai `var API_KEY` dalam `code.gs` **sama** dengan `QTIBA_API_KEY` dalam `config.js`. Jika tidak, semua permintaan ditolak.
+3. **API Key** — Pastikan nilai `var API_KEY` dalam `code.gs` **sama** dengan `QTIBA_API_KEY` (environment variable di Cloudflare/Vercel). Jika tidak, semua permintaan ditolak.
 
 ### Cegah Rekod Duplikat
 

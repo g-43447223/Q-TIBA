@@ -1,6 +1,6 @@
-// Q-TIBA Configuration (Vercel / api/exec.js proxy)
-// Browser hanya bersentuh dengan Vercel (sama origin). URL & key sebenar
-// Apps Script disimpan dalam environment variable Vercel:
+// Q-TIBA Configuration (proxy serverless, contoh: Cloudflare Pages / Vercel)
+// Browser hanya bersentuh dengan domain sendiri (sama origin). URL & key
+// sebenar Apps Script disimpan dalam environment variable platform:
 //   GAS_API_URL  -> https://script.google.com/macros/s/.../exec
 //   QTIBA_API_KEY -> key yang sama dengan var API_KEY dalam code.gs
 
