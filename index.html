@@ -461,8 +461,8 @@
           </div>
           <div class="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 col-span-2 sm:col-span-1">
             <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hari Sekolah</p>
-            <p class="text-xl sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400" id="analytics-school-days">0</p>
-            <p class="text-[10px] text-slate-400 code-font">dalam bulan terpilih</p>
+            <p class="text-lg sm:text-2xl font-black code-font text-amber-600 dark:text-amber-400" id="analytics-school-days">0</p>
+            <p class="text-[10px] text-slate-400 code-font" id="analytics-school-days-note">dalam bulan terpilih</p>
           </div>
         </div>
 
@@ -2394,7 +2394,11 @@
       if (!monthInput.value) monthInput.value = getCurrentMonthStr();
       const bulan = monthInput.value;
 
-      const hariSekolah = senaraiHariSekolahBulan(bulan);
+      const hariSekolahSemua = senaraiHariSekolahBulan(bulan);
+      // Ambil hanya hari persekolahan yang sudah berlalu setakat hari ini.
+      // Bulan lalu: semua hari. Bulan semasa: setakat hari ini sahaja. Bulan depan: 0.
+      const todayStr = getTodayDateStr();
+      const hariSekolah = hariSekolahSemua.filter(d => d <= todayStr);
       const totalHari = hariSekolah.length;
       const jumlah = (globalMuridList || []).length;
 
@@ -2412,7 +2416,6 @@
         if (scannedByDay[t]) scannedByDay[t].add(String(r.id).trim().toUpperCase());
       }
       // Fallback: jika tiada rekod untuk hari ini (masih awal), guna field server.
-      const todayStr = getTodayDateStr();
       if (scannedByDay[todayStr] && scannedByDay[todayStr].size === 0) {
         (globalMuridList || []).forEach(m => {
           if (m.lewatHariIni || (m.waktuHariIni && m.waktuHariIni.trim() !== '')) {
@@ -2432,6 +2435,13 @@
       if (pctEl) pctEl.textContent = totalHari === 0 ? '—' : `${pct}%`;
       if (daysEl) daysEl.textContent = String(totalHari);
       if (labelEl) labelEl.textContent = `${formatBulanLabel(bulan)} · ${totalHari} hari sekolah`;
+      // Nota: bulan semasa = setakat hari ini; bulan lalu/lebih awal = keseluruhan.
+      const noteEl = document.getElementById('analytics-school-days-note');
+      if (noteEl) {
+        if (bulan < getCurrentMonthStr()) noteEl.textContent = 'keseluruhan bulan (bulan lalu)';
+        else if (bulan === getCurrentMonthStr()) noteEl.textContent = 'berlaku setakat hari ini';
+        else noteEl.textContent = 'bulan belum bermula';
+      }
 
       renderFrequentAbsent(tbody, bulan, hariSekolah, scannedByDay);
     }
@@ -2447,7 +2457,10 @@
 
       const totalHari = hariSekolah.length;
       if (totalHari === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-amber-500 dark:text-amber-400 code-font"><i class="fa-solid fa-calendar-xmark mr-2"></i>Tiada hari persekolahan pada ${formatBulanLabel(bulan)} (bulan cuti).</td></tr>`;
+        const mesejBulan = bulan >= getCurrentMonthStr()
+          ? `<i class="fa-solid fa-calendar-day mr-2"></i>Belum ada hari persekolahan yang berlaku pada ${formatBulanLabel(bulan)} setakat ini.`
+          : `<i class="fa-solid fa-calendar-xmark mr-2"></i>Tiada hari persekolahan pada ${formatBulanLabel(bulan)} (bulan cuti penuh).`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-amber-500 dark:text-amber-400 code-font">${mesejBulan}</td></tr>`;
         return;
       }
 
