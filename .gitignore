@@ -30,4 +30,5 @@ dist/
 build/
 
 .vercel
+.wrangler
 .env*
