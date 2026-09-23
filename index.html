@@ -1874,8 +1874,11 @@
       }
 
       if (classChart) {
-        classChart.data.labels = Object.keys(classCounts);
-        classChart.data.datasets[0].data = Object.values(classCounts);
+        // Isih kelas mengikut jumlah kes menurun: paling tinggi di kiri,
+        // supaya graf tidak nampak serabut ikut urutan kemunculan data.
+        const kelasArray = Object.entries(classCounts).sort((a, b) => b[1] - a[1]);
+        classChart.data.labels = kelasArray.map(x => x[0]);
+        classChart.data.datasets[0].data = kelasArray.map(x => x[1]);
         classChart.update();
       }
 
