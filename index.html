@@ -1049,6 +1049,21 @@
           <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
         </div>
       </div>
+
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+          <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <i class="fa-solid fa-timeline mr-1.5 text-violet-500"></i> Sejarah Intervensi
+          </h4>
+          <span id="sp-sejarah-bilangan" class="text-[10px] font-bold text-slate-400 code-font">—</span>
+        </div>
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 mb-2 leading-relaxed">
+          Setiap perubahan status direkod sebagai baris baharu. Baris paling bawah ialah status terkini.
+        </p>
+        <div id="sp-sejarah" class="flex flex-col gap-0 max-h-72 overflow-y-auto pr-1">
+          <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2234,7 +2249,24 @@
         if (!res.ok || !data || data.result !== 'success') {
           throw new Error((data && data.message) || ('HTTP ' + res.status));
         }
+        // changed=false bermakna server tapis: nilai sama dengan entry terakhir,
+        // jadi tiada baris sejarah baharu ditambah. Local map sudah betul,
+        // jadi tiada apa-apa untuk dipulangkan.
+        if (data.changed === false) {
+          console.info("Q-TIBA: Tiada perubahan intervensi untuk " + idNorm + " - tiada baris sejarah ditambah.");
+        }
         flashIntervensiSaved(status, true);
+        // Kalau profil murid ini sedang dibuka, segarkan timeline supaya guru
+        // nampak entry baharu tanpa perlu tutup dan buka semula. Guna "|| ''"
+        // supaya ralat di sini tidak boleh menyebabkan rollback palsu - simpanan
+        // sudah berjaya pada titik ini.
+        if (String(activeSejarahId || '').toUpperCase() === idNorm) {
+          try {
+            renderSejarahIntervensi(idNorm);
+          } catch (e) {
+            console.warn("Q-TIBA: Gagal segarkan timeline intervensi", e);
+          }
+        }
       } catch (err) {
         // Pulangkan nilai asal supaya guru nampak data tidak tersimpan.
         intervensiMap[idNorm] = prev;
@@ -3873,12 +3905,91 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
       document.getElementById('sp-tarikh').textContent = tarikh;
 
       renderStudentRekod(idMurid);
+      renderSejarahIntervensi(idMurid);
 
       modal.classList.remove('hidden');
     }
 
     // Kronologi penuh murid (semua imbasan + rekod intervensi) untuk profil.
     let activeProfileId = '';
+
+    // Timeline SEJARAH intervensi: satu baris bagi setiap perubahan status,
+    // diambil daripada log append-only di tab "Intervensi". Baris paling
+    // bawah ialah status terkini.
+    let activeSejarahId = '';
+    async function renderSejarahIntervensi(idMurid) {
+      const el = document.getElementById('sp-sejarah');
+      const kiraan = document.getElementById('sp-sejarah-bilangan');
+      if (!el) return;
+      activeSejarahId = String(idMurid || '').trim();
+      if (!API_URL || API_URL.includes('MASUKKAN_URL')) return;
+
+      try {
+        const res = await fetch(buildApiUrl({ action: 'sejarahIntervensi', id: activeSejarahId }));
+        const data = await res.json();
+
+        // Race guard: pengguna mungkin sudah klik murid lain semasa request
+        // ini dalam perjalanan, jadi jangan tulis ke elemen yang bukan theirs.
+        if (String(activeSejarahId) !== String(idMurid || '').trim()) return;
+        if (data.status !== 'Success' || !Array.isArray(data.sejarah)) {
+          el.innerHTML = `<div class="text-center text-rose-400 code-font py-2 text-xs">Gagal membaca sejarah.</div>`;
+          if (kiraan) kiraan.textContent = '—';
+          return;
+        }
+
+        const senarai = data.sejarah;
+        if (kiraan) {
+          kiraan.textContent = senarai.length === 0
+            ? 'Tiada rekod'
+            : senarai.length + (senarai.length === 1 ? ' perubahan' : ' perubahan');
+        }
+
+        if (senarai.length === 0) {
+          el.innerHTML = `<div class="text-center text-slate-400 code-font py-3 text-xs">Belum ada sejarah intervensi.</div>`;
+          return;
+        }
+
+        // Papar lama ke baru (ikut kronologi sebenar). Entry terkini berada
+        // di paling bawah dan diberi label TERKINI supaya guru tahu dengan
+        // cepat tanpa perlu scroll ke hujung.
+        const balut = senarai.map((s, i) => {
+          const terkini = i === senarai.length - 1;
+          const warna = s.status === 'Kaunseling' || s.status === 'Rujuk Pengetua'
+            ? 'border-rose-500/50 bg-rose-500/10'
+            : s.status === 'Belum'
+              ? 'border-slate-300 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/50'
+              : 'border-amber-500/50 bg-amber-500/10';
+          const titik = terkini
+            ? 'bg-violet-500 ring-4 ring-violet-500/20'
+            : 'bg-slate-300 dark:bg-slate-600';
+          return `
+            <div class="relative pl-6 pb-3 last:pb-0">
+              <span class="absolute left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${titik}"></span>
+              <span class="absolute left-[9px] top-4 bottom-0 w-px bg-slate-200 dark:bg-slate-700"></span>
+              <div class="rounded-xl border ${warna} px-2.5 py-2">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="text-[10px] font-black code-font uppercase tracking-wider">${escapeHtml(s.status || 'Belum')}</span>
+                  ${terkini ? '<span class="text-[9px] font-black code-font px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-600 dark:text-violet-300">TERKINI</span>' : ''}
+                </div>
+                <div class="text-[9px] font-semibold code-font text-slate-500 dark:text-slate-400 mt-0.5">
+                  ${s.tarikh ? 'Tarikh: ' + escapeHtml(s.tarikh) : 'Tarikh: —'}
+                </div>
+                <div class="text-[9px] font-semibold code-font text-slate-400 dark:text-slate-500">
+                  Dicatat: ${s.masa ? escapeHtml(s.masa) : '—'}
+                </div>
+                ${s.guru ? '<div class="text-[9px] font-semibold text-slate-400 dark:text-slate-500">Oleh: ' + escapeHtml(s.guru) + '</div>' : ''}
+                ${s.nota ? '<div class="text-[10px] font-medium text-slate-700 dark:text-slate-300 mt-1 leading-snug">' + escapeHtml(s.nota) + '</div>' : ''}
+              </div>
+            </div>`;
+        }).join('');
+
+        el.innerHTML = balut;
+      } catch (err) {
+        el.innerHTML = `<div class="text-center text-rose-400 code-font py-3 text-xs">Gagal memuat sejarah.</div>`;
+        if (kiraan) kiraan.textContent = '—';
+      }
+    }
+
     function renderStudentRekod(idMurid) {
       const el = document.getElementById('sp-rekod');
       if (!el) return;
@@ -4022,6 +4133,9 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
     function closeStudentProfile() {
       const modal = document.getElementById('student-profile-modal');
       if (modal) modal.classList.add('hidden');
+      // Kosongkan supaya simpanan seterusnya tidak mencetuskan muat semula
+      // timeline untuk murid yang sudah ditutup.
+      activeSejarahId = '';
     }
 
     function switchAdminTab(tab) {

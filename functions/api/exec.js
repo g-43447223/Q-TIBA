@@ -30,7 +30,7 @@ const PUBLIC_ACTIONS = new Set(["", "settings"]);
 const STAFF_ACTIONS = new Set(["gateLock"]);
 
 // Tindakan ADMIN - nota intervensi, tukar PIN, daftar admin.
-const ADMIN_ACTIONS = new Set(["intervensi", "saveIntervensi", "changePin", "registerAdmin"]);
+const ADMIN_ACTIONS = new Set(["intervensi", "saveIntervensi", "sejarahIntervensi", "changePin", "registerAdmin"]);
 
 // Rate limit in-memory per isolate. Cukup untuk menapis abuse kasar dan
 // scraper biasa. Penyerang yang diedarkan ke banyak isolate memerlukan

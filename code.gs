@@ -217,28 +217,81 @@ function getSettings() {
 }
 
 // ============================================================
-// REKOD INTERVENSI (tracking surat / kaunseling / rujuk)
-// Tab "Intervensi": A=ID, B=Status, C=Tarikh, D=Nota
+// REKOD INTERVENSI (tracking surat / kaunseling / rujukan)
+// Tab "Intervensi" ialah LOG APPEND-ONLY: satu baris bagi setiap perubahan,
+// tidak pernah ditulis ganti. Jadi perjalanan intervensi seorang murid boleh
+// dibaca dari awal hingga kini, bukan cuma status terkini.
+//
+// Lajur: A=ID, B=Status, C=Tarikh, D=Nota, E=Dicatat, F=Guru
+// "Tarikh"  = tarikh yang guru pilih sendiri (boleh di-backdate).
+// "Dicatat" = masa sistem bila baris itu ditulis, jadi kronologi tetap
+//             benar walaupun guru masukkan tarikh lama kemudian.
+// "Guru"    = emel staff yang membuat perubahan (dari proxy X-QTIBA-Actor).
 // ============================================================
+var INTERVENSI_COLS = 6;
+var INTERVENSI_HEADER = ["ID", "Status", "Tarikh", "Nota", "Dicatat", "Guru"];
+
 function getIntervensiSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tab = ss.getSheetByName("Intervensi");
   if (!tab) {
     tab = ss.insertSheet("Intervensi");
-    tab.getRange(1, 1, 1, 4).setValues([["ID", "Status", "Tarikh", "Nota"]]);
+    tab.getRange(1, 1, 1, INTERVENSI_COLS).setValues([INTERVENSI_HEADER]);
     tab.setFrozenRows(1);
+    return tab;
+  }
+  // Migrasi: sheet lama hanya ada 4 lajur (ID, Status, Tarikh, Nota).
+  // Lengkapkan header supaya Dicatat dan Guru wujud. Data lama dikekalkan -
+  // baris-baris itu akan dibaca sebagai entry "tanpa timestamp".
+  var lebar = tab.getLastColumn();
+  if (lebar < INTERVENSI_COLS) {
+    tab.getRange(1, lebar + 1, 1, INTERVENSI_COLS - lebar)
+      .setValues([INTERVENSI_HEADER.slice(lebar)]);
   }
   return tab;
 }
 
-// Baca semua rekod intervensi menjadi objek map: { id: {status,tarikh,nota} }
+// Tukar lajur "Dicatat" kepada milisaat supaya boleh dibandingkan.
+// Pulangkan -1 bila tiada timestamp (baris legacy sebelum migrasi).
+function getMasaDicatatMs_(value) {
+  if (value === null || value === undefined || value === '') return -1;
+  if (value instanceof Date) {
+    var t = value.getTime();
+    return isNaN(t) ? -1 : t;
+  }
+  var parsed = Date.parse(String(value).trim());
+  return isNaN(parsed) ? -1 : parsed;
+}
+
+// Masa penuh "yyyy-MM-dd HH:mm:ss" untuk paparan dalam UI.
+function formatMasaPenuh_(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+  }
+  return String(value).trim();
+}
+
+// Baca status TERKINI setiap murid: { id: {status,tarikh,nota} }.
+//
+// Sheet append-only, jadi seorang murid boleh ada banyak baris. Yang
+// "terkini" ialah baris dengan Dicatat terbesar - BUKAN baris paling bawah.
+// Sheet boleh di-sort semula oleh guru pada bila-bila masa, jadi kedudukan
+// baris tidak lagi dipercayai. Baris legacy (tiada Dicatat) dianggap paling
+// lama, jadi sebarang entry baharu sentiasa menang.
 function readIntervensiMap() {
   var tab = getIntervensiSheet_();
   var data = tab.getDataRange().getValues();
   var map = {};
+  var meta = {};
   for (var i = 1; i < data.length; i++) {
     var id = normalizeId(data[i][0]);
     if (id === "") continue;
+    var ms = getMasaDicatatMs_(data[i][4]);
+    var sedia = meta[id];
+    // Langkau baris ini jika ia tidak lebih baharu daripada yang sudah diambil.
+    if (sedia && (ms < sedia.ms || (ms === sedia.ms && i <= sedia.i))) continue;
+    meta[id] = { ms: ms, i: i };
     map[id] = {
       status: String(data[i][1] || "Belum"),
       tarikh: formatTarikhYYYYMMDD(data[i][2]),
@@ -246,6 +299,38 @@ function readIntervensiMap() {
     };
   }
   return map;
+}
+
+// Semua entry sejarah seorang murid, paling lama ke paling baru.
+function readSejarahIntervensi(id) {
+  var tab = getIntervensiSheet_();
+  var data = tab.getDataRange().getValues();
+  var idNorm = normalizeId(id);
+  var keluar = [];
+  for (var i = 1; i < data.length; i++) {
+    if (normalizeId(data[i][0]) !== idNorm) continue;
+    keluar.push({
+      status: String(data[i][1] || "Belum"),
+      tarikh: formatTarikhYYYYMMDD(data[i][2]),
+      nota: String(data[i][3] || ""),
+      dicatat: formatTarikhYYYYMMDD(data[i][4]),
+      masa: formatMasaPenuh_(data[i][4]),
+      guru: String(data[i][5] || ""),
+      _ms: getMasaDicatatMs_(data[i][4]),
+      _i: i
+    });
+  }
+  // Kronologi: legacy (tiada Dicatat) di paling awal. Untuk nilai sama,
+  // kekalkan kedudukan asal - Array.prototype.sort stabil dalam V8.
+  keluar.sort(function (a, b) {
+    if (a._ms !== b._ms) return a._ms - b._ms;
+    return a._i - b._i;
+  });
+  for (var k = 0; k < keluar.length; k++) {
+    delete keluar[k]._ms;
+    delete keluar[k]._i;
+  }
+  return keluar;
 }
 
 // Nilai tarikh dalam Sheet boleh jadi objek Date atau teks. Pulangkan
@@ -264,21 +349,39 @@ function formatTarikhYYYYMMDD(value) {
   return s;
 }
 
-// Tulis/upsert satu rekod intervensi bagi seorang murid
-function writeIntervensi(id, rec) {
+// Tulis satu baris SEJARAH intervensi. Sentiasa append - tiada baris lama
+// ditulis ganti, itulah yang membolehkan sejarah penuh dibaca.
+//
+// Jika status/tarikh/nota sama dengan entry terakhir murid itu, jangan tambah
+// baris: simpan berulang tanpa perubahan cuma melemahkan log. Pulangkan
+// false supaya UI boleh beritahu guru "tiada perubahan".
+function writeIntervensi(id, rec, actor) {
   var tab = getIntervensiSheet_();
-  var data = tab.getDataRange().getValues();
-  var found = -1;
   var idNorm = normalizeId(id);
-  for (var i = 1; i < data.length; i++) {
-    if (normalizeId(data[i][0]) === idNorm) { found = i + 1; break; }
+  var status = String(rec.status === undefined || rec.status === null ? "Belum" : rec.status);
+  var tarikh = String(rec.tarikh === undefined || rec.tarikh === null ? "" : rec.tarikh);
+  var nota = String(rec.nota === undefined || rec.nota === null ? "" : rec.nota);
+
+  // Bandingkan dengan entry TERKINI. Guna readIntervensiMap supaya logik
+// "mana yang terkini" hanya ditetapkan di satu tempat - sama dengan yang
+  // dipaparkan oleh dashboard.
+  var terakhir = readIntervensiMap()[idNorm];
+  if (terakhir &&
+      String(terakhir.status) === status &&
+      formatTarikhYYYYMMDD(terakhir.tarikh) === formatTarikhYYYYMMDD(tarikh) &&
+      String(terakhir.nota) === nota) {
+    return false;
   }
-  var row = [idNorm, safeCell(rec.status), safeCell(rec.tarikh), safeCell(rec.nota)];
-  if (found > -1) {
-    tab.getRange(found, 1, 1, 4).setValues([row]);
-  } else {
-    tab.appendRow(row);
-  }
+
+  tab.appendRow([
+    idNorm,
+    safeCell(status),
+    safeCell(tarikh),
+    safeCell(nota),
+    new Date(),
+    safeCell(String(actor || ""))
+  ]);
+  return true;
 }
 
 // ============================================================
@@ -521,6 +624,16 @@ function doGet(e) {
   // FUNGSI AMBIL REKOD INTERVENSI (tracking surat/kaunseling)
   if (action === "intervensi") {
     return jsonResponse({ status: "Success", intervensi: readIntervensiMap() });
+  }
+
+  // SEJARAH PENUH intervensi seorang murid (timeline, admin sahaja).
+  // Proxy perlu tahu action ini dalam ADMIN_ACTIONS, jika tidak ia didolak.
+  if (action === "sejarahIntervensi") {
+    var shId = normalizeId(e.parameter.id || '');
+    if (shId === '') {
+      return jsonResponse({ status: "Error", message: "ID murid diperlukan." });
+    }
+    return jsonResponse({ status: "Success", id: shId, sejarah: readSejarahIntervensi(shId) });
   }
 
   // FUNGSI SEMAK STATUS ADMIN
@@ -943,13 +1056,16 @@ function doPost(e) {
         return ContentService.createTextOutput(JSON.stringify({ result: "error", message: "ID murid diperlukan." }))
           .setMimeType(ContentService.MimeType.JSON);
       }
-      writeIntervensi(dvId, {
+      // actor = emel staff dari header X-QTIBA-Actor yang dihantar proxy
+      // selepas ia mengesahkan sesi. Ini yang mengisi lajur "Guru".
+      var berubah = writeIntervensi(dvId, {
         status: String(requestData.status || 'Belum'),
         tarikh: String(requestData.tarikh || ''),
         nota: String(requestData.nota || '')
-      });
-      return ContentService.createTextOutput(JSON.stringify({ result: "success", id: dvId }))
-        .setMimeType(ContentService.MimeType.JSON);
+      }, getActorEmail(e));
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "success", id: dvId, changed: berubah
+      })).setMimeType(ContentService.MimeType.JSON);
     }
 
     var timestamp = new Date();
