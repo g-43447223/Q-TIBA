@@ -562,7 +562,7 @@
         tarikh = today;
         const mm = (timeOnly || '00:00:00').match(/(\d{1,2}):(\d{2})/);
         const isLate = mm
-          ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21))
+          ? (+mm[1] * 60 + +mm[2]) >= CUTOFF_MIN
           : (String(rec.status || '').toUpperCase() === 'LEWAT');
         statusText = isLate ? 'LEWAT' : 'TEPAT';
       } else if (m.waktuHariIni && m.waktuHariIni.trim() !== '') {
@@ -571,7 +571,7 @@
         tarikh = today || tarikh;
         let isLate = false;
         const mm = masa.match(/(\d{1,2}):(\d{2})/);
-        if (mm) { const h = +mm[1], mi = +mm[2]; isLate = h > 7 || (h === 7 && mi >= 21); }
+        if (mm) { const h = +mm[1], mi = +mm[2]; isLate = (h * 60 + mi) >= CUTOFF_MIN; }
         statusText = isLate ? 'LEWAT' : 'TEPAT';
       }
 
@@ -609,7 +609,7 @@
         const dateOnly = tm.slice(0, 10);
         const timeOnly = tm.includes(' ') ? tm.split(' ')[1] : '';
         const mm = timeOnly.match(/(\d{1,2}):(\d{2})/);
-        const isLate = mm ? (+mm[1] > 7 || (+mm[1] === 7 && +mm[2] >= 21)) : (String(r.status || '').toUpperCase() === 'LEWAT');
+        const isLate = mm ? (+mm[1] * 60 + +mm[2]) >= CUTOFF_MIN : (String(r.status || '').toUpperCase() === 'LEWAT');
         const warna = isLate ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10';
         return `
           <div class="flex items-center justify-between p-2 rounded-xl border ${warna}">
@@ -903,7 +903,8 @@
     }
 
     // Dapatkan nama cuti untuk tarikh (YYYY-MM-DD), atau "Hujung Minggu" / null.
-    // Jika data dari server tersedia, ia menjadi sumber utama.
+    // Jika data dari server tersedia, ia menjadi sumber utama; hujung minggu
+    // tetap disemak untuk kedua-dua kes.
     function getNamaCuti(dateStr) {
       if (!dateStr) return null;
       if (parCutiServerTarikh.length > 0 || parCutiServerJulat.length > 0) {
@@ -914,14 +915,14 @@
           const cj = parCutiServerJulat[i];
           if (dateStr >= cj.mulai && dateStr <= cj.akhir) return cj.nama;
         }
-        return null;
-      }
-      for (let i = 0; i < PAR_HARI_CUTI_TARIKH.length; i++) {
-        if (PAR_HARI_CUTI_TARIKH[i].tarikh === dateStr) return PAR_HARI_CUTI_TARIKH[i].nama;
-      }
-      for (let i = 0; i < PAR_HARI_CUTI_JULAT.length; i++) {
-        const j = PAR_HARI_CUTI_JULAT[i];
-        if (dateStr >= j.mulai && dateStr <= j.akhir) return j.nama;
+      } else {
+        for (let i = 0; i < PAR_HARI_CUTI_TARIKH.length; i++) {
+          if (PAR_HARI_CUTI_TARIKH[i].tarikh === dateStr) return PAR_HARI_CUTI_TARIKH[i].nama;
+        }
+        for (let i = 0; i < PAR_HARI_CUTI_JULAT.length; i++) {
+          const j = PAR_HARI_CUTI_JULAT[i];
+          if (dateStr >= j.mulai && dateStr <= j.akhir) return j.nama;
+        }
       }
       const hujung = parHujungMingguServer ? parHujungMingguServer : PAR_HARI_CUTI_MINGGU;
       const day = new Date(String(dateStr).replace(/-/g, '/') + ' 00:00:00').getDay();

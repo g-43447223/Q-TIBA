@@ -226,6 +226,8 @@
       { mulai: "2026-12-05", akhir: "2026-12-31", nama: "Cuti Akhir Tahun" }
     ];
     let idxHujungMingguServer = null;
+    let idxCutiServerTarikh = [];
+    let idxCutiServerJulat = [];
 
     function escapeHtml(str) {
       return String(str == null ? '' : str)
@@ -279,12 +281,22 @@
 
     function getNamaCuti(dateStr) {
       if (!dateStr) return null;
-      for (let i = 0; i < IDX_HARI_CUTI_TARIKH.length; i++) {
-        if (IDX_HARI_CUTI_TARIKH[i].tarikh === dateStr) return IDX_HARI_CUTI_TARIKH[i].nama;
-      }
-      for (let i = 0; i < IDX_HARI_CUTI_JULAT.length; i++) {
-        const j = IDX_HARI_CUTI_JULAT[i];
-        if (dateStr >= j.mulai && dateStr <= j.akhir) return j.nama;
+      if (idxCutiServerTarikh.length > 0 || idxCutiServerJulat.length > 0) {
+        for (let i = 0; i < idxCutiServerTarikh.length; i++) {
+          if (idxCutiServerTarikh[i].tarikh === dateStr) return idxCutiServerTarikh[i].nama;
+        }
+        for (let i = 0; i < idxCutiServerJulat.length; i++) {
+          const cj = idxCutiServerJulat[i];
+          if (dateStr >= cj.mulai && dateStr <= cj.akhir) return cj.nama;
+        }
+      } else {
+        for (let i = 0; i < IDX_HARI_CUTI_TARIKH.length; i++) {
+          if (IDX_HARI_CUTI_TARIKH[i].tarikh === dateStr) return IDX_HARI_CUTI_TARIKH[i].nama;
+        }
+        for (let i = 0; i < IDX_HARI_CUTI_JULAT.length; i++) {
+          const j = IDX_HARI_CUTI_JULAT[i];
+          if (dateStr >= j.mulai && dateStr <= j.akhir) return j.nama;
+        }
       }
       const hujung = idxHujungMingguServer ? idxHujungMingguServer : IDX_HARI_CUTI_MINGGU;
       const day = new Date(String(dateStr).replace(/-/g, '/') + ' 00:00:00').getDay();
@@ -376,7 +388,7 @@
         if (match) {
           const hours = parseInt(match[1], 10);
           const minutes = parseInt(match[2], 10);
-          if (hours > 7 || (hours === 7 && minutes >= 21)) return;
+          if (hours * 60 + minutes >= CUTOFF_MIN) return;
         }
         const key = r.id || r.nama;
         if (!map.has(key)) {
@@ -397,13 +409,15 @@
       const todayStrFx = `${fn.getFullYear()}-${String(fn.getMonth() + 1).padStart(2, '0')}-${String(fn.getDate()).padStart(2, '0')}`;
       if (tgl === todayStrFx && records.length === 0 && map.size === 0) {
         (globalMuridList || []).forEach(m => {
-          if ((m.lewatHariIni && m.punca !== "Tepat Masa") && m.status !== "HADIR") return;
           const timeStr = m.waktuHariIni || '';
+          const sudahImbas = m.lewatHariIni || (timeStr && timeStr.trim() !== '');
+          if (!sudahImbas) return;
+          if ((m.lewatHariIni && m.punca !== "Tepat Masa") && m.status !== "HADIR") return;
           const match = timeStr.match(/(\d{1,2}):(\d{2})/);
           if (match) {
             const hours = parseInt(match[1], 10);
             const minutes = parseInt(match[2], 10);
-            if (hours > 7 || (hours === 7 && minutes >= 21)) return;
+            if (hours * 60 + minutes >= CUTOFF_MIN) return;
           }
           map.set(m.id, {
             id: m.id,
@@ -629,10 +643,16 @@
           if (Array.isArray(data.hujungMinggu) && data.hujungMinggu.length > 0) {
             idxHujungMingguServer = data.hujungMinggu;
           }
-          if (data.cutoffMin) {
-            CUTOFF_MIN = parseInt(data.cutoffMin, 10) || CUTOFF_MIN;
-          } else if (data.cutoff) {
-            CUTOFF_MIN = parseInt(data.cutoff, 10) || CUTOFF_MIN;
+          if (Array.isArray(data.cuti)) {
+            idxCutiServerTarikh = data.cuti.filter(c => c.tarikh);
+            idxCutiServerJulat = data.cuti.filter(c => c.mulai && c.akhir);
+          }
+          if (typeof data.cutoffMin === 'number' && data.cutoffMin >= 0) {
+            CUTOFF_MIN = data.cutoffMin;
+          } else if (data.cutoff && typeof data.cutoff === 'string') {
+            const kp = data.cutoff.split(':');
+            const kpn = kp.length === 2 ? parseInt(kp[0], 10) * 60 + parseInt(kp[1], 10) : NaN;
+            if (!isNaN(kpn)) CUTOFF_MIN = kpn;
           }
         }
       } catch (e) { /* abaikan — guna fallback */ }
