@@ -85,7 +85,7 @@
   <!-- HEADER -->
   <header class="w-full px-4 sm:px-6 lg:px-10 py-3 lg:py-4 flex items-center justify-between gap-3 relative z-10 border-b border-slate-200/50 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
     <div class="flex items-center gap-2.5 sm:gap-4 min-w-0">
-      <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain flex-shrink-0" onerror="this.src='q-tibalogo.png'">
+      <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain flex-shrink-0" data-img-fallback="q-tibalogo.png">
       <div class="truncate">
         <div class="flex items-center gap-2">
           <h1 class="text-base sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white truncate">Q-TIBA</h1>
@@ -274,6 +274,28 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+
+    // Elak XSS: hanya benarkan URL http/https untuk atribut src.
+    const IMG_FALLBACK = 'https://api.dicebear.com/7.x/bottts/svg?seed=';
+    function sanitizeUrl(url, seed) {
+      const raw = String(url == null ? '' : url).trim();
+      if (!raw) return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      if (/[\u0000-\u001f\u007f"'`<>\\]/.test(raw)) {
+        return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      }
+      if (!/^https?:\/\//i.test(raw)) {
+        return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      }
+      return raw;
+    }
+
+    // Guna error listener capture supaya tiada inline onerror.
+    document.addEventListener('error', (e) => {
+      const img = e.target;
+      if (!img || img.tagName !== 'IMG') return;
+      const fb = img.getAttribute('data-img-fallback');
+      if (fb && img.src !== fb) img.src = fb;
+    }, true);
 
     // ===== MOD SIANG / MALAM (butang di header) =====
     function updateGateThemeIcon() {
@@ -935,9 +957,9 @@
         paparOverlay(`
           <div class="flex flex-col items-center">
             <div class="relative my-2">
-              <img src="${userImg}"
+              <img src="${escapeHtml(sanitizeUrl(userImg, effectiveId))}"
                    class="w-24 h-24 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(effectiveId)}'">
+                   data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(effectiveId || 'QTIBA')}">
               <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1.5 text-xs"><i class="fa-solid fa-triangle-exclamation"></i></span>
             </div>
             <h3 class="text-2xl font-black text-slate-900 dark:text-white uppercase">${escapeHtml(matchedStudent.nama)}</h3>
@@ -988,9 +1010,9 @@
         <div class="flex flex-col">
           <div class="flex items-center gap-4 text-left">
             <div class="relative shrink-0">
-              <img src="${data.img}"
+              <img src="${escapeHtml(sanitizeUrl(data.img, data.id))}"
                    class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-amber-500 shadow-md bg-slate-200 dark:bg-slate-800"
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+                   data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(data.id || 'QTIBA')}">
               <span class="absolute bottom-0 right-0 bg-amber-500 text-white rounded-full p-1.5 text-xs"><i class="fa-solid fa-clock"></i></span>
             </div>
             <div class="min-w-0">
@@ -1086,9 +1108,9 @@
       paparOverlay(`
         <div class="flex flex-col items-center">
           <div class="relative my-2">
-            <img src="${data.img}"
+            <img src="${escapeHtml(sanitizeUrl(data.img, data.id))}"
                  class="w-28 h-28 rounded-full object-cover border-4 ${borderColor} shadow-lg bg-slate-200 dark:bg-slate-800"
-                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+                 data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(data.id || 'QTIBA')}">
             <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-2 text-sm"><i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i></span>
           </div>
           <h3 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight text-center">${escapeHtml(data.nama)}</h3>

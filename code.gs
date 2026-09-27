@@ -97,6 +97,17 @@ function normalizeId(value) {
   return String(value === null || value === undefined ? '' : value).trim().toUpperCase();
 }
 
+// Pertahanan lapisan kedua terhadap XSS: hanya benalkan URL gambar http/https.
+// Nilai lain (javascript:, data:, vbscript:, aksara kawalan, petik) dikosongkan
+// supaya klien hanya menerima URL yang selamat untuk atribut src.
+function sanitizeImageUrl(value) {
+  var raw = String(value === null || value === undefined ? '' : value).trim();
+  if (!raw) return '';
+  if (/[\u0000-\u001f\u007f"'`<>\\]/.test(raw)) return '';
+  if (!/^https?:\/\//i.test(raw)) return '';
+  return raw;
+}
+
 // ============================================================
 // KONFIGURASI PUSAT (CUTOFF & HARI CUTI)
 // Satu sumber kebenaran untuk cutoff masab & senarai cuti.
@@ -705,7 +716,7 @@ function doGet(e) {
           id: idStr,
           nama: String(row[1] || '').trim(),
           kelas: String(row[2] || '').trim(),
-          urlGambar: String(row[3] || '').trim(),
+          urlGambar: sanitizeImageUrl(row[3]),
           kiraan: 0,
           kesMingguIni: 0,
           kesMingguLepas: 0,
@@ -1101,7 +1112,7 @@ function readMuridRows() {
       id: String(data[i][0]).trim(),
       nama: String(data[i][1] || "").trim(),
       kelas: String(data[i][2] || "").trim(),
-      urlGambar: String(data[i][3] || "").trim()
+      urlGambar: sanitizeImageUrl(data[i][3])
     });
   }
   return out;
@@ -1183,7 +1194,7 @@ function savePanelMurid(params) {
   var id = normalizeId(params.id);
   var nama = String(params.nama || "").trim();
   var kelas = String(params.kelas || "").trim();
-  var url = String(params.urlGambar || "").trim();
+  var url = sanitizeImageUrl(params.urlGambar);
   var editingId = normalizeId(params.editingId);
 
   if (!id || !nama) return { ok: false, msg: "ID dan Nama wajib diisi." };

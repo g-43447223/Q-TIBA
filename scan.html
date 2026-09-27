@@ -96,7 +96,7 @@
   <header class="sticky top-0 z-40 glass-card border-b border-slate-200/50 dark:border-white/10 px-4 py-3">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" onerror="this.style.display='none'">
+        <img src="logo.png" alt="Q-TIBA" class="w-10 h-10 object-contain drop-shadow hover:rotate-12 transition-transform duration-300" data-img-fallback="q-tibalogo.png">
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Q-TIBA</h1>
@@ -290,7 +290,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <!-- Ustaz Ismail -->
         <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="assets/images/cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover" alt="Ustaz Ismail">
+          <img src="assets/images/cikgu1.png" data-img-fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1" class="w-16 h-16 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover" alt="Ustaz Ismail">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
             <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
@@ -302,7 +302,7 @@
 
         <!-- Ustaz Fahmi -->
         <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="assets/images/cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover" alt="Ustaz Fahmi">
+          <img src="assets/images/cikgu2.png" data-img-fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2" class="w-16 h-16 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover" alt="Ustaz Fahmi">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
             <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem &amp; Data</p>
@@ -314,7 +314,7 @@
 
         <!-- Ustaz Hafifi -->
         <div class="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-3">
-          <img src="assets/images/cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover" alt="Ustaz Hafifi">
+          <img src="assets/images/cikgu3.png" data-img-fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3" class="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover" alt="Ustaz Hafifi">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
             <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin &amp; Intervensi</p>
@@ -486,6 +486,28 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+
+    // Elak XSS: hanya benarkan URL http/https untuk atribut src.
+    const IMG_FALLBACK = 'https://api.dicebear.com/7.x/bottts/svg?seed=';
+    function sanitizeUrl(url, seed) {
+      const raw = String(url == null ? '' : url).trim();
+      if (!raw) return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      if (/[\u0000-\u001f\u007f"'`<>\\]/.test(raw)) {
+        return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      }
+      if (!/^https?:\/\//i.test(raw)) {
+        return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      }
+      return raw;
+    }
+
+    // Guna error listener capture supaya tiada inline onerror.
+    document.addEventListener('error', (e) => {
+      const img = e.target;
+      if (!img || img.tagName !== 'IMG') return;
+      const fb = img.getAttribute('data-img-fallback');
+      if (fb && img.src !== fb) img.src = fb;
+    }, true);
 
     // Elak CSV injection (#4): neutralkan = + - @ dan petik semula bila perlu.
     function sanitizeCsv(str) {
@@ -1253,9 +1275,9 @@
         resultBox.innerHTML = `
           <div class="pop-in flex flex-col items-center w-full">
             <div class="relative my-2">
-              <img src="${userImg}" 
+              <img src="${escapeHtml(sanitizeUrl(userImg, effectiveId))}" 
                    class="w-20 h-20 rounded-full object-cover border-4 border-rose-500 shadow-md bg-slate-200 dark:bg-slate-800"
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(effectiveId)}'">
+                   data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(effectiveId || 'QTIBA')}">
               <span class="absolute bottom-0 right-0 bg-rose-500 text-white rounded-full p-1 text-[10px]">
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </span>
@@ -1387,9 +1409,9 @@
           resultBox.innerHTML = `
             <div class="pop-in flex flex-col items-center w-full">
               <div class="relative my-2">
-                <img src="${data.img}" 
+                <img src="${escapeHtml(sanitizeUrl(data.img, data.id))}" 
                      class="w-20 h-20 rounded-full object-cover border-4 ${borderColor} shadow-md bg-slate-200 dark:bg-slate-800"
-                     onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.id)}'">
+                     data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(data.id || 'QTIBA')}">
                 <span class="absolute bottom-0 right-0 ${isHadir ? 'bg-emerald-500' : 'bg-amber-500'} text-white rounded-full p-1 text-[10px]">
                   <i class="fa-solid ${isHadir ? 'fa-check' : 'fa-clock'}"></i>
                 </span>
@@ -1646,7 +1668,7 @@
         logList.innerHTML += `
           <li class="py-2 flex items-center justify-between gap-2 hover:bg-slate-500/5 transition-colors">
             <div class="flex items-center gap-2 overflow-hidden">
-              <img src="${item.img}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
+              <img src="${escapeHtml(sanitizeUrl(item.img, item.id))}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(item.id || 'QTIBA')}">
               <div class="truncate">
                 <p class="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]">${escapeHtml(item.nama)}</p>
                 <p class="text-[9px] text-slate-400 code-font">${escapeHtml(item.id)} &bull; ${escapeHtml(item.kelas)} ${item.guru ? '&bull; <span class="text-cyan-500 font-semibold">' + escapeHtml(item.guru) + '</span>' : ''} ${item.punca ? '&bull; <span class="text-amber-500 font-semibold">' + escapeHtml(item.punca) + '</span>' : ''}</p>

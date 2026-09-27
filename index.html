@@ -53,7 +53,7 @@
   <header class="sticky top-0 z-50 glass-card border-b border-slate-200/50 dark:border-white/10 px-3 sm:px-6 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
       <div class="flex items-center gap-2.5 min-w-0">
-        <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 sm:w-10 sm:h-10 object-contain flex-shrink-0" onerror="this.src='q-tibalogo.png'">
+        <img src="logo.png" alt="Q-TIBA" class="w-9 h-9 sm:w-10 sm:h-10 object-contain flex-shrink-0" data-img-fallback="q-tibalogo.png">
         <div class="truncate">
           <div class="flex items-center gap-1.5">
             <h1 class="text-sm sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">Q-TIBA</h1>
@@ -825,7 +825,7 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-2.5">
-          <img src="assets/images/cikgu1.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1'" class="w-14 h-14 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
+          <img src="assets/images/cikgu1.png" data-img-fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher1" class="w-14 h-14 rounded-full bg-cyan-500/10 border-2 border-cyan-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Ismail</h4>
             <p class="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold mt-0.5">Ketua Inovator / Penyelaras</p>
@@ -836,7 +836,7 @@
         </div>
 
         <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-2.5">
-          <img src="assets/images/cikgu2.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2'" class="w-14 h-14 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
+          <img src="assets/images/cikgu2.png" data-img-fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher2" class="w-14 h-14 rounded-full bg-indigo-500/10 border-2 border-indigo-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Fahmi</h4>
             <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">Pembangun Sistem & Data</p>
@@ -847,7 +847,7 @@
         </div>
 
         <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center gap-2.5">
-          <img src="assets/images/cikgu3.png" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3'" class="w-14 h-14 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
+          <img src="assets/images/cikgu3.png" data-img-fallback="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher3" class="w-14 h-14 rounded-full bg-emerald-500/10 border-2 border-emerald-500 p-0.5 object-cover">
           <div>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">Ustaz Hafifi</h4>
             <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Guru Disiplin & Intervensi</p>
@@ -1341,6 +1341,28 @@
         .replace(/'/g, '&#39;');
     }
 
+    // Elak XSS: hanya benalkan URL http/https untuk atribut src.
+    const IMG_FALLBACK = 'https://api.dicebear.com/7.x/bottts/svg?seed=';
+    function sanitizeUrl(url, seed) {
+      const raw = String(url == null ? '' : url).trim();
+      if (!raw) return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      if (/[\u0000-\u001f\u007f"'`<>\\]/.test(raw)) {
+        return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      }
+      if (!/^https?:\/\//i.test(raw)) {
+        return IMG_FALLBACK + encodeURIComponent(seed || 'QTIBA');
+      }
+      return raw;
+    }
+
+    // Guna error listener capture supaya tiada inline onerror.
+    document.addEventListener('error', (e) => {
+      const img = e.target;
+      if (!img || img.tagName !== 'IMG') return;
+      const fb = img.getAttribute('data-img-fallback');
+      if (fb && img.src !== fb) img.src = fb;
+    }, true);
+
     // Elak CSV injection (#4): neutralkan = + - @ dan petik semula bila perlu.
     function sanitizeCsv(str) {
       let s = String(str == null ? '' : str).replace(/"/g, "'");
@@ -1775,10 +1797,10 @@
             <td class="py-3 code-font">${index + 1}</td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.id)}</td>
             <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0">
-              <img src="${userImg}" 
+              <img src="${escapeHtml(sanitizeUrl(userImg, m.id))}" 
                    alt="${escapeHtml(m.nama)}" 
                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-cyan-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                   data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(m.id || 'QTIBA')}">
               <span class="text-xs sm:text-sm tracking-wide truncate">${escapeHtml(m.nama)}</span>
             </td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
@@ -1830,7 +1852,7 @@
       perkemasKiniCutiLabel();
       const elEmpty = document.getElementById('early-empty-label');
       if (elEmpty) elEmpty.textContent = refLabel;
-      earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum ${refLabel} pada ${dateLabel}.</div>`;
+      earlyListEl.innerHTML = `<div class="col-span-full py-4 text-center text-slate-400 text-xs code-font">Belum ada murid imbas sebelum ${escapeHtml(refLabel)} pada ${escapeHtml(dateLabel)}.</div>`;
         return;
       }
 
@@ -1867,7 +1889,7 @@
         earlyListEl.innerHTML += `
           <div data-murid-id="${encodeURIComponent(item.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer">
             <div class="flex items-center gap-3 overflow-hidden min-w-0">
-              <img src="${userImg}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.id)}'">
+              <img src="${escapeHtml(sanitizeUrl(userImg, item.id))}" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover bg-slate-200 dark:bg-slate-800 border-2 border-emerald-500 ring-2 ring-emerald-500/20 flex-shrink-0 shadow-sm" data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(item.id || 'QTIBA')}">
               <div class="truncate min-w-0">
                 <h4 class="font-extrabold text-slate-900 dark:text-white truncate text-xs sm:text-sm tracking-wide leading-snug">${escapeHtml(item.nama)}</h4>
                 <p class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 code-font mt-0.5 truncate">${escapeHtml(item.kelas)}</p>
@@ -2132,13 +2154,13 @@
               <span class="inline-block max-w-[90px] truncate align-middle text-[10px] font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2 py-0.5" title="${escapeHtml(puncaUtama)}">${escapeHtml(puncaUtama)}</span>
             </td>
             <td class="py-2 pr-2">
-              <select onchange="simpanIntervensi('${encodeURIComponent(m.id || '')}')" class="intervensi-status text-[10px] font-bold bg-white dark:bg-slate-900 border ${statusColor} rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}">${select}</select>
+              <select onchange="simpanIntervensi(this)" class="intervensi-status text-[10px] font-bold bg-white dark:bg-slate-900 border ${statusColor} rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}">${select}</select>
             </td>
             <td class="py-2 pr-2">
-              <input type="date" onchange="simpanIntervensi('${encodeURIComponent(m.id || '')}')" class="intervensi-tarikh text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${escapeHtml(ivTarikh)}">
+              <input type="date" onchange="simpanIntervensi(this)" class="intervensi-tarikh text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${escapeHtml(ivTarikh)}">
             </td>
             <td class="py-2">
-              <input type="text" onblur="simpanIntervensi('${encodeURIComponent(m.id || '')}')" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
+              <input type="text" onblur="simpanIntervensi(this)" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
             </td>
           </tr>`;
       }).join('');
@@ -2159,7 +2181,11 @@
     }
 
     // Baca semua field intervensi bagi murid & hantar ke server (upsert).
-    async function simpanIntervensi(encodedId) {
+    // Terima elemen (this) supaya id tidak perlu diletakkan dalam inline JS.
+    async function simpanIntervensi(el) {
+      const encodedId = (el && el.dataset && el.dataset.murid)
+        ? el.dataset.murid
+        : String(el == null ? '' : el);
       const id = decodeURIComponent(encodedId);
       const idNorm = String(id).trim().toUpperCase();
       const status = document.querySelector(`.intervensi-status[data-murid="${encodedId}"]`);
@@ -2389,9 +2415,9 @@
             <td class="py-3 code-font">${idx + 1}</td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.id)}</td>
             <td class="py-3 font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 min-w-0 cursor-pointer" data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))">
-              <img src="${userImg}" 
+              <img src="${escapeHtml(sanitizeUrl(userImg, m.id))}" 
                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-800 shadow-sm flex-shrink-0" 
-                   onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                   data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(m.id || 'QTIBA')}">
               <span class="text-xs sm:text-sm tracking-wide truncate">${escapeHtml(m.nama)}</span>
             </td>
             <td class="py-3 text-slate-500 dark:text-slate-400 code-font">${escapeHtml(m.kelas)}</td>
@@ -2455,10 +2481,10 @@
 
         absentList.innerHTML += `
           <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-3 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer">
-            <img src="${avatarUrl}" 
+            <img src="${escapeHtml(sanitizeUrl(avatarUrl, m.id))}" 
                  alt="${escapeHtml(m.nama)}" 
                  class="w-10 h-10 rounded-full object-cover border-2 border-rose-300 dark:border-rose-700 bg-slate-200 dark:bg-slate-800 flex-shrink-0"
-                 onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                 data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(m.id || 'QTIBA')}">
             <div class="min-w-0 flex-1">
               <p class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">${escapeHtml(m.nama)}</p>
               <p class="text-[11px] text-slate-500 dark:text-slate-400 code-font font-semibold">${escapeHtml(m.kelas)}</p>
@@ -2588,7 +2614,7 @@
             <td class="py-2 pr-2 text-slate-400 code-font">${idx + 1}</td>
             <td class="py-2 pr-2">
               <div class="flex items-center gap-2">
-                <img src="${avatarUrl}" alt="${escapeHtml(s.m.nama)}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 flex-shrink-0" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(s.m.id)}'">
+                <img src="${escapeHtml(sanitizeUrl(avatarUrl, s.m.id))}" alt="${escapeHtml(s.m.nama)}" class="w-7 h-7 rounded-full object-cover bg-slate-200 dark:bg-slate-800 flex-shrink-0" data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(s.m.id || 'QTIBA')}">
                 <span class="font-extrabold text-slate-900 dark:text-white truncate">${escapeHtml(s.m.nama)}</span>
               </div>
             </td>
@@ -2754,10 +2780,10 @@
               heroContainer.innerHTML += `
                 <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3 sm:p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center shadow-sm hover:scale-[1.03] transition-transform cursor-pointer">
                   <div class="relative mb-2">
-                    <img src="${avatarUrl}" 
+                    <img src="${escapeHtml(sanitizeUrl(avatarUrl, m.id))}" 
                          alt="${escapeHtml(m.nama)}" 
                          class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-slate-200 dark:bg-slate-900 border-4 border-amber-400 ring-4 ring-amber-400/20 object-cover shadow-md"
-                         onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+                         data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(m.id || 'QTIBA')}">
                     <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] sm:text-[10px] ${rankColor} border px-2 py-0.5 rounded-full code-font whitespace-nowrap shadow-md">${rankBadge}</span>
                   </div>
                   <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate w-full mt-2 tracking-wide">${escapeHtml(m.nama)}</h4>
@@ -2782,7 +2808,7 @@
           if (window.QTIBA_Splash) window.QTIBA_Splash.done();
         } else {
           updateSyncStatus("Ralat Google Sheets", "text-rose-500");
-          if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Ralat Apps Script: ${data.message}</td></tr>`;
+          if (todayTableBody) todayTableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-500 code-font"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Ralat Apps Script: ${escapeHtml(data.message)}</td></tr>`;
         }
 
       } catch (error) {
@@ -2804,7 +2830,7 @@
 
       select.innerHTML = '<option value="">Semua Kelas</option>';
       Array.from(kelasSet).sort().forEach(k => {
-        select.innerHTML += `<option value="${k}">${k}</option>`;
+        select.innerHTML += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`;
       });
     }
 
@@ -3067,7 +3093,7 @@
       document.getElementById('laporan-punca').textContent = data.puncaUtama;
 
       if (data.senarai.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 code-font"><i class="fa-solid fa-circle-info mr-1"></i>Tiada kes kelewatan dalam bulan ${data.month}.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 code-font"><i class="fa-solid fa-circle-info mr-1"></i>Tiada kes kelewatan dalam bulan ${escapeHtml(data.month)}.</td></tr>`;
         return;
       }
 
@@ -3666,7 +3692,7 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
         container.innerHTML += `
           <div data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-all cursor-pointer">
             <div class="flex items-center gap-3 min-w-0 mb-2">
-              <img src="${userImg}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id)}'">
+              <img src="${escapeHtml(sanitizeUrl(userImg, m.id))}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-amber-400 ring-2 ring-amber-400/20 object-cover flex-shrink-0 shadow-sm" data-img-fallback="${IMG_FALLBACK}${encodeURIComponent(m.id || 'QTIBA')}">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   ${rankBadge}
@@ -3724,7 +3750,9 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
         ? m.urlGambar
         : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.id || m.nama)}`;
 
-      document.getElementById('sp-avatar').src = avatarUrl;
+      const spAvatar = document.getElementById('sp-avatar');
+      spAvatar.setAttribute('data-img-fallback', IMG_FALLBACK + encodeURIComponent(m.id || 'QTIBA'));
+      spAvatar.src = sanitizeUrl(avatarUrl, m.id);
       document.getElementById('sp-nama').textContent = m.nama || 'Tanpa Nama';
       document.getElementById('sp-kelas').textContent = m.kelas || 'Tiada Kelas';
       document.getElementById('sp-id').textContent = 'NO. ID: ' + (m.id || '—');
