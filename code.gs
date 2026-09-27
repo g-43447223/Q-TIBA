@@ -54,6 +54,29 @@ function isHashed(value) {
 }
 
 // ============================================================
+// KESELAMATAN DATA
+// ============================================================
+
+// Cegah formula injection ke Google Sheets. Nilai yang bermula dengan
+// = + - @ (atau tab/CR) akan ditafsirkan sebagai formula (contoh
+// "=IMPORTXML(...)" boleh mencuri data Sheet lain). Awalan kutip satu
+// memaksa ia menjadi teks biasa.
+function safeCell(value) {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value;
+  var s = String(value);
+  if (s === '') return '';
+  if (/^[=+\-@\t\r]/.test(s)) return "'" + s;
+  return s;
+}
+
+// Normalisasi ID murid ke huruf besar supaya padanan konsisten antara
+// frontend (yang menghantar huruf besar) dan senarai sasaran dalam Sheet.
+function normalizeId(value) {
+  return String(value === null || value === undefined ? '' : value).trim().toUpperCase();
+}
+
+// ============================================================
 // KONFIGURASI PUSAT (CUTOFF & HARI CUTI)
 // Satu sumber kebenaran untuk cutoff masab & senarai cuti.
 // Admin boleh ubah dalam tab "Tetapan" (lajur A=kunci, B=nilai):
@@ -182,15 +205,31 @@ function readIntervensiMap() {
   var data = tab.getDataRange().getValues();
   var map = {};
   for (var i = 1; i < data.length; i++) {
-    var id = String(data[i][0] || "").trim();
+    var id = normalizeId(data[i][0]);
     if (id === "") continue;
     map[id] = {
       status: String(data[i][1] || "Belum"),
-      tarikh: String(data[i][2] || ""),
+      tarikh: formatTarikhYYYYMMDD(data[i][2]),
       nota: String(data[i][3] || "")
     };
   }
   return map;
+}
+
+// Nilai tarikh dalam Sheet boleh jadi objek Date atau teks. Pulangkan
+// sentiasa sebagai "yyyy-MM-dd" supaya <input type="date"> boleh memaparkannya.
+function formatTarikhYYYYMMDD(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) return '';
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  }
+  var s = String(value).trim();
+  var m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) {
+    return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  }
+  return s;
 }
 
 // Tulis/upsert satu rekod intervensi bagi seorang murid
@@ -198,13 +237,15 @@ function writeIntervensi(id, rec) {
   var tab = getIntervensiSheet_();
   var data = tab.getDataRange().getValues();
   var found = -1;
+  var idNorm = normalizeId(id);
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0] || "").trim() === String(id).trim()) { found = i + 1; break; }
+    if (normalizeId(data[i][0]) === idNorm) { found = i + 1; break; }
   }
+  var row = [idNorm, safeCell(rec.status), safeCell(rec.tarikh), safeCell(rec.nota)];
   if (found > -1) {
-    tab.getRange(found, 1, 1, 4).setValues([[String(id), rec.status, rec.tarikh, rec.nota]]);
+    tab.getRange(found, 1, 1, 4).setValues([row]);
   } else {
-    tab.appendRow([String(id), rec.status, rec.tarikh, rec.nota]);
+    tab.appendRow(row);
   }
 }
 
@@ -476,7 +517,7 @@ function doGet(e) {
     for (var i = 1; i < dataMurid.length; i++) {
       var row = dataMurid[i];
       if (row[0]) {
-        var idStr = String(row[0]).trim();
+        var idStr = normalizeId(row[0]);
         var obj = {
           id: idStr,
           nama: String(row[1] || '').trim(),
@@ -492,8 +533,11 @@ function doGet(e) {
           tarikhLewat: '',
           punca: ''
         };
-        muridMap[idStr] = obj;
-        muridList.push(obj);
+        // Elak ID berulang: kekalkan entri pertama sahaja.
+        if (!muridMap[idStr]) {
+          muridMap[idStr] = obj;
+          muridList.push(obj);
+        }
       }
     }
 
@@ -531,7 +575,7 @@ function doGet(e) {
           if (!rawDate) continue;
           var dateFormatted = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), "yyyy-MM-dd");
           var timeFormatted = Utilities.formatDate(rawDate, Session.getScriptTimeZone(), "HH:mm:ss");
-          var id = String(r[1]).trim();
+          var id = normalizeId(r[1]);
           var nama = String(r[2] || '').trim();
           var kelas = String(r[3] || '').trim();
           var status = String(r[4] || '').trim().toUpperCase();
@@ -655,7 +699,15 @@ function doGet(e) {
 // ============================================================
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
+  // WAJIB periksa keputusan tryLock. Jika kunci tidak diperoleh, jawap ralat
+  // dengan jelas (417) supaya client tahu untuk cuba semula, bukan sahaja
+  // proceeding tanpa lock dan berisiko tulis berganda atau ralat separa.
+  if (!lock.tryLock(10000)) {
+    return ContentService.createTextOutput(JSON.stringify({
+      result: "error",
+      message: "Sistem sibuk (kunci tidak diperoleh). Sila cuba semula sebentar."
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 
   try {
     // PENGAWAL KESELAMATAN: Semak API key (daripada query string atau body).
@@ -699,8 +751,24 @@ function doPost(e) {
     }
 
     var timestamp = new Date();
-    var scanId = String(requestData.id || '').trim();
+    var scanId = normalizeId(requestData.id);
     var scanName = String(requestData.nama || '').trim();
+
+    // Guna masa imbasan sebenar daripada peranti (masaIso) jika dihantar — penting
+    // untuk rekod offline yang disinkron lewat. Tanpa ini, imbasan offline 07:05
+    // yang dihantar 08:00 akan direkod pada 08:00 (salah slot & status lewat).
+    if (requestData.masaIso) {
+      var isoParsed = new Date(String(requestData.masaIso));
+      if (!isNaN(isoParsed.getTime())) {
+        // Terima hanya masa dalam julat munasabah (-2/+1 hari). Elak rekod rosak
+        // atau moput masa yang tidak logik, tetapi masih boleh diterima disinkron
+        // lewat selepas tengah malam.
+        var skewMs = isoParsed.getTime() - new Date().getTime();
+        if (skewMs > -2 * 86400000 && skewMs < 86400000) {
+          timestamp = isoParsed;
+        }
+      }
+    }
 
     // Sahkan semula status berdasarkan masa (cutoff dari settings)
     var statusKehadiran = String(requestData.status || 'LEWAT').trim().toUpperCase();
@@ -725,7 +793,7 @@ function doPost(e) {
         var dParsed = parseFlexibleDate(dRow[0]);
         if (!dParsed) continue;
         var dStr = Utilities.formatDate(dParsed, Session.getScriptTimeZone(), "yyyy-MM-dd");
-        if (dStr === todayKey && String(dRow[1] || '').trim() === scanId) {
+        if (dStr === todayKey && normalizeId(dRow[1]) === scanId) {
           return ContentService.createTextOutput(JSON.stringify({
             result: "duplicate",
             message: "Rekod imbas murid ini untuk hari ini sudah wujud. Tidak disimpan dua kali.",
@@ -738,12 +806,12 @@ function doPost(e) {
     // Menyimpan mengikut lajur: [Tarikh/Masa, ID, Nama, Kelas, Status, Punca, Guru]
     sheet.appendRow([
       timestamp,
-      requestData.id || '',
-      requestData.nama || '',
-      requestData.kelas || '',
+      safeCell(scanId),
+      safeCell(scanName),
+      safeCell(requestData.kelas),
       statusKehadiran,
-      requestData.punca || '',
-      requestData.guru || ''
+      safeCell(requestData.punca),
+      safeCell(requestData.guru)
     ]);
 
     return ContentService.createTextOutput(JSON.stringify({ result: "success" }))
@@ -873,6 +941,38 @@ function getPanelMurid() {
 // Simpan tetapan (cuti/cutoff/hujung minggu) ke tab Tetapan.
 function savePanelSettings(params) {
   params = params || {};
+
+  // VALIDASI DULU — jangan tulis apa-apa ke Sheet sehingga input disahkan,
+  // supaya tetapan tidak Separuh rosak bila format salah.
+  var c = String(params.cutoff || "").trim();
+  var cm = c.match(/^(\d{1,2}):(\d{2})$/);
+  if (!cm) {
+    return { ok: false, msg: "Format cutoff tidak sah. Guna HH:MM (cth 07:21)." };
+  }
+  var cH = parseInt(cm[1], 10);
+  var cM = parseInt(cm[2], 10);
+  if (cH > 23 || cM > 59) {
+    return { ok: false, msg: "Nilai cutoff di luar julat (jam 00-23, minit 00-59)." };
+  }
+
+  var hujung = params.hujung;
+  if (!Array.isArray(hujung) || hujung.length === 0) {
+    hujung = [0, 6];
+  }
+  var hujungClean = [];
+  for (var hi = 0; hi < hujung.length; hi++) {
+    var hv = parseInt(hujung[hi], 10);
+    if (isNaN(hv) || hv < 0 || hv > 6) {
+      return { ok: false, msg: "Nombor hari minggu tidak sah (perlu 0-6)." };
+    }
+    if (hujungClean.indexOf(hv) === -1) hujungClean.push(hv);
+  }
+  if (hujungClean.length === 0) hujungClean = [0, 6];
+
+  // Cuti kosong dikosongkan dengan sengaja oleh admin, tetapi elak hapus
+  // senarai secara senyap: hanya tulis jika ada nilai.
+  var cuti = String(params.cuti || "").trim();
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tab = ss.getSheetByName("Tetapan");
   if (!tab) tab = ss.insertSheet("Tetapan");
@@ -882,19 +982,13 @@ function savePanelSettings(params) {
   }
 
   tab.getRange(1, 1).setValue("cutoff");
-  tab.getRange(1, 2).setValue(String(params.cutoff || "07:21").trim());
+  tab.getRange(1, 2).setValue(cm[1] + ':' + cm[2]);
 
   tab.getRange(2, 1).setValue("hujung");
-  tab.getRange(2, 2).setValue((params.hujung || [0, 6]).join(","));
+  tab.getRange(2, 2).setValue(hujungClean.join(","));
 
   tab.getRange(3, 1).setValue("cuti");
-  tab.getRange(3, 2).setValue(String(params.cuti || "").trim());
-
-  // Sahkan cutoff format.
-  var c = String(params.cutoff || "").trim();
-  if (!/^\d{1,2}:\d{2}$/.test(c)) {
-    return { ok: false, msg: "Format cutoff tidak sah. Guna HH:MM (cth 07:21)." };
-  }
+  tab.getRange(3, 2).setValue(cuti);
 
   return { ok: true, msg: "Tetapan berjaya disimpan." };
 }
@@ -902,11 +996,11 @@ function savePanelSettings(params) {
 // Tambah / kemas kini murid.
 function savePanelMurid(params) {
   params = params || {};
-  var id = String(params.id || "").trim();
+  var id = normalizeId(params.id);
   var nama = String(params.nama || "").trim();
   var kelas = String(params.kelas || "").trim();
   var url = String(params.urlGambar || "").trim();
-  var editingId = String(params.editingId || "").trim();
+  var editingId = normalizeId(params.editingId);
 
   if (!id || !nama) return { ok: false, msg: "ID dan Nama wajib diisi." };
 
@@ -915,35 +1009,34 @@ function savePanelMurid(params) {
   if (!sheet) sheet = ss.insertSheet("MuridSasaran");
 
   var data = sheet.getDataRange().getValues();
-  var headerAda = data.length > 0 && String(data[0][0] || "").trim() !== "" && isNaN(Number(String(data[0][0]).trim()));
 
   if (editingId !== "") {
     // Kemas kini baris sedia ada.
     var targetIdx = -1;
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0] || "").trim() === editingId) { targetIdx = i; break; }
+      if (normalizeId(data[i][0]) === editingId) { targetIdx = i; break; }
     }
     if (targetIdx === -1) return { ok: false, msg: "Murid asal tidak dijumpai." };
     // Cek konflik ID (selain baris yang sedang diedit).
     for (var j = 1; j < data.length; j++) {
-      if (j !== targetIdx && String(data[j][0] || "").trim() === id) {
+      if (j !== targetIdx && normalizeId(data[j][0]) === id) {
         return { ok: false, msg: "ID yang sama sudah wujud untuk murid lain." };
       }
     }
-    sheet.getRange(targetIdx + 1, 1).setValue(id);
-    sheet.getRange(targetIdx + 1, 2).setValue(nama);
-    sheet.getRange(targetIdx + 1, 3).setValue(kelas);
-    sheet.getRange(targetIdx + 1, 4).setValue(url);
+    sheet.getRange(targetIdx + 1, 1).setValue(safeCell(id));
+    sheet.getRange(targetIdx + 1, 2).setValue(safeCell(nama));
+    sheet.getRange(targetIdx + 1, 3).setValue(safeCell(kelas));
+    sheet.getRange(targetIdx + 1, 4).setValue(safeCell(url));
     return { ok: true, msg: "Murid dikemas kini." };
   }
 
   // Tambah baharu.
   for (var k = 1; k < data.length; k++) {
-    if (String(data[k][0] || "").trim() === id) {
+    if (normalizeId(data[k][0]) === id) {
       return { ok: false, msg: "ID murid ini sudah wujud." };
     }
   }
-  var row = [id, nama, kelas, url];
+  var row = [safeCell(id), safeCell(nama), safeCell(kelas), safeCell(url)];
   // Pastikan baris 1 adalah header (sistem membaca data dari baris 2 dan seterusnya).
   if (sheet.getLastRow() === 0) {
     sheet.getRange(1, 1, 1, 4).setValues([["ID", "Nama", "Kelas", "UrlGambar"]]);

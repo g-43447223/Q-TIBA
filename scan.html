@@ -1321,6 +1321,7 @@
         status: data.status || "HADIR",
         punca: data.punca || "Tepat Masa",
         masa: timeStr,
+        masaIso: new Date().toISOString(),
         guru: guruScan,
         apiKey: QTIBA_API_KEY || ''
       };
@@ -1415,8 +1416,28 @@
       }
     }
 
+    // Baca antrian offline dengan pengendalian defensif: jika localStorage rosak
+    // (JSON tidak sah / bukan array), pulihkan kepada array kosong dan log amaran
+    // supaya scanner tidak terus gagal.
+    function readOfflineQueue() {
+      try {
+        const raw = localStorage.getItem('qtiba_offline_queue');
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.warn("Q-TIBA: Antrian offline rosak, set semula.", err);
+        return [];
+      }
+    }
+
     function saveOffline(payload) {
-      let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      const offlineQueue = readOfflineQueue();
+      // Stamp masa imbasan sebenar (ISO penuh) supaya server boleh guna masa
+      // sebenar, bukan masa sinkronisasi, untuk rekod offline.
+      if (payload && !payload.masaIso) {
+        payload.masaIso = new Date().toISOString();
+      }
       offlineQueue.push(payload);
       localStorage.setItem('qtiba_offline_queue', JSON.stringify(offlineQueue));
       checkNetworkStatus();
@@ -1426,7 +1447,7 @@
       const offlineBar = document.getElementById('offline-bar');
       const offlineCount = document.getElementById('offline-count');
       const offlineCacheBar = document.getElementById('offline-cache-bar');
-      const offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      const offlineQueue = readOfflineQueue();
 
       if (!navigator.onLine || offlineQueue.length > 0) {
         offlineBar.classList.remove('hidden');
@@ -1441,7 +1462,7 @@
     function updateScanStatusBadge(cloudOk) {
       const badge = document.getElementById('scan-status-badge');
       if (!badge) return;
-      const queue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
+      const queue = readOfflineQueue();
       if (cloudOk || queue.length === 0) {
         badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> CLOUD OK`;
         badge.className = "text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold code-font flex items-center gap-1.5";
@@ -1453,24 +1474,32 @@
 
     let isSyncingQueue = false;
     function syncOfflineQueue() {
-      let offlineQueue = JSON.parse(localStorage.getItem('qtiba_offline_queue') || '[]');
-      if (offlineQueue.length === 0 || !API_URL || API_URL.includes("MASUKKAN_URL")) return;
+      if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       if (isSyncingQueue) return;
+      const currentQueue = readOfflineQueue();
+      if (currentQueue.length === 0) return;
       isSyncingQueue = true;
 
-      const pending = [...offlineQueue];
+      const pending = [...currentQueue];
       const remaining = [];
       let sentCount = 0;
 
       const sendNext = async (index) => {
         if (index >= pending.length) {
-          if (remaining.length > 0) {
-            localStorage.setItem('qtiba_offline_queue', JSON.stringify(remaining));
+          // MERGE dengan item yang mungkin ditambah semasa sync (tab lain /
+          // imbasan baru ketika offline) — jangan tulis keluar terus dan
+          // hilangkan rekod baharu.
+          const stillPending = readOfflineQueue();
+          const merged = remaining.concat(
+            stillPending.filter(it => !pending.some(p => p === it || (p && it && p.masaIso && it.masaIso && p.masaIso === it.masaIso)))
+          );
+          if (merged.length > 0) {
+            localStorage.setItem('qtiba_offline_queue', JSON.stringify(merged));
           } else {
             localStorage.removeItem('qtiba_offline_queue');
           }
           checkNetworkStatus();
-          updateScanStatusBadge(remaining.length === 0);
+          updateScanStatusBadge(merged.length === 0);
           isSyncingQueue = false;
           if (sentCount > 0) speakText(`${sentCount} data offline telah dikemas kini ke cloud.`);
           return;

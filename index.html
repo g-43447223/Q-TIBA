@@ -2075,18 +2075,22 @@
         if (puncaCache[pid] === undefined) puncaCache[pid] = commonReasonForStudent(pid);
         const puncaUtama = puncaCache[pid] || '—';
 
-        // Data tindakan intervensi (dari server / sheet).
-        const iv = intervensiMap[String(m.id || '')] || {};
+        // Data tindakan intervensi (dari server / sheet). Kunci dinormalkan huruf besar.
+        const iv = intervensiMap[String(m.id || '').trim().toUpperCase()] || {};
         const ivStatus = iv.status || '';
         const ivTarikh = iv.tarikh || '';
         const ivNota = iv.nota || '';
 
         const statusOptions = ['Belum', 'Surat 1', 'Surat 2', 'Surat 3', 'Kaunseling', 'Rujuk Pengetua'];
+        // Jika status sedia ada tidak tersenarai (data lama/luar jadual), kekalkan
+        // sebagai option supaya guru tidak pepasaran dengan sengaja menimpa kepada "Belum".
+        const adaDalamSenarai = statusOptions.indexOf(ivStatus) !== -1;
+        const semuaOptions = (ivStatus && !adaDalamSenarai) ? [ivStatus].concat(statusOptions) : statusOptions;
         const saranan = suggestStatus(m);
-        const select = statusOptions.map(opt => {
+        const select = semuaOptions.map(opt => {
           const sel = ivStatus === opt ? ' selected' : '';
           const saran = opt === saranan && opt !== 'Belum' ? ' ✓ (disyorkan)' : '';
-          return `<option value="${opt}"${sel}${opt === saranan && opt !== 'Belum' ? ' class="font-black text-cyan-600"' : ''}>${opt}${saran}</option>`;
+          return `<option value="${escapeHtml(opt)}"${sel}${opt === saranan && opt !== 'Belum' ? ' class="font-black text-cyan-600"' : ''}>${escapeHtml(opt)}${saran}</option>`;
         }).join('');
 
         const statusColor = ivStatus === 'Kaunseling' || ivStatus === 'Rujuk Pengetua' ? 'border-rose-400 text-rose-600 dark:text-rose-300'
@@ -2137,28 +2141,53 @@
     }
 
     // Baca semua field intervensi bagi murid & hantar ke server (upsert).
-    function simpanIntervensi(encodedId) {
+    async function simpanIntervensi(encodedId) {
       const id = decodeURIComponent(encodedId);
+      const idNorm = String(id).trim().toUpperCase();
       const status = document.querySelector(`.intervensi-status[data-murid="${encodedId}"]`);
       const tarikh = document.querySelector(`.intervensi-tarikh[data-murid="${encodedId}"]`);
       const nota = document.querySelector(`.intervensi-nota[data-murid="${encodedId}"]`);
       if (!status || !tarikh || !nota) return;
 
+      const prev = intervensiMap[idNorm] || {};
       const rec = {
-        id: id,
+        id: idNorm,
         status: status.value,
         tarikh: tarikh.value,
         nota: nota.value
       };
 
       // Kemas kini local map supaya UI kekal responsif.
-      intervensiMap[id] = rec;
+      intervensiMap[idNorm] = rec;
 
-      fetch(buildApiUrl({ action: 'saveIntervensi' }), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.assign({ apiKey: QTIBA_API_KEY || '' }, rec))
-      }).then(r => r.json()).catch(() => {});
+      try {
+        const res = await fetch(buildApiUrl({ action: 'saveIntervensi' }), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({ apiKey: QTIBA_API_KEY || '' }, rec))
+        });
+        const data = await res.json();
+        if (!res.ok || !data || data.result !== 'success') {
+          throw new Error((data && data.message) || ('HTTP ' + res.status));
+        }
+        flashIntervensiSaved(status, true);
+      } catch (err) {
+        // Pulangkan nilai asal supaya guru nampak data tidak tersimpan.
+        intervensiMap[idNorm] = prev;
+        status.value = prev.status || 'Belum';
+        tarikh.value = prev.tarikh || '';
+        nota.value = prev.nota || '';
+        flashIntervensiSaved(status, false);
+        console.warn("Q-TIBA: Gagal simpan intervensi", err);
+      }
+    }
+
+    // Maklum balik visual simpan intervensi (hijau = berjaya, merah = gagal).
+    function flashIntervensiSaved(el, ok) {
+      if (!el) return;
+      el.style.transition = 'box-shadow .2s';
+      el.style.boxShadow = ok ? '0 0 0 2px rgba(16,185,129,.6)' : '0 0 0 2px rgba(244,63,94,.6)';
+      setTimeout(() => { el.style.boxShadow = ''; }, 1200);
     }
 
     // Muat rekod intervensi dari server & set semula jadual.
@@ -2168,8 +2197,10 @@
         const res = await fetch(buildApiUrl({ action: 'intervensi' }));
         const data = await res.json();
         if (data.status === 'Success' && data.intervensi) {
-          // Simpan nilai sedia ada yang mungkin belum dihantar? Tiada. Guna server sebagai sumber utama.
-          intervensiMap = data.intervensi || {};
+          // Normalisasi kunci ID ke huruf besar (selaras backend).
+          const map = {};
+          for (const k in (data.intervensi || {})) { map[String(k).trim().toUpperCase()] = data.intervensi[k]; }
+          intervensiMap = map;
         }
       } catch (err) { /* senyap - guna map kosong */ }
       renderAtRiskStudents();
@@ -3721,7 +3752,7 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
         .sort((a, b) => String(a.tarikhMasa || '').localeCompare(String(b.tarikhMasa || '')));
 
       // Blok intervensi semasa (ditunjukkan di atas timeline).
-      const iv = intervensiMap[String(idMurid || '')] || {};
+      const iv = intervensiMap[String(idMurid || '').trim().toUpperCase()] || {};
       const ivStatus = iv.status || '';
       let ivHtml = '';
       if (ivStatus && ivStatus !== 'Belum') {
@@ -3783,7 +3814,7 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
 
       const recs = (globalRekodList || []).filter(r => String(r.id || '') === String(idMurid))
         .sort((a, b) => String(a.tarikhMasa || '').localeCompare(String(b.tarikhMasa || '')));
-      const iv = intervensiMap[String(idMurid || '')] || {};
+      const iv = intervensiMap[String(idMurid || '').trim().toUpperCase()] || {};
 
       const hariMs = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
       const rows = recs.map((r, i) => {
