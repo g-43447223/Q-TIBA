@@ -928,9 +928,16 @@ function doPost(e) {
 
     var requestData = requestDataAwal;
 
+    // ACTION datang dalam QUERY STRING (proxy meneruskannya dari URL), bukan
+    // dalam body. Baca query sebagai sumber utama; body hanya fallback untuk
+    // pemanggil terus. Tanpa ini saveIntervensi tidak pernah sampai ke
+    // writeIntervensi, dan request jatuh ke laluan rekod kehadiran -
+    // menulis baris sampah ke tab Rekod.
+    var postAction = String((e.parameter && e.parameter.action) || requestData.action || '');
+
     // FUNGSI SIMPAN REKOD INTERVENSI (tracking surat/kaunseling)
-    // Body: { action:"saveIntervensi", id, status, tarikh, nota }
-    if (String(requestData.action || '') === 'saveIntervensi') {
+    // Query: ?action=saveIntervensi   Body: { id, status, tarikh, nota }
+    if (postAction === 'saveIntervensi') {
       var dvId = String(requestData.id || '').trim();
       if (dvId === '') {
         return ContentService.createTextOutput(JSON.stringify({ result: "error", message: "ID murid diperlukan." }))
@@ -948,6 +955,18 @@ function doPost(e) {
     var timestamp = new Date();
     var scanId = normalizeId(requestData.id);
     var scanName = String(requestData.nama || '').trim();
+
+    // PENGAWAL: selepas ini setiap request dianggap rekod kehadiran. Semua
+    // peranti imbas (scanner & pintu) menghantar id DAN nama, jadi request yang
+    // salah satu kosong bukan imbasan - tolak dengan jelas. Tanpa pengawal ini,
+    // request tersalah hala akan menulis baris sampah ke tab Rekod dan
+    // mengotorkan statistik kehadiran.
+    if (scanId === '' || scanName === '') {
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "error",
+        message: "Rekod imbasan tidak lengkap: id dan nama murid wajib ada."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
 
     // Guna masa imbasan sebenar daripada peranti (masaIso) jika dihantar — penting
     // untuk rekod offline yang disinkron lewat. Tanpa ini, imbasan offline 07:05

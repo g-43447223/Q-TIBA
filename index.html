@@ -2246,9 +2246,40 @@
           handleSesiTamat();
         } else {
           console.warn("Q-TIBA: Gagal simpan intervensi", err);
+          notifikasiIntervensi('Gagal simpan intervensi: ' + ((err && err.message) || 'ralat tidak diketahui'), 'err');
         }
       } finally {
         flashIntervensiBusy(status, false);
+      }
+    }
+
+    // Notifikasi ringkas untuk ralat simpan intervensi. Guru mesti nampak mesej
+    // sebenar dari server - dahulu nilai hanya dipulangkan tanpa penjelasan,
+    // jadi punca kegagalan tidak dapat dikenal pasti.
+    // Guna textContent (bukan innerHTML) supaya mesej server tidak jadi XSS,
+    // dan swallow ralat sendiri kerana ia dipanggil dari dalam blok catch -
+    // kegagalan notifikasi mesti tidak menyembunyikan punca sebenar.
+    function notifikasiIntervensi(teks, jenis) {
+      try {
+        let host = document.getElementById('intervensi-toast');
+        if (!host) {
+          host = document.createElement('div');
+          host.id = 'intervensi-toast';
+          host.setAttribute('role', 'alert');
+          document.body.appendChild(host);
+        }
+        host.textContent = teks;
+        host.className = 'fixed bottom-4 right-4 z-[100] max-w-[90vw] sm:max-w-xs px-3 py-2 rounded-xl text-[11px] font-bold shadow-lg border ' + (
+          jenis === 'ok'
+            ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-300'
+            : 'bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-300'
+        );
+        clearTimeout(host._qtibaTimer);
+        host._qtibaTimer = setTimeout(() => {
+          if (host && host.parentNode) host.remove();
+        }, 7000);
+      } catch (e) {
+        console.warn("Q-TIBA: Notifikasi intervensi gagal", e);
       }
     }
 
