@@ -40,7 +40,13 @@ const rateBuckets = new Map();
 function jsonResponse(payload, status, extraHeaders) {
   return new Response(JSON.stringify(payload), {
     status: status || 200,
-    headers: Object.assign({ "Content-Type": "application/json" }, extraHeaders || {})
+    headers: Object.assign({
+      "Content-Type": "application/json",
+      // Respons API mengandungi data kehadiran peribadi murid. Jangan biarkan
+      // edge/CDN atau cache pelayar menyimpan salinan.
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Pragma": "no-cache"
+    }, extraHeaders || {})
   });
 }
 
@@ -416,7 +422,12 @@ export async function onRequest(context) {
 
     return new Response(result.text, {
       status: result.status,
-      headers: { "Content-Type": result.contentType || "application/json" }
+      headers: {
+        "Content-Type": result.contentType || "application/json",
+        // Sama seperti jsonResponse: data kehadiran tidak boleh di-cache.
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache"
+      }
     });
   } catch (err) {
     return jsonResponse(
