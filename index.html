@@ -2160,7 +2160,7 @@
               <input type="date" onchange="simpanIntervensi(this)" class="intervensi-tarikh text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${escapeHtml(ivTarikh)}">
             </td>
             <td class="py-2">
-              <input type="text" onblur="simpanIntervensi(this)" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
+              <input type="text" onblur="simpanIntervensi(this)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
             </td>
           </tr>`;
       }).join('');
@@ -2180,6 +2180,11 @@
       return best;
     }
 
+    // Rantaian simpan per murid: dua permintaan bagi murid sama tidak boleh
+    // jalan serentak. Tanpa ini, permintaan lama boleh tiba selepas yang baharu
+    // dan menimpa nilai terkini di Sheet.
+    const intervensiRantai = {};
+
     // Baca semua field intervensi bagi murid & hantar ke server (upsert).
     // Terima elemen (this) supaya id tidak perlu diletakkan dalam inline JS.
     async function simpanIntervensi(el) {
@@ -2193,6 +2198,15 @@
       const nota = document.querySelector(`.intervensi-nota[data-murid="${encodedId}"]`);
       if (!status || !tarikh || !nota) return;
 
+      // Nilai dibaca semasa tugas dijalankan (bukan semasa queue) supaya
+      // simpanan beraturhan menghantar keadaan terkini.
+      const tugas = (intervensiRantai[idNorm] || Promise.resolve())
+        .then(() => hantarIntervensi(idNorm, status, tarikh, nota));
+      intervensiRantai[idNorm] = tugas.catch(() => {});
+      return tugas;
+    }
+
+    async function hantarIntervensi(idNorm, status, tarikh, nota) {
       const prev = intervensiMap[idNorm] || {};
       const rec = {
         id: idNorm,
@@ -2203,6 +2217,7 @@
 
       // Kemas kini local map supaya UI kekal responsif.
       intervensiMap[idNorm] = rec;
+      flashIntervensiBusy(status, true);
 
       try {
         const res = await fetch(buildApiUrl({ action: 'saveIntervensi' }), {
@@ -2232,6 +2247,27 @@
         } else {
           console.warn("Q-TIBA: Gagal simpan intervensi", err);
         }
+      } finally {
+        flashIntervensiBusy(status, false);
+      }
+    }
+
+    // Penunjuk "menyimpan..." pada sel status semasa request sedang berjalan.
+    function flashIntervensiBusy(el, busy) {
+      if (!el) return;
+      const sel = el.parentNode;
+      if (!sel) return;
+      let tag = sel.querySelector('[data-intervensi-busy]');
+      if (busy) {
+        if (!tag) {
+          tag = document.createElement('span');
+          tag.setAttribute('data-intervensi-busy', '1');
+          tag.className = 'ml-1 text-[9px] font-bold text-cyan-600 dark:text-cyan-400 whitespace-nowrap';
+          tag.textContent = 'menyimpan...';
+          sel.appendChild(tag);
+        }
+      } else if (tag) {
+        tag.remove();
       }
     }
 
