@@ -8,17 +8,58 @@ var LATE_HOUR = 7;
 var LATE_MINUTE = 21;
 
 // ============================================================
-// API KEY - PADANKAN DENGAN config.js (QTIBA_API_KEY)
-// !!! WAJIB GANTI dengan nilai yang unik sebelum deploy !!!
-// Ini menghalang orang luar dari memanggil Web App tanpa kebenaran.
+// API KEY - DISIMPAN DALAM SCRIPT PROPERTIES, BUKAN DALAM KOD
+// ------------------------------------------------------------
+// Kunci lama pernah ditulis terus di fail ini, dan repo Q-TIBA adalah
+// PUBLIC di GitHub - jadi kunci itu sudah bocor dan mesti dirotasi.
+// Sekarang kunci dibaca dari Project Settings > Script Properties (nama:
+// API_KEY) supaya tidak pernah lagi muncul dalam kod atau repo.
+//
+//.cloudflarePages: nilai yang sama mesti ada dalam env QTIBA_API_KEY.
+// Proxy Cloudflare menyuntik kunci ini; pelayar tidak pernah melihatnya.
+//
+// Nilai di bawah hanya digunakan SEMASA MIGRATION sahaja (supaya kunci lama
+// dan baharu kedua-duanya berfungsi sementara Apps Script dikemas kini).
+// AKAN DIBUANG selepas migrasi selesai.
 // ============================================================
-var API_KEY = "QTiba-918800f61817b8b676e903f10b03903b50c62a5c98332ae8"; // GANTI INI dengan key yang sama dalam config.js
+var LEGACY_API_KEY = "QTiba-918800f61817b8b676e903f10b03903b50c62a5c98332ae8";
 
-// Sahkan request datang dengan API key yang betul.
-// Key dihantar sebagai query parameter: ?apiKey=xxx&action=yyy
+function getApiKey() {
+  var keys = getApiKeys();
+  return keys.length > 0 ? keys[0] : '';
+}
+
+// Senarai kunci yang sah pada masa ini.
+//
+// MIGRATION: Cloudflare masih menghantar kunci LAMA sementara backend ini
+// dinaik taraf. Kedua-duanya diterima supaya deployment baharu ini tidak
+// menyebabkan downtime. Selepas kunci Cloudflare ditukar kepada kunci baharu
+// dan disahkan, buang LEGACY_API_KEY (fungsi ini kembali kepada satu kunci).
+function getApiKeys() {
+  var keys = [];
+  try {
+    var fromProps = String(
+      PropertiesService.getScriptProperties().getProperty('API_KEY') || ''
+    ).trim();
+    if (fromProps !== '') keys.push(fromProps);
+  } catch (err) {
+    // Script Properties tidak tersedia (contoh dalam ujian) - guna fallback.
+  }
+  if (keys.length === 0 && LEGACY_API_KEY !== '') {
+    keys.push(LEGACY_API_KEY);
+  }
+  return keys;
+}
+
+// Sahkan request datang dengan API key yang betul (disuntik oleh proxy).
 function isAuthorizedRequest(e) {
   var key = String((e && e.parameter && e.parameter.apiKey) || '');
-  return key !== '' && key === API_KEY;
+  if (key === '') return false;
+  var keys = getApiKeys();
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] !== '' && key === keys[i]) return true;
+  }
+  return false;
 }
 
 // Hasilkan hash SHA-256 (hex). PIN disimpan sebagai hash, bukan plain text,
@@ -349,6 +390,129 @@ function requireAdminToken(e) {
   }
 }
 
+// Email admin yang sedang acting, seperti yang disahkan oleh proxy Cloudflare.
+//
+// Proxy menghantar header X-QTIBA-Actor HANYA selepas ia mengesahkan sesi
+// cookie milik pelayar. Kita Percaya header ini kerana request ini sudah
+// melepasi isAuthorizedRequest() - yang hanya boleh berlaku jika pemanggil
+// mengetahui API key, iaitu rahsia yang hanya proxy tahu.
+//
+// Ini menggantikan token dalam query string. Token URL bocor ke browser
+// history, log Cloudflare dan header Referrer; header ini tidak.
+function getActorEmail(e) {
+  var header = {};
+  try {
+    header = (e && e.header) || {};
+  } catch (err) {
+    header = {};
+  }
+  var actor = String(header['X-QTIBA-Actor'] || '').trim().toLowerCase();
+  if (actor !== '') return actor;
+
+  // Fallback: token sesi Apps Script ( masih disokong untuk kesCRIPT langsung).
+  return requireAdminToken(e);
+}
+
+// ============================================================
+// KUNCI AKAUN SELAIN PERCUBAAAN GAGAL (sheet-berasaskan)
+// ------------------------------------------------------------
+// Rate limit in-memory pada proxy hilang bila Worker restart, jadi
+// penguncian kekal disimpan dalam Sheet. Ini adalah pertahanan yang
+// benar-benar tahan lama terhadap brute force PIN.
+// ============================================================
+var LOCK_MAX_FAILS = 5;        // percubaan gagal sebelum dikunci
+var LOCK_MINUTES = 15;         // tempoh kunci
+
+function getLockSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tab = ss.getSheetByName('AdminKunci');
+  if (!tab) {
+    tab = ss.insertSheet('AdminKunci');
+    tab.getRange(1, 1, 1, 3).setValues([['Email', 'Gagal', 'KunciHkbp']]);
+    tab.setFrozenRows(1);
+  }
+  return tab;
+}
+
+// Pulangkan baris kunci bagi emel, atau -1.
+function findLockRow_(tab, email) {
+  var data = tab.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0] || '').trim().toLowerCase() === email) return i;
+  }
+  return -1;
+}
+
+// Adakah akaun sedang dikunci? true = ya.
+function isAccountLocked_(email) {
+  try {
+    var tab = getLockSheet_();
+    var row = findLockRow_(tab, email);
+    if (row < 0) return false;
+    var until = tab.getRange(row + 1, 3).getValue();
+    if (until === '' || until === null) return false;
+    var t = (until instanceof Date) ? until.getTime() : parseFlexibleDate(until);
+    if (!t) return false;
+    if (t > new Date().getTime()) return true;
+    // Kunci telah lupus - bersihkan baris supaya percubaan boleh diulang.
+    tab.getRange(row + 1, 2, 1, 2).setValues([[0, '']]);
+    return false;
+  } catch (err) {
+    // Jika Sheet tidak boleh dibaca, jangan kunci akaun (ketersediaan didahulukan).
+    return false;
+  }
+}
+
+// Rekod satu kegagalan; kunci akaun bila melebihi had.
+function recordFailedLogin_(email) {
+  try {
+    var tab = getLockSheet_();
+    var row = findLockRow_(tab, email);
+    var fails = 1;
+    if (row < 0) {
+      tab.appendRow([email, 1, '']);
+    } else {
+      fails = (parseInt(tab.getRange(row + 1, 2).getValue(), 10) || 0) + 1;
+      if (fails >= LOCK_MAX_FAILS) {
+        var until = new Date(new Date().getTime() + LOCK_MINUTES * 60000);
+        tab.getRange(row + 1, 2, 1, 2).setValues([[fails, until]]);
+      } else {
+        tab.getRange(row + 1, 2).setValue(fails);
+      }
+    }
+  } catch (err) {
+    // Butiran ralat tidak penting berbanding jeopard Sheet.
+  }
+}
+
+// Reset counter selepas login berjaya.
+function clearFailedLogins_(email) {
+  try {
+    var tab = getLockSheet_();
+    var row = findLockRow_(tab, email);
+    if (row >= 0) tab.getRange(row + 1, 2, 1, 2).setValues([[0, '']]);
+  } catch (err) {
+    // Tiada apa-apa untuk dilakukan.
+  }
+}
+
+// ============================================================
+// DASAR PIN - minimum 6 digit, tolak yang terlalu mudah diteka
+// ============================================================
+function isPinAcceptable(pin) {
+  var p = String(pin || '').trim();
+  if (!/^\d{6,12}$/.test(p)) return false;
+  if (/^(\d)\1+$/.test(p)) return false;                 // 111111, 000000
+  var ascending = true;
+  var descending = true;
+  for (var i = 1; i < p.length; i++) {
+    if (parseInt(p[i], 10) !== parseInt(p[i - 1], 10) + 1) ascending = false;
+    if (parseInt(p[i], 10) !== parseInt(p[i - 1], 10) - 1) descending = false;
+  }
+  if (ascending || descending) return false;              // 123456, 654321
+  return true;
+}
+
 // 1. MENGAMBIL DAN MENGANALISIS DATA UNTUK DASHBOARD & SCANNER
 function doGet(e) {
   var action = e.parameter.action;
@@ -373,6 +537,18 @@ function doGet(e) {
     var inputEmail = String(e.parameter.email || "").trim().toLowerCase();
     var inputPin = String(e.parameter.pin || "").trim();
 
+    // Kunci akaun selepas terlalu banyak percubaan gagal. Semak SEBELUM
+    // membandingkan PIN, dan balas mesej yang sama supaya tidak mendedahkan
+    // sama ada emel itu wujud.
+    if (inputEmail !== "" && isAccountLocked_(inputEmail)) {
+      return jsonResponse({
+        status: "Error",
+        authorized: false,
+        locked: true,
+        message: "Akaun dikunci sementara selepas terlalu banyak percubaan. Cuba lagi dalam " + LOCK_MINUTES + " minit."
+      });
+    }
+
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Admin");
     var isAuthorized = false;
 
@@ -393,13 +569,21 @@ function doGet(e) {
       }
     }
 
+    if (inputEmail !== "" && inputPin !== "") {
+      if (isAuthorized) {
+        clearFailedLogins_(inputEmail);
+      } else {
+        recordFailedLogin_(inputEmail);
+      }
+    }
+
     var token = null;
     if (isAuthorized) {
       token = issueSessionToken(inputEmail);
     }
 
     return jsonResponse({
-      status: "Success",
+      status: isAuthorized ? "Success" : "Error",
       authorized: isAuthorized,
       token: token
     });
@@ -408,7 +592,7 @@ function doGet(e) {
   // FUNGSI TUKAR PIN ADMIN
   if (action === "changePin") {
     // Tindakan sensitif: mesti log masuk dengan betul (token sah) + API key.
-    var sessionEmail = requireAdminToken(e);
+    var sessionEmail = getActorEmail(e);
     if (!sessionEmail) {
       return jsonResponse({ status: "Error", message: "Sesi sah tidak dijumpai. Sila log masuk semula." });
     }
@@ -420,6 +604,14 @@ function doGet(e) {
     // Hanya pemilik akaun yang log masuk boleh menukar PIN akaun sendiri.
     if (email !== sessionEmail) {
       return jsonResponse({ status: "Error", message: "Anda hanya boleh menukar PIN akaun anda sendiri." });
+    }
+
+    // Dasar PIN: minimum 6 digit, tolak yang mudah diteka.
+    if (!isPinAcceptable(newPin)) {
+      return jsonResponse({
+        status: "Error",
+        message: "PIN baru mesti 6-12 digit dan tidak boleh semua digit sama atau berurutan (cth 123456)."
+      });
     }
 
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Admin");
@@ -448,7 +640,7 @@ function doGet(e) {
   // FUNGSI DAFTAR ADMIN BAHARU (OLEH ADMIN SEDIA ADA)
   if (action === "registerAdmin") {
     // Tindakan sensitif: mesti log masuk dengan betul (token sah) + API key.
-    var sessionEmail = requireAdminToken(e);
+    var sessionEmail = getActorEmail(e);
     if (!sessionEmail) {
       return jsonResponse({ status: "Error", message: "Sesi sah tidak dijumpai. Sila log masuk semula." });
     }
@@ -461,6 +653,17 @@ function doGet(e) {
     // Pengesah mestilah akaun yang sedang log masuk dalam sesi.
     if (adminEmail !== sessionEmail) {
       return jsonResponse({ status: "Error", message: "Pengesahan Admin tidak sepadan dengan sesi log masuk." });
+    }
+
+    // Semak input sebelum apa-apa tulisan ke Sheet.
+    if (newEmail === "" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail)) {
+      return jsonResponse({ status: "Error", message: "Emel tidak sah." });
+    }
+    if (!isPinAcceptable(newPin)) {
+      return jsonResponse({
+        status: "Error",
+        message: "PIN baharu mesti 6-12 digit dan tidak boleh semua digit sama atau berurutan (cth 123456)."
+      });
     }
 
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Admin");
@@ -717,8 +920,16 @@ function doPost(e) {
     }
     var bodyKey = String(requestDataAwal.apiKey || '');
     var queryKey = String((e.parameter && e.parameter.apiKey) || '');
-    var effectiveKey = bodyKey !== '' ? bodyKey : queryKey;
-    if (effectiveKey === '' || effectiveKey !== API_KEY) {
+    var effectiveKey = queryKey !== '' ? queryKey : bodyKey;
+    // Bandingkan dengan senarai kunci yang sah (lama + baharu semasa migrasi).
+    var sahKey = false;
+    if (effectiveKey !== '') {
+      var kunciSah = getApiKeys();
+      for (var ki = 0; ki < kunciSah.length; ki++) {
+        if (kunciSah[ki] !== '' && effectiveKey === kunciSah[ki]) { sahKey = true; break; }
+      }
+    }
+    if (!sahKey) {
       return ContentService.createTextOutput(JSON.stringify({ result: "error", message: "Unauthorized: API key tidak sah." }))
         .setMimeType(ContentService.MimeType.JSON);
     }

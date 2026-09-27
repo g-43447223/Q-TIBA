@@ -396,9 +396,10 @@
 
     // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
 
-    // Bina URL API lengkap dengan apiKey (#2) sebagai query param.
+    // Bina URL API. apiKey TIDAK lagi dihantar dari pelayar - proxy Cloudflare
+    // menyuntik kunci itu sendiri. Paparan ibu bapa adalah AWAM (tiada sesi).
     function buildApiUrl(params) {
-      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      const p = Object.assign({}, params || {});
       return `${API_URL}?${new URLSearchParams(p).toString()}`;
     }
 
@@ -886,7 +887,7 @@
     async function muatKonfigurasiCuti() {
       try {
         if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
-        const res = await fetch(`${API_URL}?action=settings&apiKey=${encodeURIComponent(QTIBA_API_KEY || '')}`);
+        const res = await fetch(buildApiUrl({ action: 'settings' }));
         const data = await res.json();
         if (!data || data.status !== 'Success') return;
         if (typeof data.cutoffMin === 'number' && data.cutoffMin >= 0) CUTOFF_MIN = data.cutoffMin;

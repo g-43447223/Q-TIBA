@@ -443,6 +443,13 @@
     let sessionScannedList = [];
     let pendingScanData = null;
 
+    // Status SESI (disahkan server, bukan localStorage).
+    // sesiSudahDisahkan: cache(session check) supaya queue offline tidak
+    // dihantar setiap 15 saat lalu ditolak 401.
+    // sesiAdminEmail: emel staff untuk kolum "guru" pada rekod imbasan.
+    let sesiSudahDisahkan = false;
+    let sesiAdminEmail = '';
+
     const BUILD_VERSION = 'v5.1';
     const versionEl = document.getElementById('build-version');
     if (versionEl) versionEl.innerText = BUILD_VERSION;
@@ -450,10 +457,24 @@
 
     // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
 
-    // Bina URL API lengkap dengan apiKey (keselamatan #2) sebagai query param.
+    // Bina URL API. apiKey TIDAK lagi dihantar dari pelayar - proxy Cloudflare
+    // menyuntik kunci itu sendiri. Sesi dihantar melalui cookie HttpOnly.
     function buildApiUrl(params) {
-      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      const p = Object.assign({}, params || {});
       return `${API_URL}?${new URLSearchParams(p).toString()}`;
+    }
+
+    // Status sesi sebenar di server (bukan localStorage).
+    async function semakSesiServer() {
+      try {
+        const res = await fetch(buildApiUrl({ action: 'session' }), {
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        return (data && data.authenticated) ? data : null;
+      } catch (err) {
+        return null;
+      }
     }
 
     // Elak XSS (#4): buang aksara yang boleh menjadi HTML/JS dalam innerHTML.
@@ -673,11 +694,27 @@
       if (offlineBar) offlineBar.style.display = 'none';
     }
 
-    function checkAdminAuth() {
-      const isAuth = localStorage.getItem('qtiba_admin_auth');
-      if (isAuth !== 'true') {
-        document.getElementById('admin-auth-modal').classList.remove('hidden');
+    // Tunjuk skrin log masuk bila sesi tiada/tamat.
+    function tunjukSkrinLoginMula() {
+      const modal = document.getElementById('admin-auth-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    // Emel staff yang disahkan server. Diisi semasa semak sesi.
+
+    // Semak sesi SEBENAR dengan server. localStorage tidak lagi menjadi bukti -
+    // sesi tinggal dalam cookie HttpOnly yang tidak boleh dibaca/skrip pelayar.
+    async function checkAdminAuth() {
+      const sesi = await semakSesiServer();
+      if (!sesi) {
+        sesiSudahDisahkan = false;
+        sesiAdminEmail = '';
+        tunjukSkrinLoginMula();
+        return false;
       }
+      sesiSudahDisahkan = true;
+      sesiAdminEmail = sesi.email || '';
+      return true;
     }
 
     async function handleAdminLoginSubmit(e) {
@@ -692,19 +729,23 @@
       submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Menyemak...`;
 
       try {
-        const response = await fetch(buildApiUrl({ action: 'verifyAdmin', email: email, pin: pin }));
+        // action=login dikendalikan proxy: proxy sahkan PIN, kemudian issuing
+        // cookie sesi HttpOnly. Tiada token dalam localStorage atau URL.
+        const response = await fetch(buildApiUrl({ action: 'login' }), {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, pin: pin })
+        });
         const data = await response.json();
 
-        if (data.status === "Success" && data.authorized) {
-          localStorage.setItem('qtiba_admin_auth', 'true');
-          localStorage.setItem('qtiba_admin_email', email);
-          if (data.token) {
-            localStorage.setItem('qtiba_admin_token', data.token);
-          }
+        if (response.ok && data.authorized) {
           document.getElementById('admin-auth-modal').classList.add('hidden');
           playAudioBeep('success');
+          // Muat semula supaya senarai murid yang di-cache disegarkan.
+          window.location.reload();
         } else {
-          errEl.innerText = "Emel atau PIN tidak sah! Akses ditolak.";
+          errEl.innerText = data.message || "Emel atau PIN tidak sah! Akses ditolak.";
           errEl.classList.remove('hidden');
           playAudioBeep('error');
         }
@@ -722,11 +763,16 @@
       window.location.href = "parent.html";
     }
 
-    function logoutAdmin() {
+    async function logoutAdmin() {
       if (confirm("Adakah anda pasti untuk log keluar daripada mod Pengimbas?")) {
-        localStorage.removeItem('qtiba_admin_auth');
-        localStorage.removeItem('qtiba_admin_email');
-        localStorage.removeItem('qtiba_admin_token');
+        try {
+          await fetch(buildApiUrl({ action: 'logout' }), {
+            method: 'POST',
+            credentials: 'same-origin'
+          });
+        } catch (err) {
+          // Teruskan logout secara lokal.
+        }
         window.location.href = "parent.html";
       }
     }
@@ -1290,7 +1336,8 @@
       const now = new Date();
       const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const isHadir = data.status === "HADIR";
-      const guruScan = localStorage.getItem('qtiba_admin_email') || 'Admin';
+      // Nama guru datang daripada sesi server (bukan localStorage).
+      const guruScan = sesiAdminEmail || 'Admin';
 
       scannedTodaySet.add(data.id);
 
@@ -1322,8 +1369,7 @@
         punca: data.punca || "Tepat Masa",
         masa: timeStr,
         masaIso: new Date().toISOString(),
-        guru: guruScan,
-        apiKey: QTIBA_API_KEY || ''
+        guru: guruScan
       };
       sendDataToBackend(payload).then(cloudOk => updateScanStatusBadge(cloudOk));
 
@@ -1372,6 +1418,7 @@
         res = await fetch(API_URL, {
           method: 'POST',
           mode: 'cors',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload),
           signal: controller.signal
@@ -1382,12 +1429,17 @@
       let data = {};
       try { data = await res.json(); } catch (err) { /* bukan JSON */ }
       if (res.ok) return data;
+      // 401 = sesi tamat. Jangan masukkan ke queue - ia akan ditolak semula.
+      if (res.status === 401) {
+        return { result: 'noauth', message: data.message || 'Sesi tamat. Log masuk semula.' };
+      }
       return Object.assign({ result: 'error', message: 'HTTP ' + res.status }, data);
     }
 
     // HANTAR DATA KE GOOGLE APPS SCRIPT / OFFLINE QUEUE
     // - success  : sudah tersimpan di cloud.
     // - duplicate: rekod sudah wujud untuk hari ini (jangan simpan lagi).
+    // - noauth   : sesi tamat - rekod TIDAK disimpan ke queue (akan ditolak semula).
     // - error    : server tolak / gagal -> simpan ke queue offline untuk cuba semula.
     // Pulangkan true jika rekod telah sampai ke cloud, false jika disimpan dalam peranti sahaja.
     async function sendDataToBackend(payload) {
@@ -1400,11 +1452,16 @@
           if (result === 'success' || result === 'duplicate') {
             console.log("Q-TIBA: Rekod berjaya dihantar ke cloud.");
             return true;
-          } else {
-            console.warn("Q-TIBA: Server tolak rekod, simpan ke queue:", data && data.message);
-            saveOffline(payload);
+          }
+          if (result === 'noauth') {
+            // Sesi tamat. JANGAN queue - ia hanya akan ditolak semula nanti.
+            // Paparan skrin log masuk supaya guru boleh log masuk semula.
+            tunjukSkrinLoginMula();
             return false;
           }
+          console.warn("Q-TIBA: Server tolak rekod, simpan ke queue:", data && data.message);
+          saveOffline(payload);
+          return false;
         } catch (err) {
           console.error("Gagal hantar data:", err);
           saveOffline(payload);
@@ -1473,11 +1530,24 @@
     }
 
     let isSyncingQueue = false;
-    function syncOfflineQueue() {
+
+    async function syncOfflineQueue() {
       if (!API_URL || API_URL.includes("MASUKKAN_URL")) return;
       if (isSyncingQueue) return;
       const currentQueue = readOfflineQueue();
       if (currentQueue.length === 0) return;
+
+      // Semak sesi SEBELUM sync. Tanpa ini, queue akan dihantar setiap 15 saat
+      // dan setiap kali ditolak 401 sehingga guru log masuk semula.
+      if (!sesiSudahDisahkan) {
+        const sesi = await semakSesiServer();
+        if (!sesi) {
+          tunjukSkrinLoginMula();
+          return;
+        }
+        sesiSudahDisahkan = true;
+      }
+
       isSyncingQueue = true;
 
       const pending = [...currentQueue];
@@ -1512,6 +1582,20 @@
           if (result === 'success' || result === 'duplicate') {
             // Selesai (tersimpan atau sudah wujud) -> buang dari queue.
             sentCount++;
+          } else if (result === 'noauth') {
+            // Sesi tamat. Kekalkan rekod dalam queue (jangan buang!), hentikan
+            // sync, dan minta guru log masuk semula. Rekod tidak hilang.
+            remaining.push(item);
+            tunjukSkrinLoginMula();
+            speakText("Sesi tamat. Sila log masuk untuk sync data offline.");
+            const keep = readOfflineQueue();
+            const merged = remaining.concat(
+              keep.filter(it => !pending.some(p => p === it || (p && it && p.masaIso && it.masaIso && p.masaIso === it.masaIso)))
+            );
+            localStorage.setItem('qtiba_offline_queue', JSON.stringify(merged));
+            checkNetworkStatus();
+            isSyncingQueue = false;
+            return;
           } else {
             // Server tolak / error -> cuba semula kemudian.
             remaining.push(item);

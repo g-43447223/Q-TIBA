@@ -1309,15 +1309,26 @@
 
     // ===== UTILITI KESELAMATAN & KEMUDAHAN =====
 
-    // Bina URL API lengkap dengan apiKey (#2) sebagai query param.
+    // Bina URL API. apiKey TIDAK lagi dihantar dari pelayar - proxy Cloudflare
+    // menyuntik kunci itu sendiri. Cookie sesi dihantar automatik (same-origin).
     function buildApiUrl(params) {
-      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      const p = Object.assign({}, params || {});
       return `${API_URL}?${new URLSearchParams(p).toString()}`;
     }
 
-    // Baca token sesi admin yang disimpan semasa log masuk (#3).
-    function getAdminSessionToken() {
-      return localStorage.getItem('qtiba_admin_token') || '';
+    // Status sesi sebenar, ditanya kepada server (bukan localStorage).
+    // localStorage boleh disunting oleh sesiapa sahaja, jadi tidak boleh
+    // menjadi bukti kebenaran.
+    async function semakSesiServer() {
+      try {
+        const res = await fetch(buildApiUrl({ action: 'session' }), {
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        return (data && data.authenticated) ? data : null;
+      } catch (err) {
+        return null;
+      }
     }
 
     // Elak XSS (#4): buang aksara yang boleh menjadi HTML/JS dalam innerHTML.
@@ -1349,32 +1360,34 @@
     // LOG MASUK & PENGESAHAN ADMIN
     async function handleAdminLogin(e) {
       e.preventDefault();
-      
+
       const email = document.getElementById('login-email').value.trim();
       const pin = document.getElementById('login-pin').value.trim();
       const errorBox = document.getElementById('login-error');
       const btnText = document.getElementById('login-btn-text');
       const spinner = document.getElementById('login-spinner');
-      
+
       errorBox.classList.add('hidden');
       btnText.innerText = "Mengesahkan...";
       spinner.classList.remove('hidden');
 
       try {
-        const res = await fetch(buildApiUrl({ action: 'verifyAdmin', email: email, pin: pin }));
+        // action=login dikendalikan oleh proxy: proxy sahkan PIN melalui Apps
+        // Script, kemudian issuing cookie sesi HttpOnly. Tiada token disimpan
+        // dalam localStorage dan tiada token dalam URL.
+        const res = await fetch(buildApiUrl({ action: 'login' }), {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, pin: pin })
+        });
         const data = await res.json();
 
-        if (data.status === "Success" && data.authorized) {
-          localStorage.setItem('qtiba_admin_auth', 'true');
-          localStorage.setItem('qtiba_admin_user', email);
-          if (data.token) {
-            localStorage.setItem('qtiba_admin_token', data.token);
-          }
-          
+        if (res.ok && data.authorized) {
           document.getElementById('login-modal').classList.add('hidden');
           fetchLiveData();
         } else {
-          errorBox.innerText = "Akses ditolak! Emel atau PIN tidak padan.";
+          errorBox.innerText = data.message || "Akses ditolak! Emel atau PIN tidak padan.";
           errorBox.classList.remove('hidden');
         }
       } catch (err) {
@@ -1386,10 +1399,15 @@
       }
     }
 
-    function logoutAdmin() {
-      localStorage.removeItem('qtiba_admin_auth');
-      localStorage.removeItem('qtiba_admin_user');
-      localStorage.removeItem('qtiba_admin_token');
+    async function logoutAdmin() {
+      try {
+        await fetch(buildApiUrl({ action: 'logout' }), {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+      } catch (err) {
+        // Bahkan jika gagal, teruskan logout secara lokal.
+      }
       window.location.href = "parent.html";
     }
 
@@ -2164,9 +2182,14 @@
         const res = await fetch(buildApiUrl({ action: 'saveIntervensi' }), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ apiKey: QTIBA_API_KEY || '' }, rec))
+          body: JSON.stringify(rec),
+          credentials: 'same-origin'
         });
         const data = await res.json();
+        // 401 = sesi tamat. Tunjukkan skrin log masuk, bukan sahaja mesej ralat.
+        if (res.status === 401) {
+          throw new Error('SESI_TAMAT');
+        }
         if (!res.ok || !data || data.result !== 'success') {
           throw new Error((data && data.message) || ('HTTP ' + res.status));
         }
@@ -2178,8 +2201,18 @@
         tarikh.value = prev.tarikh || '';
         nota.value = prev.nota || '';
         flashIntervensiSaved(status, false);
-        console.warn("Q-TIBA: Gagal simpan intervensi", err);
+        if (err && err.message === 'SESI_TAMAT') {
+          handleSesiTamat();
+        } else {
+          console.warn("Q-TIBA: Gagal simpan intervensi", err);
+        }
       }
+    }
+
+    // Sesi tamat / log masuk paksa: tunjukkan modal log masuk semula.
+    function handleSesiTamat() {
+      const modal = document.getElementById('login-modal');
+      if (modal) modal.classList.remove('hidden');
     }
 
     // Maklum balik visual simpan intervensi (hijau = berjaya, merah = gagal).
@@ -3661,7 +3694,14 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
     }
 
     // OPERASI MODAL KETETAPAN ADMIN
-    function openAdminSettings() {
+    // Sesi disahkan server: butang tetapan hanya berfungsi selepas log masuk.
+    // openAdminSettings dipanggil dari onclick, jadiIa perlu semak async dahulu.
+    async function openAdminSettings() {
+      const sesi = await semakSesiServer();
+      if (!sesi) {
+        handleSesiTamat();
+        return;
+      }
       document.getElementById('admin-settings-modal').classList.remove('hidden');
     }
 
@@ -3910,8 +3950,12 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
       const newPin = document.getElementById('pin-new').value;
 
       try {
-        const res = await fetch(buildApiUrl({ action: 'changePin', email: email, currentPin: currentPin, newPin: newPin, token: getAdminSessionToken() }));
+        // Tiada token dalam URL - sesi disahkan melalui cookie HttpOnly.
+        const res = await fetch(buildApiUrl({ action: 'changePin', email: email, currentPin: currentPin, newPin: newPin }), {
+          credentials: 'same-origin'
+        });
         const data = await res.json();
+        if (res.status === 401) { handleSesiTamat(); return; }
         alert(data.message || "Keputusan diproses.");
         if (data.status === 'Success') closeAdminSettings();
       } catch (err) {
@@ -3927,8 +3971,11 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
       const adminPin = document.getElementById('reg-my-pin').value;
 
       try {
-        const res = await fetch(buildApiUrl({ action: 'registerAdmin', newEmail: newEmail, newPin: newPin, adminEmail: adminEmail, adminPin: adminPin, token: getAdminSessionToken() }));
+        const res = await fetch(buildApiUrl({ action: 'registerAdmin', newEmail: newEmail, newPin: newPin, adminEmail: adminEmail, adminPin: adminPin }), {
+          credentials: 'same-origin'
+        });
         const data = await res.json();
+        if (res.status === 401) { handleSesiTamat(); return; }
         alert(data.message || "Keputusan diproses.");
         if (data.status === 'Success') closeAdminSettings();
       } catch (err) {
@@ -3957,28 +4004,47 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
         renderLaporanBulanan();
       }
 
-      // Semak status pendaftaran masuk admin
-      if (localStorage.getItem('qtiba_admin_auth') !== 'true') {
-        document.getElementById('login-modal').classList.remove('hidden');
-        if (window.QTIBA_Splash) window.QTIBA_Splash.done();
-      } else {
-        fetchLiveData();
-      }
+      // Semak sesi SEBENAR dengan server. localStorage tidak lagi menjadi bukti -
+      // sesi tinggal dalam cookie HttpOnly yang tidak boleh dibaca/skrip pelayar.
+      semakSesiServer().then((sesi) => {
+        if (!sesi) {
+          document.getElementById('login-modal').classList.remove('hidden');
+          if (window.QTIBA_Splash) window.QTIBA_Splash.done();
+        } else {
+          fetchLiveData();
+        }
+      });
 
       // Kemaskini automatik data setiap 60 saat (jimat kuota; hanya waktu sekolah)
-      setInterval(() => {
+      let refreshSedangBerlari = false;
+      setInterval(async () => {
         const jam = new Date().getHours();
         if (jam < 5 || jam >= 19) return;
         if (document.hidden) return;
-        if (localStorage.getItem('qtiba_admin_auth') === 'true') {
-          fetchLiveData();
+        if (refreshSedangBerlari) return;
+        refreshSedangBerlari = true;
+        try {
+          // Sesi mungkin sudah tamat (contoh(tab dibuka/esok). Semak dahulu supaya
+          // tidak hantar request yang pasti ditolak.
+          const sesi = await semakSesiServer();
+          if (sesi) {
+            await fetchLiveData();
+          } else {
+            handleSesiTamat();
+          }
+        } finally {
+          refreshSedangBerlari = false;
         }
       }, 60000);
 
       // Refresh serta-merta bila tab kembali dilihat, henti bila tersembunyi
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && localStorage.getItem('qtiba_admin_auth') === 'true') {
+      document.addEventListener('visibilitychange', async () => {
+        if (document.hidden) return;
+        const sesi = await semakSesiServer();
+        if (sesi) {
           fetchLiveData();
+        } else {
+          handleSesiTamat();
         }
       });
 

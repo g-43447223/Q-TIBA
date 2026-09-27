@@ -189,6 +189,43 @@
     <div id="gate-scan-overlay-card" class="gate-overlay-card glass-card w-full max-w-2xl rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-white/10 shadow-2xl text-center"></div>
   </div>
 
+  <!-- KIOSK LOCK: skrin kunci untuk staff. Paparan ini dibuka pada tablet di
+       pintu pagar. Tanpa sesi staff yang sah, skrin ini menutupi papan paparan
+       supaya orang luar tidak boleh memindai kad atau melihat data MURID. -->
+  <div id="gate-lock-screen" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-slate-950"></div>
+    <div class="relative h-full w-full flex items-center justify-center p-4">
+      <div class="glass-card w-full max-w-md rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl">
+        <div class="text-center mb-5">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-500/15 text-cyan-400 mb-3">
+            <i class="fa-solid fa-lock text-2xl"></i>
+          </div>
+          <h2 class="text-xl font-black text-slate-900 dark:text-white">Paparan Terkunci</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="gate-lock-reason">
+            Sesi staff tamat. Sila log masuk untuk menggunakan paparan ini.
+          </p>
+        </div>
+        <form id="gate-lock-form" class="space-y-3">
+          <div>
+            <label for="gate-lock-email" class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Emel Staff</label>
+            <input type="email" id="gate-lock-email" autocomplete="username" inputmode="email" required
+              class="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none">
+          </div>
+          <div>
+            <label for="gate-lock-pin" class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">PIN</label>
+            <input type="password" id="gate-lock-pin" autocomplete="current-password" inputmode="numeric" pattern="[0-9]*" required
+              class="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none tracking-[0.4em] text-center">
+          </div>
+          <p id="gate-lock-error" class="hidden text-sm font-bold text-rose-500 text-center"></p>
+          <button type="submit" id="gate-lock-submit"
+            class="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-bold transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-unlock"></i> Buka Kiosk
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="config.js"></script>
   <script>
     let globalMuridList = [];
@@ -269,9 +306,97 @@
       updateGateThemeIcon();
     }
 
+    // Bina URL API. apiKey TIDAK lagi dihantar dari pelayar - proxy Cloudflare
+    // menyuntik kunci itu sendiri. Sesi dihantar melalui cookie HttpOnly.
     function buildApiUrl(params) {
-      const p = Object.assign({}, params || {}, { apiKey: QTIBA_API_KEY || '' });
+      const p = Object.assign({}, params || {});
       return `${API_URL}?${new URLSearchParams(p).toString()}`;
+    }
+
+    // Status sesi sebenar di server (bukan localStorage).
+    async function semakSesiServer() {
+      try {
+        const res = await fetch(buildApiUrl({ action: 'session' }), {
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        return (data && data.authenticated) ? data : null;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    // --- Kiosk lock ---------------------------------------------------------
+    // Status sebenar: "terbuka" hanya jika server mengesahkan sesi staff.
+    let gateKioskTerbuka = false;
+
+    function bukaKiosk() {
+      gateKioskTerbuka = true;
+      const lock = document.getElementById('gate-lock-screen');
+      if (lock) lock.classList.add('hidden');
+      // Beritahu server kiosk dibuka (untuk jejak audit). Kegagalan di sini
+      // tidak menghalang operasi - skrin tetap boleh digunakan.
+      fetch(buildApiUrl({ action: 'gateLock', state: 'open' }), {
+        method: 'POST',
+        credentials: 'same-origin'
+      }).catch(() => {});
+    }
+
+    // Tutup skrin kiosk dan pulangkan ke skrin log masuk.
+    function kunciKiosk(reason) {
+      gateKioskTerbuka = false;
+      const lock = document.getElementById('gate-lock-screen');
+      const reasonEl = document.getElementById('gate-lock-reason');
+      const errEl = document.getElementById('gate-lock-error');
+      if (lock) lock.classList.remove('hidden');
+      if (reasonEl && reason) reasonEl.textContent = reason;
+      if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+      const pin = document.getElementById('gate-lock-pin');
+      if (pin) pin.value = '';
+    }
+
+    function kunciKioskSebabSesiTamat() {
+      kunciKiosk('Sesi staff tamat. Sila log masuk semula untuk meneruskan.');
+    }
+
+    async function handleGateLockSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('gate-lock-email').value.trim();
+      const pin = document.getElementById('gate-lock-pin').value.trim();
+      const errEl = document.getElementById('gate-lock-error');
+      const btn = document.getElementById('gate-lock-submit');
+
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Menyemak...';
+
+      try {
+        // action=login dikendalikan proxy: proxy sahkan PIN, kemudian issuing
+        // cookie sesi HttpOnly. Tiada token dalam localStorage atau URL.
+        const res = await fetch(buildApiUrl({ action: 'login' }), {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, pin: pin })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.authorized) {
+          bukaKiosk();
+          // Muat semula supaya senarai murid & data disegarkan dengan sesi baharu.
+          window.location.reload();
+        } else {
+          errEl.textContent = data.message || 'Emel atau PIN tidak sah. Akses ditolak.';
+          errEl.classList.remove('hidden');
+          document.getElementById('gate-lock-pin').value = '';
+        }
+      } catch (err) {
+        errEl.textContent = 'Gagal menyemak. Semak rangkaian.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-unlock"></i> Buka Kiosk';
+      }
     }
 
     function getTodayDateStr() {
@@ -759,6 +884,12 @@
       let rawId = String(scannedId || '').trim().toUpperCase();
       if (rawId === '') return;
 
+      // Kiosk mesti dibuka dengan sesi staff yang sah sebelum kad boleh diimbas.
+      if (!gateKioskTerbuka) {
+        kunciKiosk('Sila log masuk staff untuk mengimbas kad.');
+        return;
+      }
+
       const numOnly = (s) => (String(s || '').replace(/[^0-9]/g, ''));
       const targetNum = numOnly(rawId);
       const targetInt = targetNum === '' ? NaN : parseInt(targetNum, 10);
@@ -975,8 +1106,7 @@
         punca: data.punca || 'Tepat Masa',
         masa: timeStr,
         masaIso: new Date().toISOString(),
-        guru: 'Paparan Pintu',
-        apiKey: QTIBA_API_KEY || ''
+        guru: 'Paparan Pintu'
       };
       postGateToBackend(payload).then(() => {
         // Segera segarnya nombor KPI supaya paparan up-to-date.
@@ -992,6 +1122,7 @@
         const res = await fetch(API_URL, {
           method: 'POST',
           mode: 'cors',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload),
           signal: controller.signal
@@ -999,6 +1130,11 @@
         let data = {};
         try { data = await res.json(); } catch (e) {}
         const result = data && data.result;
+        if (result === 'noauth' || res.status === 401) {
+          // Sesi tamat. JANGAN queue - ia akan ditolak semula. Kunci kiosk.
+          kunciKioskSebabSesiTamat();
+          return;
+        }
         if (result !== 'success' && result !== 'duplicate') {
           // Server tolak / error — simpan ke antrian offline untuk cuba semula.
           saveGateOffline(payload);
@@ -1123,15 +1259,42 @@
       if (overlay) overlay.classList.add('hidden');
     }
 
-    // berjalan selepas muatan awal supaya imbas pintu bersedia.
+    // --- Kiosk lock: semak sesi SEBENAR sebelum buka paparan ---------------
+    const gateLockForm = document.getElementById('gate-lock-form');
+    if (gateLockForm) {
+      gateLockForm.addEventListener('submit', handleGateLockSubmit);
+    }
+
+    // Kunci skrin serta-merta supaya data murid tidak kelihatan seketika
+    // (tablet dibuka/usr load).
     initGateTheme();
-    preloadStudentData();
+    kunciKiosk('Sesi staff diperlukan untuk membuka paparan pintu.');
+
+    semakSesiServer().then((sesi) => {
+      if (sesi) {
+        bukaKiosk();
+      } else {
+        // Ketinggal terkunci. Minta log masuk.
+      }
+      // Muat data hanya selepas sesi disahkan.
+      preloadStudentData();
+      if (window.QTIBA_Splash) window.QTIBA_Splash.done();
+    });
+
+    // Hambarkan jereja pada awal; muat semula bila kembali ke talian.
     setInterval(() => {
-      if (Object.keys(studentCacheMap).length === 0) preloadStudentData();
+      if (gateKioskTerbuka && Object.keys(studentCacheMap).length === 0) preloadStudentData();
     }, 30000);
     window.addEventListener('online', () => {
-      if (Object.keys(studentCacheMap).length === 0) preloadStudentData();
+      if (gateKioskTerbuka && Object.keys(studentCacheMap).length === 0) preloadStudentData();
     });
+
+    // Semak sesi secara berkala. Jika tamat, kunci semula skrin.
+    setInterval(async () => {
+      if (!gateKioskTerbuka) return;
+      const sesi = await semakSesiServer();
+      if (!sesi) kunciKioskSebabSesiTamat();
+    }, 120000);
 
     document.addEventListener('keydown', (e) => {
       // Jika overlay imbasan sedang dibuka, Escape menutupnya dahulu (tidak keluar).
