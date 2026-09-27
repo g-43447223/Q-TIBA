@@ -40,6 +40,22 @@
   border-color: rgba(56, 189, 248, 0.4);
 }
 
+/* ---------- Modal: permukaan hampir pepekat ----------
+   .glass-card ialah kad putih lutsinar yang direka untuk latar halaman
+   cerah. Modal pula sentiasa duduk atas overlay gelap, jadi komposit kedua-dua
+   menjadi kelabu gelap (rgb(140-201)) dan teks light mode jatuh ke 1.00:1.
+   .modal-card hanya menggantikan background; border, bayang, blur dan
+   transition kekal daripada .glass-card. */
+.modal-card {
+  background: rgba(255, 255, 255, 0.97);
+  background-image: none;
+}
+
+.dark .modal-card {
+  background: rgba(15, 23, 42, 0.97);
+  background-image: none;
+}
+
 /* Fallback: pelayar tanpa backdrop-filter — pastikan teks masih terbaca */
 @supports not (backdrop-filter: blur(1px)) {
   .glass-card { background: rgba(255, 255, 255, 0.88); }

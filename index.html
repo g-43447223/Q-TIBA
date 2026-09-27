@@ -31,7 +31,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
 
-  <link rel="stylesheet" href="theme.css?v=3">
+  <link rel="stylesheet" href="theme.css?v=4">
   <script src="splash.js"></script>
 
   <style>
@@ -862,8 +862,8 @@
 
   <!-- MODAL PWA INSTALL (Dashboard Pentadbir) -->
   <div id="pwa-install-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[95] flex items-end sm:items-center justify-center p-4 hidden">
-    <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative">
-      <button onclick="closePwaModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white text-sm p-1 transition-colors">
+    <div class="modal-card max-w-sm w-full rounded-2xl p-5 border border-slate-200 dark:border-white/10 shadow-2xl relative">
+      <button onclick="closePwaModal()" class="absolute top-3 right-3 text-slate-500 hover:text-cyan-600 dark:hover:text-white text-sm p-1 transition-colors">
         <i class="fa-solid fa-xmark"></i>
       </button>
 
@@ -884,7 +884,7 @@
       </div>
 
       <div id="pwa-ios-instructions" class="hidden text-[11px] bg-slate-100 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 space-y-1.5 mt-2">
-        <p class="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
+        <p class="font-bold text-cyan-700 dark:text-cyan-400 flex items-center gap-1">
           <i class="fa-brands fa-apple"></i> Pengguna iPhone / Safari:
         </p>
         <ol class="list-decimal list-inside space-y-1 text-[10px]">
@@ -939,12 +939,12 @@
 
   <!-- MODAL KETETAPAN ADMIN (TUKAR PIN & DAFTAR CIKGU) -->
   <div id="admin-settings-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl relative text-slate-800 dark:text-white">
-      <button onclick="closeAdminSettings()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="modal-card max-w-md w-full rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl relative text-slate-800 dark:text-white">
+      <button onclick="closeAdminSettings()" class="absolute top-4 right-4 text-slate-500 hover:text-cyan-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       
-      <div class="flex border-b border-slate-700 mb-4 text-xs font-bold">
-        <button id="tab-btn-pin" onclick="switchAdminTab('pin')" class="flex-1 py-2 border-b-2 border-cyan-500 text-cyan-400">Tukar PIN</button>
-        <button id="tab-btn-reg" onclick="switchAdminTab('reg')" class="flex-1 py-2 border-b-2 border-transparent text-slate-400">Daftar Admin Baharu</button>
+      <div class="flex border-b border-slate-200 dark:border-slate-700 mb-4 text-xs font-bold">
+        <button id="tab-btn-pin" onclick="switchAdminTab('pin')" class="flex-1 py-2 border-b-2 border-cyan-500 text-cyan-700 dark:text-cyan-400">Tukar PIN</button>
+        <button id="tab-btn-reg" onclick="switchAdminTab('reg')" class="flex-1 py-2 border-b-2 border-transparent text-slate-500 dark:text-slate-400">Daftar Admin Baharu</button>
       </div>
 
       <!-- TAB 1: TUKAR PIN -->
@@ -991,47 +991,47 @@
 
   <!-- MODAL PROFIL MURID (paparan besar) -->
   <div id="student-profile-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[90] flex items-center justify-center p-4 hidden">
-    <div class="glass-card w-full max-w-lg rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-white/10 shadow-2xl relative text-slate-800 dark:text-white overflow-y-auto max-h-[90vh]">
-      <button onclick="closeStudentProfile()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg transition-colors z-10"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-card w-full max-w-lg rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-white/10 shadow-2xl relative text-slate-800 dark:text-white overflow-y-auto max-h-[90vh]">
+      <button onclick="closeStudentProfile()" class="absolute top-4 right-4 text-slate-500 hover:text-cyan-600 dark:hover:text-white text-lg transition-colors z-10"><i class="fa-solid fa-xmark"></i></button>
 
       <div class="flex flex-col items-center text-center">
         <img id="sp-avatar" src="" alt="Avatar"
              class="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-cyan-400 ring-4 ring-cyan-400/20 bg-slate-200 dark:bg-slate-900 shadow-xl mb-3">
         <h3 id="sp-nama" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-wide">Nama Murid</h3>
-        <p id="sp-kelas" class="text-xs sm:text-sm font-bold text-cyan-600 dark:text-cyan-400 code-font mt-1">Kelas</p>
-        <p id="sp-id" class="text-[11px] text-slate-400 code-font mt-0.5">NO. ID</p>
+        <p id="sp-kelas" class="text-xs sm:text-sm font-bold text-cyan-700 dark:text-cyan-400 code-font mt-1">Kelas</p>
+        <p id="sp-id" class="text-[11px] text-slate-600 dark:text-slate-400 code-font mt-0.5">NO. ID</p>
       </div>
 
       <div class="grid grid-cols-2 gap-3 mt-6">
         <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
           <div id="sp-total" class="text-2xl sm:text-3xl font-black code-font text-rose-500">0</div>
-          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Jumlah Kes Kelewatan</div>
+          <div class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wide">Jumlah Kes Kelewatan</div>
         </div>
         <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
           <div id="sp-status" class="text-2xl sm:text-3xl font-black code-font text-emerald-500">TEPAT</div>
-          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Status Hari Ini</div>
+          <div class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wide">Status Hari Ini</div>
         </div>
         <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
           <div id="sp-minggu" class="text-2xl sm:text-3xl font-black code-font text-amber-500">0</div>
-          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Kes Minggu Ini</div>
+          <div class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wide">Kes Minggu Ini</div>
         </div>
         <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-center">
           <div id="sp-bulan" class="text-2xl sm:text-3xl font-black code-font text-amber-500">0</div>
-          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wide">Kes Bulan Ini</div>
+          <div class="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1 uppercase tracking-wide">Kes Bulan Ini</div>
         </div>
       </div>
 
       <div class="mt-4 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-4 text-xs space-y-2">
         <div class="flex justify-between">
-          <span class="text-slate-500 dark:text-slate-400 font-bold">Masa Imbas Hari Ini</span>
+          <span class="text-slate-600 dark:text-slate-400 font-bold">Masa Imbas Hari Ini</span>
           <span id="sp-masa" class="font-bold code-font text-slate-800 dark:text-white">—</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-slate-500 dark:text-slate-400 font-bold">Punca Terakhir</span>
+          <span class="text-slate-600 dark:text-slate-400 font-bold">Punca Terakhir</span>
           <span id="sp-punca" class="font-bold code-font text-slate-800 dark:text-white text-right">—</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-slate-500 dark:text-slate-400 font-bold">Tarikh Terakhir</span>
+          <span class="text-slate-600 dark:text-slate-400 font-bold">Tarikh Terakhir</span>
           <span id="sp-tarikh" class="font-bold code-font text-slate-800 dark:text-white">—</span>
         </div>
       </div>
@@ -1041,12 +1041,12 @@
           <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
             <i class="fa-solid fa-clock-rotate-left mr-1.5 text-cyan-500"></i> Kronologi Murid
           </h4>
-          <button onclick="cetakKronologiPDF()" class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 rounded-full hover:bg-cyan-500/20 transition-colors">
+          <button onclick="cetakKronologiPDF()" class="text-[10px] font-bold text-cyan-700 dark:text-cyan-400 border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 rounded-full hover:bg-cyan-500/20 transition-colors">
             <i class="fa-solid fa-file-pdf mr-1"></i> Muat Turun PDF
           </button>
         </div>
         <div id="sp-rekod" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-          <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
+          <div class="text-center text-slate-500 dark:text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
         </div>
       </div>
 
@@ -1055,13 +1055,13 @@
           <h4 class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
             <i class="fa-solid fa-timeline mr-1.5 text-violet-500"></i> Sejarah Intervensi
           </h4>
-          <span id="sp-sejarah-bilangan" class="text-[10px] font-bold text-slate-400 code-font">—</span>
+          <span id="sp-sejarah-bilangan" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 code-font">—</span>
         </div>
-        <p class="text-[10px] text-slate-400 dark:text-slate-500 mb-2 leading-relaxed">
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
           Setiap perubahan status direkod sebagai baris baharu. Baris paling bawah ialah status terkini.
         </p>
         <div id="sp-sejarah" class="flex flex-col gap-0 max-h-72 overflow-y-auto pr-1">
-          <div class="text-center text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
+          <div class="text-center text-slate-500 dark:text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
         </div>
       </div>
     </div>
@@ -3974,10 +3974,10 @@ html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0,
                 <div class="text-[9px] font-semibold code-font text-slate-500 dark:text-slate-400 mt-0.5">
                   ${s.tarikh ? 'Tarikh: ' + escapeHtml(s.tarikh) : 'Tarikh: —'}
                 </div>
-                <div class="text-[9px] font-semibold code-font text-slate-400 dark:text-slate-500">
+                <div class="text-[9px] font-semibold code-font text-slate-500 dark:text-slate-400">
                   Dicatat: ${s.masa ? escapeHtml(s.masa) : '—'}
                 </div>
-                ${s.guru ? '<div class="text-[9px] font-semibold text-slate-400 dark:text-slate-500">Oleh: ' + escapeHtml(s.guru) + '</div>' : ''}
+                ${s.guru ? '<div class="text-[9px] font-semibold text-slate-500 dark:text-slate-400">Oleh: ' + escapeHtml(s.guru) + '</div>' : ''}
                 ${s.nota ? '<div class="text-[10px] font-medium text-slate-700 dark:text-slate-300 mt-1 leading-snug">' + escapeHtml(s.nota) + '</div>' : ''}
               </div>
             </div>`;
