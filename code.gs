@@ -10,56 +10,36 @@ var LATE_MINUTE = 21;
 // ============================================================
 // API KEY - DISIMPAN DALAM SCRIPT PROPERTIES, BUKAN DALAM KOD
 // ------------------------------------------------------------
-// Kunci lama pernah ditulis terus di fail ini, dan repo Q-TIBA adalah
-// PUBLIC di GitHub - jadi kunci itu sudah bocor dan mesti dirotasi.
-// Sekarang kunci dibaca dari Project Settings > Script Properties (nama:
-// API_KEY) supaya tidak pernah lagi muncul dalam kod atau repo.
+// Kunci pertama pernah ditulis terus di fail ini, dan repo Q-TIBA adalah
+// PUBLIC di GitHub - jadi kunci itu sudah bocor, sudah Dirotasi, dan kini
+// sudah dibuang sepenuhnya dari kod ini.
+// Kunci hanya dibaca dari Project Settings > Script Properties (nama: API_KEY)
+// supaya ia tidak pernah lagi muncul dalam kod atau repo.
 //
-//.cloudflarePages: nilai yang sama mesti ada dalam env QTIBA_API_KEY.
+// Cloudflare Pages: nilai yang sama mesti ada dalam env QTIBA_API_KEY.
 // Proxy Cloudflare menyuntik kunci ini; pelayar tidak pernah melihatnya.
 //
-// Nilai di bawah hanya digunakan SEMASA MIGRATION sahaja (supaya kunci lama
-// dan baharu kedua-duanya berfungsi sementara Apps Script dikemas kini).
-// AKAN DIBUANG selepas migrasi selesai.
+// Tiada lagi kunci fallback. Jika Script Properties tiada/bersalah, semua
+// request DITOLAK (fail closed) - lebih selamat daripada menerima kunci
+// tersembunyi dalam kod.
 // ============================================================
-var LEGACY_API_KEY = "QTiba-918800f61817b8b676e903f10b03903b50c62a5c98332ae8";
 
 function getApiKey() {
-  var keys = getApiKeys();
-  return keys.length > 0 ? keys[0] : '';
-}
-
-// Senarai kunci yang sah pada masa ini.
-//
-// MIGRATION: Cloudflare masih menghantar kunci LAMA sementara backend ini
-// dinaik taraf. Kedua-duanya diterima supaya deployment baharu ini tidak
-// menyebabkan downtime. Selepas kunci Cloudflare ditukar kepada kunci baharu
-// dan disahkan, buang LEGACY_API_KEY (fungsi ini kembali kepada satu kunci).
-function getApiKeys() {
-  var keys = [];
   try {
-    var fromProps = String(
+    return String(
       PropertiesService.getScriptProperties().getProperty('API_KEY') || ''
     ).trim();
-    if (fromProps !== '') keys.push(fromProps);
   } catch (err) {
-    // Script Properties tidak tersedia (contoh dalam ujian) - guna fallback.
+    // Script Properties tidak boleh dibaca. Gagal dengan selamat.
+    return '';
   }
-  if (keys.length === 0 && LEGACY_API_KEY !== '') {
-    keys.push(LEGACY_API_KEY);
-  }
-  return keys;
 }
 
 // Sahkan request datang dengan API key yang betul (disuntik oleh proxy).
 function isAuthorizedRequest(e) {
   var key = String((e && e.parameter && e.parameter.apiKey) || '');
-  if (key === '') return false;
-  var keys = getApiKeys();
-  for (var i = 0; i < keys.length; i++) {
-    if (keys[i] !== '' && key === keys[i]) return true;
-  }
-  return false;
+  var expected = getApiKey();
+  return key !== '' && expected !== '' && key === expected;
 }
 
 // Hasilkan hash SHA-256 (hex). PIN disimpan sebagai hash, bukan plain text,
@@ -921,15 +901,8 @@ function doPost(e) {
     var bodyKey = String(requestDataAwal.apiKey || '');
     var queryKey = String((e.parameter && e.parameter.apiKey) || '');
     var effectiveKey = queryKey !== '' ? queryKey : bodyKey;
-    // Bandingkan dengan senarai kunci yang sah (lama + baharu semasa migrasi).
-    var sahKey = false;
-    if (effectiveKey !== '') {
-      var kunciSah = getApiKeys();
-      for (var ki = 0; ki < kunciSah.length; ki++) {
-        if (kunciSah[ki] !== '' && effectiveKey === kunciSah[ki]) { sahKey = true; break; }
-      }
-    }
-    if (!sahKey) {
+    var expectedKey = getApiKey();
+    if (effectiveKey === '' || expectedKey === '' || effectiveKey !== expectedKey) {
       return ContentService.createTextOutput(JSON.stringify({ result: "error", message: "Unauthorized: API key tidak sah." }))
         .setMimeType(ContentService.MimeType.JSON);
     }
