@@ -724,17 +724,6 @@
 
   </main>
 
-  <!-- PEMILIH MINGGU UNTUK JANA SURAT (global — boleh guna dari mana-mana tab) -->
-  <div id="minggu-surat-bar" class="hidden mb-3">
-    <label for="minggu-surat-pilih" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-      <i class="fa-solid fa-calendar-week text-indigo-500 mr-1"></i>
-      Pilih minggu untuk surat:
-    </label>
-    <select id="minggu-surat-pilih" class="w-full sm:w-72 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none">
-      <option value="">— pilih minggu —</option>
-    </select>
-  </div>
-
   <!-- TEMPLAT SURAT AMARAN PDF -->
   <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 194mm; background: #ffffff;">
     <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
@@ -1077,6 +1066,22 @@
         <div id="sp-sejarah" class="flex flex-col gap-0 max-h-72 overflow-y-auto pr-1">
           <div class="text-center text-slate-500 dark:text-slate-400 code-font py-2 text-xs">Memuatkan...</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PILIH MINGGU UNTUK JANA SURAT AMARAN -->
+  <div id="minggu-surat-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[96] flex items-end sm:items-center justify-center p-4 hidden">
+    <div class="modal-card w-full max-w-md rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-white/10 shadow-2xl relative text-slate-800 dark:text-white">
+      <button onclick="tutupModalMingguSurat()" class="absolute top-4 right-4 text-slate-500 hover:text-rose-600 dark:hover:text-white text-lg transition-colors"><i class="fa-solid fa-xmark"></i></button>
+
+      <h3 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
+        <i class="fa-solid fa-calendar-week text-indigo-500"></i> Pilih Minggu Surat
+      </h3>
+      <p id="minggu-surat-info" class="text-[11px] text-slate-500 dark:text-slate-400 mb-4">Pilih minggu untuk kandungan surat amaran.</p>
+
+      <div id="minggu-surat-senarai" class="flex flex-col gap-2 max-h-[55vh] overflow-y-auto pr-1">
+        <div class="text-center text-slate-400 code-font py-3 text-xs">Memuatkan...</div>
       </div>
     </div>
   </div>
@@ -2994,15 +2999,13 @@
       return `${isnin.getDate()}/${isnin.getMonth() + 1} - ${akhir.getDate()}/${akhir.getMonth() + 1}/${akhir.getFullYear()}`;
     }
 
-    // Bina semula dropdown Tempoh (tab Rekod) + pemiliih minggu surat (global).
-    // Idempotent supaya selamat dipanggil semula setiap auto-refresh.
+    // Bina semula dropdown Tempoh (tab Rekod). Idempotent.
     function isiOpsiMingguRekod() {
       const list = senaraiMingguRekod(8);
       const opsiMinggu = list.map(w =>
         `<option value="minggu:${w.key}">Minggu ${labelMinggu(w.isnin)} (${w.kes} kes)</option>`
       ).join('');
 
-      // 1) Dropdown filter Tempoh (tab Rekod)
       const sel = document.getElementById('filter-tempoh');
       if (sel) {
         const nilaiTerpilih = sel.value;
@@ -3013,24 +3016,46 @@
         const masihAda = Array.from(sel.options).some(o => o.value === nilaiTerpilih);
         sel.value = masihAda ? nilaiTerpilih : 'semua';
       }
-
-      // 2) Dropdown minggu untuk jana surat (global, ada dalam tab Rekod & Analitik)
-      const selSurat = document.getElementById('minggu-surat-pilih');
-      if (selSurat) {
-        const nilaiLama = selSurat.value;
-        selSurat.innerHTML = '<option value="">— pilih minggu —</option>' + opsiMinggu;
-        const masihAda = Array.from(selSurat.options).some(o => o.value === nilaiLama);
-        selSurat.value = masihAda ? nilaiLama : '';
-      }
     }
 
-    // Papar bar pilih minggu (dipanggil bila user tekan butang "Pilihan").
-    function tunjukPilihanMingguSurat() {
-      isiOpsiMingguRekod();
-      const bar = document.getElementById('minggu-surat-bar');
-      if (bar) bar.classList.remove('hidden');
-      const sel = document.getElementById('minggu-surat-pilih');
-      if (sel) sel.focus();
+    let mingguSuratUntukMurid = '';
+
+    // Buka modal pilih minggu untuk surat amaran murid berkenaan.
+    function tunjukPilihanMingguSurat(idMurid) {
+      mingguSuratUntukMurid = idMurid || '';
+      const list = senaraiMingguRekod(12);
+      const bekas = document.getElementById('minggu-surat-senarai');
+      if (!bekas) return;
+
+      if (list.length === 0) {
+        bekas.innerHTML = '<div class="text-center text-slate-400 code-font py-3 text-xs">Tiada rekod kelewatan.</div>';
+      } else {
+        bekas.innerHTML = list.map(w => {
+          const akhir = new Date(w.isnin);
+          akhir.setDate(w.isnin.getDate() + 4);
+          const label = `Minggu ${labelMinggu(w.isnin)}`;
+          return `<button onclick="janaSuratMingguDipilih('${w.key}')"
+                    class="w-full text-left px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-500/10 transition-all flex items-center justify-between gap-2">
+                    <span class="text-xs font-bold text-slate-800 dark:text-white">${label}</span>
+                    <span class="text-[10px] font-bold code-font text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">${w.kes} kes</span>
+                  </button>`;
+        }).join('');
+      }
+
+      const modal = document.getElementById('minggu-surat-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function tutupModalMingguSurat() {
+      const modal = document.getElementById('minggu-surat-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Jana surat untuk minggu yang user pilih dalam modal.
+    function janaSuratMingguDipilih(mingguKey) {
+      tutupModalMingguSurat();
+      if (!mingguSuratUntukMurid) return;
+      generateSuratAmaran(mingguSuratUntukMurid, 'minggu:' + mingguKey);
     }
 
     function isKesLewat(r) {
@@ -3399,16 +3424,9 @@
       const id = btn ? btn.getAttribute('data-murid-id') || '' : '';
       const tempoh = btn ? btn.getAttribute('data-tempoh') || 'semua' : 'semua';
 
-      // 'pilihan' -> guna minggu yang dipilih dalam bar "Pilih minggu untuk surat".
+      // 'pilihan' -> buka modal pilih minggu.
       if (tempoh === 'pilihan') {
-        const sel = document.getElementById('minggu-surat-pilih');
-        const minggu = sel ? sel.value : '';
-        if (!minggu) {
-          tunjukPilihanMingguSurat();
-          alert("Sila pilih minggu dahulu untuk surat ini.");
-          return;
-        }
-        generateSuratAmaran(id, minggu);
+        tunjukPilihanMingguSurat(id);
         return;
       }
       generateSuratAmaran(id, tempoh);
