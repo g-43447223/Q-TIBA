@@ -606,7 +606,6 @@
               <option value="semua">Keseluruhan</option>
               <option value="minggu">Minggu Ini</option>
               <option value="bulan">Bulan Ini</option>
-              <optgroup id="optgroup-minggu-rekod" label="Pilihan Minggu (Isnin–Ahad)"></optgroup>
             </select>
           </div>
 
@@ -2984,23 +2983,28 @@
       return `${isnin.getDate()}/${isnin.getMonth() + 1} - ${akhir.getDate()}/${akhir.getMonth() + 1}/${akhir.getFullYear()}`;
     }
 
+    // Bina semula dropdown Tempoh: 3 pilihan tetap + senarai minggu yang ada rekod.
+    // Idempotent supaya selamat dipanggil semula setiap auto-refresh.
     function isiOpsiMingguRekod() {
-      const og = document.getElementById('optgroup-minggu-rekod');
-      if (!og) return;
+      const sel = document.getElementById('filter-tempoh');
+      if (!sel) return;
+      const nilaiTerpilih = sel.value;
       const list = senaraiMingguRekod(8);
-      const mingguIni = (() => {
-        const now = new Date(); now.setHours(0,0,0,0);
-        now.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-        return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-      })();
-      const lampas = list; // Papar semua minggu yang ada rekod (termasuk minggu ini)
-      if (lampas.length === 0) {
-        og.innerHTML = '';
-        return;
+      const tetap = '<option value="semua">Keseluruhan</option>' +
+                    '<option value="minggu">Minggu Ini</option>' +
+                    '<option value="bulan">Bulan Ini</option>';
+      let html = tetap;
+      if (list.length > 0) {
+        html += '<optgroup label="Pilihan Minggu (Isnin-Ahad)">';
+        html += list.map(w =>
+          `<option value="minggu:${w.key}">Minggu ${labelMinggu(w.isnin)} (${w.kes} kes)</option>`
+        ).join('');
+        html += '</optgroup>';
       }
-      og.innerHTML = lampas.map(w =>
-        `<option value="minggu:${w.key}">${labelMinggu(w.isnin)} (${w.kes} kes)</option>`
-      ).join('');
+      sel.innerHTML = html;
+      // Pulihkan nilai pilihan guru jika masih wujud dalam senarai baru.
+      const masihAda = Array.from(sel.options).some(o => o.value === nilaiTerpilih);
+      sel.value = masihAda ? nilaiTerpilih : 'semua';
     }
 
     function isKesLewat(r) {
