@@ -725,8 +725,8 @@
   </main>
 
   <!-- TEMPLAT SURAT AMARAN PDF -->
-  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 194mm; background: #ffffff;">
-    <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
+  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: 0; width: 200mm; background: #ffffff;">
+    <div id="surat-amaran-pdf" style="width: 200mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
       
       <!-- HEADER SEKOLAH -->
       <table style="width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
@@ -3563,52 +3563,75 @@
       const element = document.getElementById('surat-amaran-pdf');
       const wrapper = document.getElementById('pdf-wrapper');
 
-      wrapper.style.cssText = 'position: fixed; left: 0; top: 0; right: auto; bottom: auto; width: 194mm; background: #ffffff; visibility: visible; opacity: 1; z-index: 9999;';
+      // Pastikan wrapper dirender (bukan display:none) tetapi di luar skrin.
+      wrapper.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: #ffffff; visibility: visible; opacity: 1; z-index: -1;';
 
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 250));
 
-      // --- AUTO-FIT: paksa surat muat dalam 1 muka A4 (portrait) ---
-      // A4 = 210 x 297mm. Margin 4mm setiap sisi => ruang boleh guna 202 x 289mm.
-      // html2pdf tak boleh "zoom out" automatik, jadi kita kecilkan font secara
-      // berperingkat sehingga tinggi kandungan <= ruang satu muka, baru jana PDF.
-      const MM = 96 / 25.4;               // px per mm
-      const RUANG_TINGGI_PX = (297 - 8) * MM;
-      const gayaAsal = element.getAttribute('style') || '';
-
-      let percubaan = 0;
-      while (element.scrollHeight > RUANG_TINGGI_PX && percubaan < 22) {
-        percubaan++;
-        // kecilkan font-size & padding secara berperingkat (~0.22pt setiap kali)
-        const kurang = percubaan * 0.22;
-        element.style.fontSize = (9 - kurang) + 'pt';
-        element.style.lineHeight = String(Math.max(1.05, 1.32 - kurang * 0.04));
-        element.style.padding = Math.max(0, 6 - percubaan) + 'px';
-        // kecilkan jarak atas/bawah jadual
-        element.querySelectorAll('table').forEach(t => {
-          t.style.marginTop = '2px';
-          t.style.marginBottom = '2px';
-        });
-        await new Promise(r => setTimeout(r, 60));
-      }
-
-      const opt = {
-        margin:       [4, 4, 4, 4],
-        filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 794 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img'] }
-      };
+      // --- AUTO-FIT BETUL: kecilkan font/padding SEMUA elemen anak ---
+      // Masalah lama: banyak elemen ada font-size inline sendiri, jadi kecilkan
+      // parent sahaja tak jalan. Kita simpan & kecilkan setiap elemen.
+      const MM = 96 / 25.4;                    // px per mm @96dpi
+      // Element 200mm dipetakan tepat ke lebar boleh guna (210 - 2*5mm margin).
+      const RUANG_TINGGI_PX = (297 - 10) * MM; // 287mm => ~1084px
+      const semuaElemen = [element, ...element.querySelectorAll('*')];
+      const simpananGaya = semuaElemen.map(el => [el, el.getAttribute('style')]);
 
       try {
+        let percubaan = 0;
+        while (element.scrollHeight > RUANG_TINGGI_PX && percubaan < 30) {
+          percubaan++;
+          const tinggiSemasa = element.scrollHeight;
+          // Anggarkan faktor; jangan kecilkan lebih 15% sekali gus.
+          const faktor = Math.max(0.85, RUANG_TINGGI_PX / tinggiSemasa);
+          semuaElemen.forEach(el => {
+            const cs = getComputedStyle(el);
+            const fs = parseFloat(cs.fontSize);
+            if (fs > 0) el.style.fontSize = (fs * faktor).toFixed(2) + 'px';
+            ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'marginTop', 'marginBottom'].forEach(p => {
+              const v = parseFloat(cs[p]);
+              if (v > 0) el.style[p] = Math.max(0, v * faktor).toFixed(2) + 'px';
+            });
+            const lh = parseFloat(cs.lineHeight);
+            if (lh > 0) el.style.lineHeight = (lh * faktor).toFixed(2) + 'px';
+          });
+          await new Promise(r => requestAnimationFrame(r));
+        }
+
+        // Dimensi eksplisit supaya html2canvas ambil SELURUH kandungan.
+        const lebar = element.scrollWidth;
+        const tinggi = element.scrollHeight;
+
+        const opt = {
+          margin:       [5, 5, 5, 5],
+          filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  {
+            scale: 2,
+            useCORS: false,
+            logging: false,
+            width: lebar,
+            height: tinggi,
+            windowWidth: lebar,
+            windowHeight: tinggi,
+            scrollX: 0,
+            scrollY: 0
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img'] }
+        };
+
         await html2pdf().set(opt).from(element).save();
       } catch (err) {
         console.error("Ralat penjanaan PDF:", err);
         alert("Gagal menjana PDF. Sila cuba lagi.\n\nRalat: " + err.message);
       } finally {
-        // Pulihkan style asal surat & sembunyikan semula wrapper.
-        element.setAttribute('style', gayaAsal);
-        wrapper.style.cssText = 'position: absolute; left: -9999px; top: -9999px; visibility: hidden; opacity: 0; z-index: -1;';
+        // Pulihkan SETIAP elemen supaya janaan berikutnya tak terkumpul.
+        simpananGaya.forEach(([el, gaya]) => {
+          if (gaya === null) el.removeAttribute('style');
+          else el.setAttribute('style', gaya);
+        });
+        wrapper.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: #ffffff; visibility: hidden; opacity: 0; z-index: -1;';
       }
     }
 
