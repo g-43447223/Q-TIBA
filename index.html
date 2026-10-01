@@ -606,6 +606,7 @@
               <option value="semua">Keseluruhan</option>
               <option value="minggu">Minggu Ini</option>
               <option value="bulan">Bulan Ini</option>
+              <optgroup id="optgroup-minggu-rekod" label="Minggu Lepas (pilih khusus)"></optgroup>
             </select>
           </div>
 
@@ -725,8 +726,8 @@
   </main>
 
   <!-- TEMPLAT SURAT AMARAN PDF -->
-  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 190mm; background: #ffffff;">
-    <div id="surat-amaran-pdf" style="width: 190mm; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 10.5pt; padding: 10px;">
+  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 194mm; background: #ffffff;">
+    <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 10.5pt; padding: 10px;">
       
       <!-- HEADER SEKOLAH -->
       <table style="width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
@@ -1805,7 +1806,8 @@
                <div class="flex items-center gap-1">
                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="minggu" title="Surat untuk kes minggu ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="bulan" title="Surat untuk kes bulan ini" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
-                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="semua" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="semua" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-1 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(m.id)}" data-tempoh="pilihan" title="Surat ikut minggu yang dipilih dalam penapis Tempoh" class="px-1.5 py-1 text-[9px] font-bold text-white bg-indigo-500 hover:bg-indigo-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Pilihan</button>
                </div>
              </div>`
           : '';
@@ -2904,6 +2906,7 @@
           filterStudents();
           renderStreakTracker();
           populateClassFilter();
+          isiOpsiMingguRekod();
           applyFilters();
           renderLaporanBulanan();
 
@@ -2937,7 +2940,9 @@
     }
 
     // Kira sempadan tempoh (minggu Isnin / bulan)
+    // Batas bawah tempoh. Sokong: 'semua' | 'minggu' | 'bulan' | 'minggu:YYYY-MM-DD' (tarikh Isnin).
     function getTempohBoundaries(tempoh) {
+      tempoh = String(tempoh || 'semua').toLowerCase();
       const today = new Date();
       const startMinggu = new Date(today); startMinggu.setHours(0,0,0,0);
       const dow = (startMinggu.getDay() + 6) % 7;
@@ -2945,7 +2950,57 @@
       const startBulan = new Date(today.getFullYear(), today.getMonth(), 1);
       if (tempoh === 'minggu') return startMinggu;
       if (tempoh === 'bulan') return startBulan;
+      if (tempoh.indexOf('minggu:') === 0) {
+        const d = new Date(tempoh.slice(7) + 'T00:00:00');
+        if (!isNaN(d.getTime())) return d;
+      }
       return null;
+    }
+
+    // Senarai minggu (Isnin) yang ada rekod — untuk picker.
+    function senaraiMingguRekod(had) {
+      const peta = new Map();
+      (globalRekodList || []).forEach(r => {
+        const t = String(r.tarikhMasa || '').slice(0, 10);
+        if (t.length < 10) return;
+        const d = new Date(t + 'T00:00:00');
+        if (isNaN(d.getTime())) return;
+        const isnin = new Date(d);
+        isnin.setHours(0, 0, 0, 0);
+        isnin.setDate(isnin.getDate() - ((isnin.getDay() + 6) % 7));
+        const key = isnin.getFullYear() + '-' + String(isnin.getMonth() + 1).padStart(2, '0') + '-' + String(isnin.getDate()).padStart(2, '0');
+        if (!peta.has(key)) peta.set(key, { key, isnin, kes: 0 });
+        if (isKesLewat(r)) peta.get(key).kes += 1;
+      });
+      return Array.from(peta.values())
+        .filter(w => w.kes > 0)
+        .sort((a, b) => b.isnin - a.isnin)
+        .slice(0, had || 8);
+    }
+
+    function labelMinggu(isnin) {
+      const akhir = new Date(isnin);
+      akhir.setDate(isnin.getDate() + 4);
+      return `${isnin.getDate()}/${isnin.getMonth() + 1} - ${akhir.getDate()}/${akhir.getMonth() + 1}/${akhir.getFullYear()}`;
+    }
+
+    function isiOpsiMingguRekod() {
+      const og = document.getElementById('optgroup-minggu-rekod');
+      if (!og) return;
+      const list = senaraiMingguRekod(8);
+      const mingguIni = (() => {
+        const now = new Date(); now.setHours(0,0,0,0);
+        now.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      })();
+      const lampas = list.filter(w => w.key !== mingguIni);
+      if (lampas.length === 0) {
+        og.innerHTML = '';
+        return;
+      }
+      og.innerHTML = lampas.map(w =>
+        `<option value="minggu:${w.key}">${labelMinggu(w.isnin)} (${w.kes} kes)</option>`
+      ).join('');
     }
 
     function isKesLewat(r) {
@@ -3098,7 +3153,8 @@
                <div class="flex items-center gap-1">
                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="minggu" title="Surat untuk kes minggu ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Minggu</button>
                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="bulan" title="Surat untuk kes bulan ini" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Bulan</button>
-                 <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="semua" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="semua" title="Surat untuk semua kes (keseluruhan)" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-rose-500 hover:bg-rose-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Semua</button>
+                  <button onclick="generateSuratAmaranFrom(this)" data-murid-id="${escapeHtml(s.id)}" data-tempoh="pilihan" title="Surat ikut minggu yang dipilih dalam penapis Tempoh" class="px-1.5 py-0.5 text-[9px] font-bold text-white bg-indigo-500 hover:bg-indigo-600 active:scale-95 rounded-md shadow-sm transition-all whitespace-nowrap">Pilihan</button>
                </div>
              </div>`
           : '';
@@ -3355,10 +3411,28 @@
       startMinggu.setDate(startMinggu.getDate() - dow);
       const startBulan = new Date(today.getFullYear(), today.getMonth(), 1);
 
+      // 'pilihan' -> ikut penapis Tempoh yang dipilih guru (minggu lampau / bulan / keseluruhan).
+      if (tempoh === 'pilihan') {
+        tempoh = (document.getElementById('filter-tempoh')?.value || 'semua').toLowerCase();
+      }
+
       let filtered = semuaKes;
       let tempohLabel = 'KESELURUHAN';
       if (tempoh === 'minggu') { filtered = semuaKes.filter(r => (new Date(String(r.tarikhMasa||'').replace(' ','T')) >= startMinggu)); tempohLabel = 'MINGGU INI'; }
       else if (tempoh === 'bulan') { filtered = semuaKes.filter(r => (new Date(String(r.tarikhMasa||'').replace(' ','T')) >= startBulan)); tempohLabel = 'BULAN INI'; }
+      else if (tempoh.indexOf('minggu:') === 0) {
+        // Weeks specifically picked from the dropdown (Monday - Sunday).
+        const isnin = new Date(tempoh.slice(7) + 'T00:00:00');
+        if (!isNaN(isnin.getTime())) {
+          const ahad = new Date(isnin);
+          ahad.setDate(isnin.getDate() + 7);
+          filtered = semuaKes.filter(r => {
+            const t = new Date(String(r.tarikhMasa || '').replace(' ', 'T'));
+            return t.getTime() >= isnin.getTime() && t.getTime() < ahad.getTime();
+          });
+          tempohLabel = 'MINGGU ' + labelMinggu(isnin);
+        }
+      }
 
       // Susun ikut hari bekerja (Isnin->Jumaat), kemudian mengikut tarikh/masa
       const dayOrder = [6, 0, 1, 2, 3, 4, 5]; // getDay(): Ahd=0,Isn=1... => priority
@@ -3430,7 +3504,7 @@
       const element = document.getElementById('surat-amaran-pdf');
       const wrapper = document.getElementById('pdf-wrapper');
 
-      wrapper.style.cssText = 'position: fixed; left: 0; top: 0; right: auto; bottom: auto; width: 190mm; background: #ffffff; visibility: visible; opacity: 1; z-index: 9999;';
+      wrapper.style.cssText = 'position: fixed; left: 0; top: 0; right: auto; bottom: auto; width: 194mm; background: #ffffff; visibility: visible; opacity: 1; z-index: 9999;';
 
       await new Promise(r => setTimeout(r, 300));
 
