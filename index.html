@@ -727,7 +727,7 @@
 
   <!-- TEMPLAT SURAT AMARAN PDF -->
   <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 194mm; background: #ffffff;">
-    <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 9.5pt; padding: 6px 8px;">
+    <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
       
       <!-- HEADER SEKOLAH -->
       <table style="width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
@@ -3509,12 +3509,12 @@
       await new Promise(r => setTimeout(r, 300));
 
       const opt = {
-        margin:       [5, 5, 5, 5],
+        margin:       [3, 3, 3, 3],
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 1.75, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 800 },
+        html2canvas: { scale: 1.6, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 750 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: ['avoid-all', 'css'] }
       };
 
       try {
