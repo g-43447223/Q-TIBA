@@ -1366,7 +1366,11 @@
         }
 
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+          navigator.serviceWorker.register('sw.js').then(reg => {
+            // Paksa semak versi sw.js baharu setiap kali halaman dibuka.
+            reg.update().catch(() => {});
+            setInterval(() => reg.update().catch(() => {}), 10 * 60 * 1000);
+          }).catch(err => console.log('SW registration failed:', err));
         }
       });
     }
