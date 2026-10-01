@@ -725,8 +725,8 @@
   </main>
 
   <!-- TEMPLAT SURAT AMARAN PDF -->
-  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: 0; width: 200mm; background: #ffffff;">
-    <div id="surat-amaran-pdf" style="width: 200mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
+  <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: 0; width: 196mm; background: #ffffff; visibility: hidden; opacity: 0;">
+    <div id="surat-amaran-pdf" style="width: 196mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
       
       <!-- HEADER SEKOLAH -->
       <table style="width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
@@ -3563,17 +3563,22 @@
       const element = document.getElementById('surat-amaran-pdf');
       const wrapper = document.getElementById('pdf-wrapper');
 
-      // Pastikan wrapper dirender (bukan display:none) tetapi di luar skrin.
-      wrapper.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: #ffffff; visibility: visible; opacity: 1; z-index: -1;';
+      // PENTING: letak surat DI SKRIN pada 0,0 semasa jana.
+      // html2canvas mengklip ikut viewport; bila unsur ada koordinat negatif
+      // (left:-9999px) sisi kiri/kanan surat terpotong.
+      const gayaWrapperAsal = wrapper.getAttribute('style') || '';
+      wrapper.style.cssText = 'position: fixed; left: 0; top: 0; width: 196mm; background: #ffffff; visibility: visible; opacity: 1; z-index: 99999; margin: 0; padding: 0; border: 0;';
 
       await new Promise(r => setTimeout(r, 250));
 
-      // --- AUTO-FIT BETUL: kecilkan font/padding SEMUA elemen anak ---
-      // Masalah lama: banyak elemen ada font-size inline sendiri, jadi kecilkan
-      // parent sahaja tak jalan. Kita simpan & kecilkan setiap elemen.
+      // --- AUTO-FIT: kecilkan font/padding SEMUA elemen anak ---
+      // Banyak elemen ada font-size inline sendiri, jadi kecilkan parent
+      // sahaja tak berkesan. Kita kecilkan setiap elemen satu per satu.
       const MM = 96 / 25.4;                    // px per mm @96dpi
-      // Element 200mm dipetakan tepat ke lebar boleh guna (210 - 2*5mm margin).
-      const RUANG_TINGGI_PX = (297 - 10) * MM; // 287mm => ~1084px
+      const LEBAR_MM = 196;                     // lebar surat (kelonggaran 2mm kiri+kanan)
+      // Lebar boleh guna = 210 - 2*5mm margin = 200mm; surat 196mm dipetakan
+      // naik kepada 200mm, jadi ruang tinggi dikira dengan faktor sama.
+      const RUANG_TINGGI_PX = (297 - 10) * (LEBAR_MM / 200) * MM; // ~1063px
       const semuaElemen = [element, ...element.querySelectorAll('*')];
       const simpananGaya = semuaElemen.map(el => [el, el.getAttribute('style')]);
 
@@ -3598,9 +3603,10 @@
           await new Promise(r => requestAnimationFrame(r));
         }
 
-        // Dimensi eksplisit supaya html2canvas ambil SELURUH kandungan.
-        const lebar = element.scrollWidth;
-        const tinggi = element.scrollHeight;
+        // Surat berada pada (0,0), jadi x/y = 0. Beri width/height eksplisit
+        // supaya html2canvas ambil keseluruhan surat tanpa terpotong mana-mana sisi.
+        const lebar = element.offsetWidth;
+        const tinggi = element.offsetHeight;
 
         const opt = {
           margin:       [5, 5, 5, 5],
@@ -3610,6 +3616,9 @@
             scale: 2,
             useCORS: false,
             logging: false,
+            backgroundColor: '#ffffff',
+            x: 0,
+            y: 0,
             width: lebar,
             height: tinggi,
             windowWidth: lebar,
@@ -3631,7 +3640,8 @@
           if (gaya === null) el.removeAttribute('style');
           else el.setAttribute('style', gaya);
         });
-        wrapper.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 200mm; background: #ffffff; visibility: hidden; opacity: 0; z-index: -1;';
+        if (gayaWrapperAsal === '') wrapper.removeAttribute('style');
+        else wrapper.setAttribute('style', gayaWrapperAsal);
       }
     }
 
