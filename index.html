@@ -264,7 +264,7 @@
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-emerald-500 text-lg"></i> 🏆 Murid Terawal Hari Ini <span id="early-title-label" class="code-font font-bold text-emerald-600 dark:text-emerald-400">(&le; 7:21 AM)</span>
+              <i class="fa-solid fa-bolt text-emerald-500 text-lg"></i> 🏆 Murid Terawal Hari Ini <span id="early-title-label" class="code-font font-bold text-emerald-600 dark:text-emerald-400">(≤ 7:21 AM)</span>
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Senarai imbasan terawal mengikut susunan tiba (First Come, First Serve).</p>
           </div>
@@ -1196,7 +1196,7 @@
       const l = formatCutoffLabel(CUTOFF_MIN);
       const el1 = document.getElementById('early-title-label');
       const el2 = document.getElementById('late-title-label');
-      if (el1) el1.textContent = `(${'&le;'} ${l})`;
+      if (el1) el1.textContent = `(\u2264 ${l})`;
       if (el2) el2.textContent = `(> ${l})`;
     }
 
