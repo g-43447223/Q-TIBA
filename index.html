@@ -606,7 +606,7 @@
               <option value="semua">Keseluruhan</option>
               <option value="minggu">Minggu Ini</option>
               <option value="bulan">Bulan Ini</option>
-              <optgroup id="optgroup-minggu-rekod" label="Minggu Lepas (pilih khusus)"></optgroup>
+              <optgroup id="optgroup-minggu-rekod" label="Pilihan Minggu (Isnin–Ahad)"></optgroup>
             </select>
           </div>
 
@@ -727,13 +727,13 @@
 
   <!-- TEMPLAT SURAT AMARAN PDF -->
   <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 194mm; background: #ffffff;">
-    <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 10.5pt; padding: 10px;">
+    <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.4; font-size: 9.5pt; padding: 6px 8px;">
       
       <!-- HEADER SEKOLAH -->
       <table style="width: 100%; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;">
         <tr>
           <td style="width: 15%; text-align: left; vertical-align: middle;">
-            <img id="pdf-logo-img" src="logo.png" alt="Logo Sekolah" style="width: 60px; height: 60px; object-fit: contain;">
+            <img id="pdf-logo-img" src="logo.png" alt="Logo Sekolah" style="width: 50px; height: 50px; object-fit: contain;">
           </td>
           <td style="width: 85%; text-align: center; vertical-align: middle;">
             <h2 style="font-size: 13pt; font-weight: bold; margin: 0; text-transform: uppercase;">SEKOLAH KEBANGSAAN PULAU INDAH</h2>
@@ -759,7 +759,7 @@
       </div>
 
       <!-- TAJUK SURAT -->
-      <h3 style="font-size: 10.5pt; font-weight: bold; text-transform: uppercase; text-decoration: underline; margin-bottom: 10px; letter-spacing: 0.5px;">
+      <h3 style="font-size: 10.5pt; font-weight: bold; text-transform: uppercase; text-decoration: underline; margin-bottom: 8px; letter-spacing: 0.5px;">
         SURAT AMARAN KELEWATAN HADIR KE SEKOLAH
       </h3>
       <p style="font-size: 9pt; font-weight: bold; text-align: center; margin: -6px 0 8px 0;"><span id="pdf-tempoh-surat">Surat Amaran Kelewatan (KESELURUHAN)</span></p>
@@ -769,7 +769,7 @@
         <p style="margin-bottom: 8px;">Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
         <p style="margin-bottom: 8px;">2. Dukacita dimaklumkan bahawa anak / jagaan tuan/puan telah mendaftar masuk lewat ke sekolah menerusi rekod imbasan digital <strong>Q-TIBA</strong> dengan butiran seperti berikut:</p>
 
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin: 10px 0;">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin: 8px 0;">
           <thead>
             <tr style="background-color: #f2f2f2; font-weight: bold;">
               <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 35%;">Jumlah Kelewatan</th>
@@ -778,21 +778,21 @@
           </thead>
           <tbody>
             <tr>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center; font-weight: bold; color: #b91c1c; font-size: 11pt;" id="pdf-jumlah-lewat">0 Kali</td>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">Sesi Bimbingan & Kaunseling / Amaran Unit Disiplin</td>
+              <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; color: #b91c1c; font-size: 11pt;" id="pdf-jumlah-lewat">0 Kali</td>
+              <td style="border: 1px solid #000; padding: 6px; text-align: center;">Sesi Bimbingan & Kaunseling / Amaran Unit Disiplin</td>
             </tr>
           </tbody>
         </table>
 
         <p style="margin-bottom: 6px; font-weight: bold;">Rekod Kes Kelewatan (Mengikut Tempoh):</p>
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px;">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 6px;">
           <thead>
             <tr style="background-color: #f2f2f2; font-weight: bold;">
-              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 7%;">Bil</th>
-              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 15%;">Hari</th>
-              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 28%;">Tarikh</th>
-              <th style="border: 1px solid #000; padding: 5px; text-align: center; width: 25%;">Masa Imbas</th>
-              <th style="border: 1px solid #000; padding: 5px; text-align: center;">Punca</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; width: 7%;">Bil</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; width: 15%;">Hari</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; width: 28%;">Tarikh</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center; width: 25%;">Masa Imbas</th>
+              <th style="border: 1px solid #000; padding: 4px; text-align: center;">Punca</th>
             </tr>
           </thead>
           <tbody id="pdf-rekod-kes">
@@ -801,17 +801,17 @@
         </table>
 
         <p style="margin-bottom: 8px;">3. Sehubungan dengan itu, pihak sekolah memohon kerjasama pihak tuan/puan untuk memastikan anak jagaan tuan/puan dapat hadir ke sekolah <strong>sebelum jam 7:21 pagi</strong> bagi memastikan proses Pembelajaran dan Pemudahcaraan (PdPC) berjalan lancar.</p>
-        <p style="margin-bottom: 10px;">4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
+        <p style="margin-bottom: 6px;">4. Kerjasama dan keprihatinan pihak tuan/puan dalam menangani isu kelewatan ini amat dihargai demi masa depan dan sahsiah cemerlang anak tuan/puan.</p>
       </div>
 
       <p style="font-size: 10pt; margin-top: 8px; margin-bottom: 8px;">Sekian, terima kasih.</p>
 
       <!-- TANDATANGAN -->
-      <div style="font-size: 10pt; line-height: 1.3; margin-top: 10px;">
-        <p style="font-weight: bold; font-style: italic; margin-bottom: 3px;">"BERKHIDMAT UNTUK NEGARA"</p>
-        <p style="margin-bottom: 20px;">Saya yang menjalankan amanah,</p>
+      <div style="font-size: 10pt; line-height: 1.3; margin-top: 6px;">
+        <p style="font-weight: bold; font-style: italic; margin-bottom: 2px;">"BERKHIDMAT UNTUK NEGARA"</p>
+        <p style="margin-bottom: 14px;">Saya yang menjalankan amanah,</p>
         <p style="font-weight: bold; text-transform: uppercase; margin: 0;">___________________________________________</p>
-        <p style="font-weight: bold; text-transform: uppercase; margin: 2px 0 0 0;">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
+        <p style="font-weight: bold; text-transform: uppercase; margin: 1px 0 0 0;">( GURU BIMBINGAN & KAUNSELING / UNIT DISIPLIN )</p>
         <p style="margin: 0;">Sekolah Kebangsaan Pulau Indah</p>
       </div>
     </div>
@@ -2993,7 +2993,7 @@
         now.setDate(now.getDate() - ((now.getDay() + 6) % 7));
         return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
       })();
-      const lampas = list.filter(w => w.key !== mingguIni);
+      const lampas = list; // Papar semua minggu yang ada rekod (termasuk minggu ini)
       if (lampas.length === 0) {
         og.innerHTML = '';
         return;
@@ -3509,12 +3509,12 @@
       await new Promise(r => setTimeout(r, 300));
 
       const opt = {
-        margin:       [8, 8, 8, 8],
+        margin:       [5, 5, 5, 5],
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 900 },
+        html2canvas: { scale: 1.75, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 800 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       try {
