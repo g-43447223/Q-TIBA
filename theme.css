@@ -264,6 +264,52 @@ th.sortable:hover {
   transform: scale(0.96);
 }
 
+/* ---------- Butang Simpan intervensi (per baris) ---------- */
+.btn-simpan-intervensi {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+.btn-simpan-intervensi:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+}
+.btn-simpan-intervensi:active:not(:disabled) {
+  transform: scale(0.95);
+}
+/* Baris ada draf belum disimpan - baris disorot supaya guru nampak ada kerja belum disimpan. */
+     tr.intervensi-dirty > td {
+       background: rgba(245, 158, 11, 0.08);
+     }
+     tr.intervensi-dirty > td:first-child {
+       box-shadow: inset 3px 0 0 #f59e0b;
+     }
+     /* Lajur Simpan melekat di tepi kanan jadual - butang sentiasa kelihatan
+        walaupun jadual perlu digeser mendatar pada telefon kecil. */
+     td.sticky.right-0,
+     th.sticky.right-0 {
+       background-color: #fff;
+     }
+     .dark td.sticky.right-0,
+     .dark th.sticky.right-0 {
+       background-color: #0f172a;
+     }
+     /* Bila baris disorot dirty, sel sticky pun perlu warna sama - kalau tidak,
+        sorotan kuning terputus tepat di lajur Simpan dan kelihatan rosak. */
+     tr.intervensi-dirty > td.sticky.right-0 {
+       background-color: #fffbf0;
+     }
+     .dark tr.intervensi-dirty > td.sticky.right-0 {
+       background-color: #1e293b;
+     }
+.btn-simpan-intervensi.dikemas {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+.btn-simpan-intervensi.dijimpat {
+       background: linear-gradient(135deg, #94a3b8, #64748b);
+     }
+     /* Simparan gagal - butang kekal boleh ditekan untuk cuba lagi. */
+     .btn-simpan-intervensi.gagal {
+       background: linear-gradient(135deg, #f43f5e, #e11d48);
+     }
+
 /* ---------- Tab peralihan (slide + fana) ---------- */
 .tab-content {
   transition: opacity 0.25s ease, transform 0.25s ease;

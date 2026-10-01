@@ -79,6 +79,8 @@
     .btn.ghost { background: #eef2f7; color: var(--text); border: 1px solid var(--border); }
     .btn.danger { background: #fff; color: var(--rose); border: 1px solid var(--rose); }
     .btn.outline-cyan { background: #fff; color: var(--cyan-dark); border: 1px solid var(--cyan); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+    .btn:disabled:hover { filter: none; }
     .status {
       display: none; padding: 9px 11px; border-radius: 8px; margin-bottom: 12px;
       font-weight: 600; font-size: 12px;
@@ -106,6 +108,7 @@
   <div class="tabs">
     <div class="tab active" data-tab="tetapan" onclick="switchTab('tetapan')">⚙️ Tetapan</div>
     <div class="tab" data-tab="murid" onclick="switchTab('murid')">👥 Murid</div>
+    <div class="tab" data-tab="intervensi" onclick="switchTab('intervensi')">🧹 Intervensi</div>
   </div>
 
   <!-- TAB TETAPAN -->
@@ -128,6 +131,26 @@
     <div class="card">
       <label>Lengkapkan Semula Senarai Cuti Lalai (2026 Kumpulan B)</label>
       <button class="btn ghost" onclick="loadDefault()">Muat Senarai Lalai</button>
+    </div>
+  </div>
+
+  <!-- TAB INTERVENSI (pemeliharaan data) -->
+  <div class="panel" id="panel-intervensi">
+    <div class="status" id="status-intervensi"></div>
+    <div class="card">
+      <label>Analisa Baris Berulang</label>
+      <p class="hint" style="margin-top:-6px">
+        Tab <code>Intervensi</code> ialah log sejarah (append-only). Sebelum ada butang
+        <em>Simpan</em>, setiap field yang guru ubah menghantar rekod sendiri, jadi satu
+        intervensi boleh pecah kepada beberapa baris. Alat ini mengesan baris itu.
+      </p>
+      <div class="row">
+        <button class="btn outline-cyan" onclick="analisaIntervensi()">🔍 Analisa (Dry-run)</button>
+        <button class="btn danger" id="btn-padam-intervensi" onclick="padamIntervensi()" disabled>
+          🗑️ Padam Baris Ditanda
+        </button>
+      </div>
+      <div id="laporan-intervensi"></div>
     </div>
   </div>
 
@@ -177,8 +200,10 @@
       document.querySelectorAll('.tab').forEach(function (t) {
         t.classList.toggle('active', t.getAttribute('data-tab') === name);
       });
-      document.getElementById('panel-tetapan').classList.toggle('active', name === 'tetapan');
-      document.getElementById('panel-murid').classList.toggle('active', name === 'murid');
+      // Panel dipetakan daripada tab supaya tab baru tidak perlu ditambah di sini.
+      document.querySelectorAll('.panel').forEach(function (p) {
+        p.classList.toggle('active', p.id === 'panel-' + name);
+      });
     }
 
     // ---- MUAT DATA ----
@@ -239,6 +264,98 @@
       google.script.run
         .withSuccessHandler(function (str) { document.getElementById('cuti-list').value = str; })
         .defaultCutiString();
+    }
+
+    // ---- INTERVENSI (pemeliharaan) ----
+    // Hanya selepas Analisa berjaya, butang padam dibuka - jadi tiada risiko padam tanpa semak.
+    // akan membenarkan butang padam. Tanpa ini butang hanya terbuka
+    // selepasanalisa, jadiiada cima pixu memadam secara tidak sengaja.
+    var laporanIntervensiSiap = false;
+
+    function analisaIntervensi() {
+      var btnPadam = document.getElementById('btn-padam-intervensi');
+      btnPadam.disabled = true;
+      laporanIntervensiSiap = false;
+      document.getElementById('laporan-intervensi').innerHTML =
+        '<p class="hint">Menganalisa...</p>';
+
+      google.script.run
+        .withSuccessHandler(function (r) {
+          laporanIntervensiSiap = true;
+          var host = document.getElementById('laporan-intervensi');
+          if (!r || !r.jumlahTanda) {
+            host.innerHTML = '<p class="hint" style="color:#059669">'
+              + 'Tiada baris berulang dikesan. (' + (r ? r.jumlahBaris : 0)
+              + ' baris diperiksa)</p>';
+            showStatus('status-intervensi', 'Analisa selesai - tiada apa untuk dibaiki.', true);
+            btnPadam.disabled = true;
+            return;
+          }
+          var baris = r.tandakan.map(function (t) {
+            return '<tr>'
+              + '<td style="padding:4px 6px">' + t.baris + '</td>'
+              + '<td style="padding:4px 6px">' + t.peraturan + '</td>'
+              + '<td style="padding:4px 6px">' + escapeHtml(t.id) + '</td>'
+              + '<td style="padding:4px 6px">' + escapeHtml(t.status) + '</td>'
+              + '<td style="padding:4px 6px">' + escapeHtml(t.tarikh || '(tiada)') + '</td>'
+              + '<td style="padding:4px 6px">' + escapeHtml(t.nota || '-') + '</td>'
+              + '</tr>';
+          }).join('');
+          host.innerHTML =
+            '<p class="hint" style="margin-top:10px">'
+            + '<strong>' + r.jumlahTanda + '</strong> baris akan dipadam '
+            + '(Peraturan A: ' + r.peraturanA + ' baris tanpa tarikh, '
+            + 'Peraturan B: ' + r.peraturanB + ' duplikasi tepat). '
+            + 'Baris terkini setiap murid tidak akan disentuh.</p>'
+            + '<div style="max-height:260px;overflow:auto;margin-top:8px">'
+            + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+            + '<thead><tr style="border-bottom:1px solid #d9dee6">'
+            + '<th style="text-align:left;padding:4px 6px">Baris</th>'
+            + '<th style="text-align:left;padding:4px 6px">Peraturan</th>'
+            + '<th style="text-align:left;padding:4px 6px">ID</th>'
+            + '<th style="text-align:left;padding:4px 6px">Tindakan</th>'
+            + '<th style="text-align:left;padding:4px 6px">Tarikh</th>'
+            + '<th style="text-align:left;padding:4px 6px">Nota</th>'
+            + '</tr></thead><tbody>' + baris + '</tbody></table></div>';
+          btnPadam.disabled = false;
+          showStatus('status-intervensi',
+            'Analisa selesai - ' + r.jumlahTanda + ' baris ditanda.', true);
+        })
+        .withFailureHandler(function (e) {
+          document.getElementById('laporan-intervensi').innerHTML = '';
+          showStatus('status-intervensi', 'Ralat: ' + e.message, false);
+        })
+        .analisisPembersihIntervensi();
+    }
+
+    function padamIntervensi() {
+      if (!laporanIntervensiSiap) {
+        showStatus('status-intervensi', 'Analisa dulu sebelum memadam.', false);
+        return;
+      }
+      var msg = 'Padam baris intervensi yang ditanda?\n\n'
+        + 'Baris terkini setiap murid dikekalkan, jadi status terkini tidak berubah.\n'
+        + 'Tindakan ini tidak boleh dibatalkan.';
+      if (!confirm(msg)) return;
+
+      var btn = document.getElementById('btn-padam-intervensi');
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (r) {
+          laporanIntervensiSiap = false;
+          var mesej = r.dipadam + ' baris dipadam.';
+          if (r.dilangkau) {
+            mesej += ' ' + r.dilangkau + ' baris dilangkau kerana data berubah semasa proses — tiada apa yang dipadam untuk baris itu.';
+          }
+          mesej += ' Jalankan Analisa semula untuk semak.';
+          showStatus('status-intervensi', mesej, true);
+          document.getElementById('laporan-intervensi').innerHTML = '';
+        })
+        .withFailureHandler(function (e) {
+          btn.disabled = false;
+          showStatus('status-intervensi', 'Ralat: ' + e.message, false);
+        })
+        .jalankanPembersihIntervensi();
     }
 
     // ---- MURID ----

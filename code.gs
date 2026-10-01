@@ -362,6 +362,14 @@ function writeIntervensi(id, rec, actor) {
   var tarikh = String(rec.tarikh === undefined || rec.tarikh === null ? "" : rec.tarikh);
   var nota = String(rec.nota === undefined || rec.nota === null ? "" : rec.nota);
 
+  // Tindakan tanpa tarikh ditolak. Frontend dah asking guru pilih tarikh
+  // dahulu, jadi ini hanya lapisan kedua - kalau ada path lain (import,
+  // curl, skrip lama) yang hantar tarikh kosong, ia tidak boleh tulis
+  // baris sejarah yang tiada makna.
+  if (status !== "" && status !== "Belum" && tarikh === "") {
+    throw new Error("Tindakan '" + status + "' memerlukan tarikh.");
+  }
+
   // Bandingkan dengan entry TERKINI. Guna readIntervensiMap supaya logik
 // "mana yang terkini" hanya ditetapkan di satu tempat - sama dengan yang
   // dipaparkan oleh dashboard.
@@ -382,6 +390,127 @@ function writeIntervensi(id, rec, actor) {
     safeCell(String(actor || ""))
   ]);
   return true;
+}
+
+// ============================================================
+// PEMBERSIH TAB INTERVENSI (laporan dahulu, padam kemudian)
+// ------------------------------------------------------------
+// Latar: sebelum ada butang "Simpan", setiap field yang guru ubah
+// (Tindakan, kemudian Tarikh, kemudian Nota) menghantar request
+// sendiri. Tab Intervensi ialah log append-only, jadi satu intervensi
+// yang sah boleh pecah kepada beberapa baris berturut-turut.
+//
+// analisisPembersihIntervensi() hanya MENGANALISA - tidak memadam.
+// Guru semak laporan dulu, baru panggil jalankanPembersihIntervensi().
+//
+// Dua peraturan:
+//   A) Baris tanpa Tarikh, Status bukan "Belum", dan ada baris lebih baru
+//      untuk ID + Status sama yang bertarikh. Ini artifak "tersimpan
+//      sebelum guru pilih tarikh".
+//   B) Duplikasi tepat baris sebelumnya (ID, Status, Tarikh, Nota).
+//
+// Baris TERAKHIR bagi setiap murid tidak pernah ditanda supaya
+// readIntervensiMap() (yang pilih status terkini) kekal betul.
+// ============================================================
+function analisisPembersihIntervensi() {
+  var tab = getIntervensiSheet_();
+  var barisAkhir = tab.getLastRow();
+  var laporan = {
+    jumlahBaris: Math.max(0, barisAkhir - 1),
+    jumlahTanda: 0,
+    peraturanA: 0,
+    peraturanB: 0,
+    tandakan: []
+  };
+  if (barisAkhir < 2) return laporan;
+
+  var data = tab.getRange(2, 1, barisAkhir - 1, INTERVENSI_COLS).getValues();
+  var adaBertarikh = {};
+
+  // Scan dari belakang ke hadapan supaya "ada baris lebih baru"
+  // sentiasa dibentuk sebelum baris yang lebih lama diperiksa.
+  for (var i = data.length - 1; i >= 0; i--) {
+    var r = data[i];
+    var id = normalizeId(r[0]);
+    var status = String(r[1] === null || r[1] === undefined ? "" : r[1]).trim();
+    var tarikh = formatTarikhYYYYMMDD(r[2]);
+    var nota = String(r[3] === null || r[3] === undefined ? "" : r[3]).trim();
+    var noBaris = i + 2;              // header = baris 1, data bermula baris 2
+    var kunci = id + "|" + status;
+
+    // Peraturan A - tarikh kosong pada tindakan, tetapi versi lebih
+    // lengkap dengan tarikh memang wujud selepas baris ini.
+    if (status !== "" && status !== "Belum" && tarikh === "" && adaBertarikh[kunci]) {
+      laporan.peraturanA++;
+      laporan.tandakan.push({
+        baris: noBaris, peraturan: "A", id: id, status: status,
+        tarikh: "", nota: nota, guru: String(r[5] || "")
+      });
+    }
+
+    // Baris ini yang mengandungi tarikh, jadi baris lebih lama dengan
+    // ID + Status sama boleh ditanda sebagai artifak.
+    if (tarikh !== "") adaBertarikh[kunci] = true;
+
+    // Peraturan B - duplikasi tepat dengan baris sebelumnya.
+    if (i > 0) {
+      var p = data[i - 1];
+      var pId = normalizeId(p[0]);
+      var pStatus = String(p[1] === null || p[1] === undefined ? "" : p[1]).trim();
+      var pTarikh = formatTarikhYYYYMMDD(p[2]);
+      var pNota = String(p[3] === null || p[3] === undefined ? "" : p[3]).trim();
+      if (id !== "" && pId === id && pStatus === status &&
+          pTarikh === tarikh && pNota === nota) {
+        laporan.peraturanB++;
+        laporan.tandakan.push({
+          baris: noBaris, peraturan: "B", id: id, status: status,
+          tarikh: tarikh, nota: nota, guru: String(r[5] || "")
+        });
+      }
+    }
+  }
+
+  laporan.tandakan.sort(function (a, b) { return a.baris - b.baris; });
+  laporan.jumlahTanda = laporan.tandakan.length;
+  return laporan;
+}
+
+// Betulkan padam baris yang ditanda. PANGGIL HANYA selepas guru
+// menyemak laporan analisisPembersihIntervensi() dan bersetuju.
+function jalankanPembersihIntervensi() {
+  var laporan = analisisPembersihIntervensi();
+  if (!laporan.jumlahTanda) return { dipadam: 0, dilangkau: 0, laporan: laporan };
+
+  // Nombor baris turun dahulu, supaya setiap deleteRow tidak menyebabkan
+  // baris yang belum dipadam ikut bergeser.
+  var senarai = laporan.tandakan.slice().sort(function (a, b) { return b.baris - a.baris; });
+
+  var tab = getIntervensiSheet_();
+  var dipadam = 0;
+  var dilangkau = 0;
+
+  for (var i = 0; i < senarai.length; i++) {
+    var t = senarai[i];
+    // Pengesahan pra-padam: baca semula baris itu SEKARANG dan pastikan ia
+    // masih baris yang sama seperti semasa analisis. Kalau guru lain menyimpan
+    // rekod antara analisis dan loop ini, nombor baris boleh bergeser — tanpa
+    // semakan ini kita risk memadam rekod yang salah.
+    if (!barisMasihSama(tab, t)) { dilangkau++; continue; }
+    tab.deleteRow(t.baris);
+    dipadam++;
+  }
+  return { dipadam: dipadam, dilangkau: dilangkau, laporan: laporan };
+}
+
+// Bandingkan kandungan baris dengan rekod yang dijangka untuk dipadam.
+function barisMasihSama(tab, t) {
+  var r = tab.getRange(t.baris, 1, 1, INTERVENSI_COLS).getValues()[0];
+  if (!r) return false;
+  var nota = String(r[3] === null || r[3] === undefined ? "" : r[3]).trim();
+  return normalizeId(r[0]) === t.id &&
+    String(r[1] === null || r[1] === undefined ? "" : r[1]).trim() === t.status &&
+    formatTarikhYYYYMMDD(r[2]) === t.tarikh &&
+    nota === t.nota;
 }
 
 // ============================================================
@@ -1058,11 +1187,20 @@ function doPost(e) {
       }
       // actor = emel staff dari header X-QTIBA-Actor yang dihantar proxy
       // selepas ia mengesahkan sesi. Ini yang mengisi lajur "Guru".
-      var berubah = writeIntervensi(dvId, {
-        status: String(requestData.status || 'Belum'),
-        tarikh: String(requestData.tarikh || ''),
-        nota: String(requestData.nota || '')
-      }, getActorEmail(e));
+      //	writeIntervensi boleh menolak (tindakan tanpa tarikh) - tangkap dan
+      // pulangkan JSON supaya UI tunjuk mesej sebenar, bukan halaman ralat 500.
+      var berubah;
+      try {
+        berubah = writeIntervensi(dvId, {
+          status: String(requestData.status || 'Belum'),
+          tarikh: String(requestData.tarikh || ''),
+          nota: String(requestData.nota || '')
+        }, getActorEmail(e));
+      } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({
+          result: "error", message: String((err && err.message) || err)
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
       return ContentService.createTextOutput(JSON.stringify({
         result: "success", id: dvId, changed: berubah
       })).setMimeType(ContentService.MimeType.JSON);

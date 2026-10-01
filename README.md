@@ -169,12 +169,35 @@ Backend **menolak imbasan duplikat** — jika ID murid sudah wujud dalam tab **R
 Jadual **Senarai Murid Berisiko** dalam tab Analitik (dashboard admin) kini membolehkan guru merekod **tindakan intervensi** bagi setiap murid:
 
 - **Status tindakan** (dropdown): `Belum`, `Surat 1`, `Surat 2`, `Surat 3`, `Kaunseling`, `Rujuk Pengetua`.
-- **Tarikh** tindakan diambil.
+- **Tarikh** tindakan diambil. **Wajib** diisi jika status bukan `Belum`.
 - **Nota** ringkas untuk rekod follow-up.
+- **Simpan** — butang per baris; hanya aktif selepas ada perubahan.
 - **Tren** (▲ naik / ▼ turun) — perbandingan kes minggu ini berbanding minggu lepas, untuk melihat sama ada intervensi berkesan (merosot → membaik).
 - **Punca utama** per murid — sebab paling kerap bagi murid itu.
 
-Perubahan disimpan **automatik** ke Google Sheet melalui backend (`action=saveIntervensi`). Semua rekod tindakan disimpan dalam tab **`Intervensi`** dengan lajur: `ID, Status, Tarikh, Nota`. Kerana ia disimpan di server, rekod tindakan **dikongsi** antara semua guru/peranti.
+Perubahan **tidak** disimpan automatik. Guru boleh ubah Status / Tarikh / Nota berapa kali dahulu, kemudian tekan butang **Simpan** sekali sahaja. Baris yang ada draf akan disorot kuning dan butang Simpan akan menyala, supaya guru tahu ada perubahan yang belum disimpan. Ini penting sebab tab `Intervensi` ialah log append-only - satu saving bagi setiap field yang diubah akan memecah satu intervensi kepada beberapa baris sejarah.
+
+Draf guru dilindungi daripada refresh automatik (dashboard memuat semula data setiap 60 saat), jadi kerja yang belum disimpan tidak hilang apabila halaman disegarkan sendiri.
+
+Rekod disimpan ke Google Sheet melalui backend (`action=saveIntervensi`). Tab **`Intervensi`** ialah **log append-only** dengan lajur: `ID, Status, Tarikh, Nota, Dicatat, Guru` — satu baris bagi setiap saves, tidak pernah ditulis ganti, jadi perjalanan intervensi boleh dibaca dari awal hingga kini.
+
+- `Tarikh` = tarikh yang guru pilih sendiri (boleh di-backdate).
+- `Dicatat` = masa sistem bila baris itu ditulis, jadi kronologi tetap benar walaupun guru masukkan tarikh lama kemudian.
+- `Guru` = emel staff yang membuat perubahan (daripada header proxy `X-QTIBA-Actor`).
+
+### Membersihkan Baris Intervensi Berulang
+
+Sebelum butang **Simpan** ditambah, setiap field yang guru ubah menghantar rekod sendiri, jadi satu intervensi boleh pecah kepada beberapa baris berturut-turut. Panel admin (`Panel.html`) ada tab **Intervensi** untuk mengesan dan membersihkan baris tersebut:
+
+1. **Analisa (Dry-run)** — hanya membaca. Memaparkan berapa baris akan dipadam dansenaraikannya. Tiada data berubah.
+2. **Padam Baris Ditanda** — hanya boleh ditekan selepas Analisa berjaya, dan meminta pengesahan. Baris **terkini** setiap murid sentiasa dikekalkan, jadi status terkini tidak berubah.
+
+Dua peraturan yang digunakan:
+
+| Peraturan | Baris yang ditanda |
+|-----------|--------------------|
+| **A** | Baris tanpa `Tarikh` dengan status bukan `Belum`, jika ada baris lebih baru untuk ID + status sama yang **bertarikh** — artifak "tersimpan sebelum guru memilih tarikh". |
+| **B** | Duplikasi tepat baris sebelumnya (`ID`, `Status`, `Tarikh`, `Nota`). |
 
 > Nota: Tab `Intervensi` dicipta secara automatik pada kali pertama rekod disimpan. Ia membaca akaun yang sama yang menguruskan `Rekod`/`MuridSasaran` (Web App dikaitkan dengan spreadsheet aktif).
 

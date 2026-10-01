@@ -508,18 +508,23 @@
                 <th class="pb-2 pr-2">Nama</th>
                 <th class="pb-2 pr-2">Kelas</th>
                 <th class="pb-2 pr-2 text-center">Mgg</th>
-                <th class="pb-2 pr-2 text-center">Bulan</th>
+                <th class="pb-2 pr-2 text-center hidden md:table-cell">Bulan</th>
                 <th class="pb-2 pr-2 text-center">Jumlah</th>
-                <th class="pb-2 pr-2 text-center">Tren</th>
-                <th class="pb-2 pr-2">Punca Utama</th>
+                <th class="pb-2 pr-2 text-center hidden lg:table-cell">Tren</th>
+                <th class="pb-2 pr-2 hidden lg:table-cell">Punca Utama</th>
                 <th class="pb-2 pr-2">Tindakan</th>
                 <th class="pb-2 pr-2">Tarikh</th>
-                <th class="pb-2">Nota</th>
+                <th class="pb-2 pr-2">Nota</th>
+                <th class="pb-2 text-center sticky right-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.15)]">Simpan</th>
               </tr>
             </thead>
             <tbody id="atrisk-tbody" class="text-xs"></tbody>
           </table>
         </div>
+        <p class="mt-2 text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-info"></i>
+          Ubah Tindakan / Tarikh / Nota dahulu, kemudian tekan <span class="font-bold">Simpan</span>. Rekod hanya disimpan bila butang ditekan.
+        </p>
       </div>
     </div>
 
@@ -2150,11 +2155,15 @@
         if (puncaCache[pid] === undefined) puncaCache[pid] = commonReasonForStudent(pid);
         const puncaUtama = puncaCache[pid] || '—';
 
-        // Data tindakan intervensi (dari server / sheet). Kunci dinormalkan huruf besar.
-        const iv = intervensiMap[String(m.id || '').trim().toUpperCase()] || {};
+        // Data tindakan intervensi. Jika guru ada draf yang belum disimpan,
+        // draf itu menang atas data server - supaya refresh automatik
+        // (fetchLiveData setiap 60 saat) tidak memadam kerja dalam progress.
+        const ivKey = String(m.id || '').trim().toUpperCase();
+        const iv = intervensiStaging[ivKey] || intervensiMap[ivKey] || {};
         const ivStatus = iv.status || '';
         const ivTarikh = iv.tarikh || '';
         const ivNota = iv.nota || '';
+        const ivDirty = Object.prototype.hasOwnProperty.call(intervensiStaging, ivKey);
 
         const statusOptions = ['Belum', 'Surat 1', 'Surat 2', 'Surat 3', 'Kaunseling', 'Rujuk Pengetua'];
         // Jika status sedia ada tidak tersenarai (data lama/luar jadual), kekalkan
@@ -2175,27 +2184,30 @@
         const safeNota = escapeHtml(ivNota);
 
         return `
-          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-500/5 align-top">
+          <tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-500/5 align-top${ivDirty ? ' intervensi-dirty' : ''}">
             <td class="py-2 pr-2 text-slate-400 code-font">${idx + 1}</td>
             <td class="py-2 pr-2">
               <span data-murid-id="${encodeURIComponent(m.id || '')}" onclick="showStudentProfile(decodeURIComponent(this.dataset.muridId))" class="font-bold text-slate-800 dark:text-white cursor-pointer hover:underline">${escapeHtml(m.nama)}</span>
             </td>
             <td class="py-2 pr-2 text-slate-500 dark:text-slate-400 code-font whitespace-nowrap">${escapeHtml(m.kelas)}</td>
             <td class="py-2 pr-2 text-center font-bold code-font text-amber-500">${kesMinggu}</td>
-            <td class="py-2 pr-2 text-center font-bold code-font text-amber-500">${kesBulan}</td>
+            <td class="py-2 pr-2 text-center font-bold code-font text-amber-500 hidden md:table-cell">${kesBulan}</td>
             <td class="py-2 pr-2 text-center font-black code-font text-rose-500">${jumlah}</td>
-            <td class="py-2 pr-2 text-center">${trenHtml}</td>
-            <td class="py-2 pr-2">
+            <td class="py-2 pr-2 text-center hidden lg:table-cell">${trenHtml}</td>
+            <td class="py-2 pr-2 hidden lg:table-cell">
               <span class="inline-block max-w-[90px] truncate align-middle text-[10px] font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-2 py-0.5" title="${escapeHtml(puncaUtama)}">${escapeHtml(puncaUtama)}</span>
             </td>
             <td class="py-2 pr-2">
-              <select onchange="simpanIntervensi(this)" class="intervensi-status text-[10px] font-bold bg-white dark:bg-slate-900 border ${statusColor} rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}">${select}</select>
+              <select onchange="tandaIntervensiDirty(this)" class="intervensi-status text-[10px] font-bold bg-white dark:bg-slate-900 border ${statusColor} rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}">${select}</select>
             </td>
             <td class="py-2 pr-2">
-              <input type="date" onchange="simpanIntervensi(this)" class="intervensi-tarikh text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${escapeHtml(ivTarikh)}">
+              <input type="date" onchange="tandaIntervensiDirty(this)" class="intervensi-tarikh text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${escapeHtml(ivTarikh)}">
             </td>
-            <td class="py-2">
-              <input type="text" onblur="simpanIntervensi(this)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
+            <td class="py-2 pr-2">
+              <input type="text" oninput="tandaIntervensiDirty(this)" placeholder="Nota..." class="intervensi-nota w-full min-w-[100px] text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg px-1.5 py-1 outline-none" data-murid="${encodeURIComponent(m.id || '')}" value="${safeNota}">
+            </td>
+            <td class="py-2 text-center sticky right-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 shadow-[-4px_0_6px_-4px_rgba(0,0,0,0.15)]">
+              <button type="button" onclick="simpanIntervensiBaris(this)" data-murid="${encodeURIComponent(m.id || '')}" class="btn-simpan-intervensi px-2.5 py-1.5 text-[10px] font-bold text-white rounded-md shadow-sm transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"${ivDirty ? '' : ' disabled'}>Simpan</button>
             </td>
           </tr>`;
       }).join('');
@@ -2220,39 +2232,89 @@
     // dan menimpa nilai terkini di Sheet.
     const intervensiRantai = {};
 
-    // Baca semua field intervensi bagi murid & hantar ke server (upsert).
-    // Terima elemen (this) supaya id tidak perlu diletakkan dalam inline JS.
-    async function simpanIntervensi(el) {
-      const encodedId = (el && el.dataset && el.dataset.murid)
-        ? el.dataset.murid
-        : String(el == null ? '' : el);
-      const id = decodeURIComponent(encodedId);
-      const idNorm = String(id).trim().toUpperCase();
-      const status = document.querySelector(`.intervensi-status[data-murid="${encodedId}"]`);
-      const tarikh = document.querySelector(`.intervensi-tarikh[data-murid="${encodedId}"]`);
-      const nota = document.querySelector(`.intervensi-nota[data-murid="${encodedId}"]`);
-      if (!status || !tarikh || !nota) return;
+    // Draf intervensi yang belum disimpan, kunci ID huruf besar.
+    // populated oleh tandaIntervensiDirty, dikosongkan selepas simpan berjaya.
+    const intervensiStaging = {};
 
-      // Nilai dibaca semasa tugas dijalankan (bukan semasa queue) supaya
-      // simpanan beraturhan menghantar keadaan terkini.
+    // Cari 3 input baris bagi satu murid.
+    function cariInputIntervensi(encodedId) {
+      return {
+        status: document.querySelector(`.intervensi-status[data-murid="${encodedId}"]`),
+        tarikh: document.querySelector(`.intervensi-tarikh[data-murid="${encodedId}"]`),
+        nota: document.querySelector(`.intervensi-nota[data-murid="${encodedId}"]`),
+        btn: document.querySelector(`.btn-simpan-intervensi[data-murid="${encodedId}"]`)
+      };
+    }
+
+    // Tandakan baris sebagai "ada perubahan belum disimpan".
+    // TIDAK hantar apa-apa ke server - guru boleh ubah beberapa field
+    // dahulu, kemudian tekan butang Simpan sekali sahaja.
+    function tandaIntervensiDirty(el) {
+      const encodedId = (el && el.dataset && el.dataset.murid) ? el.dataset.murid : '';
+      if (!encodedId) return;
+      const idNorm = decodeURIComponent(encodedId).trim().toUpperCase();
+      const f = cariInputIntervensi(encodedId);
+      if (!f.status || !f.tarikh || !f.nota) return;
+
+      intervensiStaging[idNorm] = {
+        status: f.status.value,
+        tarikh: f.tarikh.value,
+        nota: f.nota.value
+      };
+
+      const tr = f.btn ? f.btn.closest('tr') : null;
+      if (tr) tr.classList.add('intervensi-dirty');
+      if (f.btn) {
+        f.btn.disabled = false;
+        f.btn.classList.remove('dikemas', 'dijimpat', 'gagal');
+        f.btn.textContent = 'Simpan';
+      }
+    }
+
+    // Simpan SATU baris bila guru tekan butang. Semua field dihantar dalam
+    // satu permintaan supaya tab "Intervensi" dapat satu baris sejarah
+    // bagi satu tindakan, bukan satu baris bagi setiap field yang diubah.
+    function simpanIntervensiBaris(btn) {
+      const encodedId = (btn && btn.dataset && btn.dataset.murid) ? btn.dataset.murid : '';
+      if (!encodedId) return Promise.resolve();
+      const idNorm = decodeURIComponent(encodedId).trim().toUpperCase();
+      const f = cariInputIntervensi(encodedId);
+      if (!f.status || !f.tarikh || !f.nota || !f.btn) return Promise.resolve();
+
+      const status = f.status.value;
+      const tarikh = f.tarikh.value;
+      const nota = f.nota.value;
+
+      // Tindakan tanpa tarikh tidak boleh disimpan: baris tanpa tarikh
+      // tiada makna dalam log sejarah dan lebih mudah luput.
+      if (status && status !== 'Belum' && !tarikh) {
+        f.tarikh.focus();
+        notifikasiIntervensi('Pilih tarikh dahulu sebelum menyimpan tindakan ini.', 'err');
+        return Promise.resolve();
+      }
+      if (!status && !tarikh && !nota) {
+        return Promise.resolve();
+      }
+
+      f.btn.disabled = true;
+      f.btn.classList.add('dijimpat');
+      f.btn.textContent = 'Simpan...';
+
+      const rec = { id: idNorm, status: status, tarikh: tarikh, nota: nota };
       const tugas = (intervensiRantai[idNorm] || Promise.resolve())
-        .then(() => hantarIntervensi(idNorm, status, tarikh, nota));
+        .then(() => hantarIntervensi(idNorm, f, rec));
       intervensiRantai[idNorm] = tugas.catch(() => {});
       return tugas;
     }
 
-    async function hantarIntervensi(idNorm, status, tarikh, nota) {
+    // f = {status, tarikh, nota, btn} (elemen DOM), rec = nilai snapshot yang
+      // telah disahkan (satu permintaan bagi satu klik butang).
+      async function hantarIntervensi(idNorm, f, rec) {
       const prev = intervensiMap[idNorm] || {};
-      const rec = {
-        id: idNorm,
-        status: status.value,
-        tarikh: tarikh.value,
-        nota: nota.value
-      };
 
       // Kemas kini local map supaya UI kekal responsif.
       intervensiMap[idNorm] = rec;
-      flashIntervensiBusy(status, true);
+      flashIntervensiBusy(f.status, true);
 
       try {
         const res = await fetch(buildApiUrl({ action: 'saveIntervensi' }), {
@@ -2275,7 +2337,25 @@
         if (data.changed === false) {
           console.info("Q-TIBA: Tiada perubahan intervensi untuk " + idNorm + " - tiada baris sejarah ditambah.");
         }
-        flashIntervensiSaved(status, true);
+        flashIntervensiSaved(f.status, true);
+        // Berjaya sahaja: lepaskan draf. Kalau simpan gagal, draf MESTI kekal
+        // supaya guru boleh cuba lagi dan refresh 60s tidak memadam kerja dia.
+        delete intervensiStaging[idNorm];
+        const trOk = f.btn ? f.btn.closest('tr') : null;
+        if (trOk) trOk.classList.remove('intervensi-dirty');
+        // Berjaya: matikan butang kembali sehingga guru mengubah sesuatu.
+        if (f.btn) {
+          f.btn.disabled = true;
+          f.btn.classList.remove('dijimpat', 'gagal');
+          f.btn.classList.add('dikemas');
+          f.btn.textContent = 'Tersimpan';
+          setTimeout(() => {
+            if (f.btn && f.btn.textContent === 'Tersimpan') {
+              f.btn.classList.remove('dikemas');
+              f.btn.textContent = 'Simpan';
+            }
+          }, 1800);
+        }
         // Kalau profil murid ini sedang dibuka, segarkan timeline supaya guru
         // nampak entry baharu tanpa perlu tutup dan buka semula. Guna "|| ''"
         // supaya ralat di sini tidak boleh menyebabkan rollback palsu - simpanan
@@ -2288,12 +2368,22 @@
           }
         }
       } catch (err) {
-        // Pulangkan nilai asal supaya guru nampak data tidak tersimpan.
+        // KEEP nilai yang guru taip supaya dia boleh cuba simpan semula
+        // tanpa taip ulang. Local map sahaja yang perlu dipulangkan, kerana
+        // ia mewakili keadaan server yang sebenar.
         intervensiMap[idNorm] = prev;
-        status.value = prev.status || 'Belum';
-        tarikh.value = prev.tarikh || '';
-        nota.value = prev.nota || '';
-        flashIntervensiSaved(status, false);
+        flashIntervensiSaved(f.status, false);
+        if (f.btn) {
+          f.btn.disabled = false;
+          f.btn.classList.remove('dijimpat', 'dikemas');
+          f.btn.classList.add('gagal');
+          f.btn.textContent = 'Cuba lagi';
+        }
+        // Draf masih belum disimpan - pastikan baris disorot dan staging
+        // ada supaya butang kekal aktif walaupun render berlaku.
+        intervensiStaging[idNorm] = rec;
+        const trGagal = f.btn ? f.btn.closest('tr') : null;
+        if (trGagal) trGagal.classList.add('intervensi-dirty');
         if (err && err.message === 'SESI_TAMAT') {
           handleSesiTamat();
         } else {
@@ -2301,7 +2391,7 @@
           notifikasiIntervensi('Gagal simpan intervensi: ' + ((err && err.message) || 'ralat tidak diketahui'), 'err');
         }
       } finally {
-        flashIntervensiBusy(status, false);
+        flashIntervensiBusy(f.status, false);
       }
     }
 
