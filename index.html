@@ -724,6 +724,17 @@
 
   </main>
 
+  <!-- PEMILIH MINGGU UNTUK JANA SURAT (global — boleh guna dari mana-mana tab) -->
+  <div id="minggu-surat-bar" class="hidden mb-3">
+    <label for="minggu-surat-pilih" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+      <i class="fa-solid fa-calendar-week text-indigo-500 mr-1"></i>
+      Pilih minggu untuk surat:
+    </label>
+    <select id="minggu-surat-pilih" class="w-full sm:w-72 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none">
+      <option value="">— pilih minggu —</option>
+    </select>
+  </div>
+
   <!-- TEMPLAT SURAT AMARAN PDF -->
   <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px; width: 194mm; background: #ffffff;">
     <div id="surat-amaran-pdf" style="width: 194mm; box-sizing: border-box; font-family: 'Times New Roman', Times, serif; color: #000; background: #ffffff; line-height: 1.32; font-size: 9pt; padding: 4px 6px;">
@@ -2983,28 +2994,43 @@
       return `${isnin.getDate()}/${isnin.getMonth() + 1} - ${akhir.getDate()}/${akhir.getMonth() + 1}/${akhir.getFullYear()}`;
     }
 
-    // Bina semula dropdown Tempoh: 3 pilihan tetap + senarai minggu yang ada rekod.
+    // Bina semula dropdown Tempoh (tab Rekod) + pemiliih minggu surat (global).
     // Idempotent supaya selamat dipanggil semula setiap auto-refresh.
     function isiOpsiMingguRekod() {
-      const sel = document.getElementById('filter-tempoh');
-      if (!sel) return;
-      const nilaiTerpilih = sel.value;
       const list = senaraiMingguRekod(8);
-      const tetap = '<option value="semua">Keseluruhan</option>' +
-                    '<option value="minggu">Minggu Ini</option>' +
-                    '<option value="bulan">Bulan Ini</option>';
-      let html = tetap;
-      if (list.length > 0) {
-        html += '<optgroup label="Pilihan Minggu (Isnin-Ahad)">';
-        html += list.map(w =>
-          `<option value="minggu:${w.key}">Minggu ${labelMinggu(w.isnin)} (${w.kes} kes)</option>`
-        ).join('');
-        html += '</optgroup>';
+      const opsiMinggu = list.map(w =>
+        `<option value="minggu:${w.key}">Minggu ${labelMinggu(w.isnin)} (${w.kes} kes)</option>`
+      ).join('');
+
+      // 1) Dropdown filter Tempoh (tab Rekod)
+      const sel = document.getElementById('filter-tempoh');
+      if (sel) {
+        const nilaiTerpilih = sel.value;
+        sel.innerHTML = '<option value="semua">Keseluruhan</option>' +
+                        '<option value="minggu">Minggu Ini</option>' +
+                        '<option value="bulan">Bulan Ini</option>' +
+                        (opsiMinggu ? '<optgroup label="Pilihan Minggu (Isnin-Ahad)">' + opsiMinggu + '</optgroup>' : '');
+        const masihAda = Array.from(sel.options).some(o => o.value === nilaiTerpilih);
+        sel.value = masihAda ? nilaiTerpilih : 'semua';
       }
-      sel.innerHTML = html;
-      // Pulihkan nilai pilihan guru jika masih wujud dalam senarai baru.
-      const masihAda = Array.from(sel.options).some(o => o.value === nilaiTerpilih);
-      sel.value = masihAda ? nilaiTerpilih : 'semua';
+
+      // 2) Dropdown minggu untuk jana surat (global, ada dalam tab Rekod & Analitik)
+      const selSurat = document.getElementById('minggu-surat-pilih');
+      if (selSurat) {
+        const nilaiLama = selSurat.value;
+        selSurat.innerHTML = '<option value="">— pilih minggu —</option>' + opsiMinggu;
+        const masihAda = Array.from(selSurat.options).some(o => o.value === nilaiLama);
+        selSurat.value = masihAda ? nilaiLama : '';
+      }
+    }
+
+    // Papar bar pilih minggu (dipanggil bila user tekan butang "Pilihan").
+    function tunjukPilihanMingguSurat() {
+      isiOpsiMingguRekod();
+      const bar = document.getElementById('minggu-surat-bar');
+      if (bar) bar.classList.remove('hidden');
+      const sel = document.getElementById('minggu-surat-pilih');
+      if (sel) sel.focus();
     }
 
     function isKesLewat(r) {
@@ -3372,6 +3398,19 @@
     function generateSuratAmaranFrom(btn) {
       const id = btn ? btn.getAttribute('data-murid-id') || '' : '';
       const tempoh = btn ? btn.getAttribute('data-tempoh') || 'semua' : 'semua';
+
+      // 'pilihan' -> guna minggu yang dipilih dalam bar "Pilih minggu untuk surat".
+      if (tempoh === 'pilihan') {
+        const sel = document.getElementById('minggu-surat-pilih');
+        const minggu = sel ? sel.value : '';
+        if (!minggu) {
+          tunjukPilihanMingguSurat();
+          alert("Sila pilih minggu dahulu untuk surat ini.");
+          return;
+        }
+        generateSuratAmaran(id, minggu);
+        return;
+      }
       generateSuratAmaran(id, tempoh);
     }
 
@@ -3415,10 +3454,8 @@
       startMinggu.setDate(startMinggu.getDate() - dow);
       const startBulan = new Date(today.getFullYear(), today.getMonth(), 1);
 
-      // 'pilihan' -> ikut penapis Tempoh yang dipilih guru (minggu lampau / bulan / keseluruhan).
-      if (tempoh === 'pilihan') {
-        tempoh = (document.getElementById('filter-tempoh')?.value || 'semua').toLowerCase();
-      }
+      // 'pilihan' sudah ditukar kepada 'minggu:YYYY-MM-DD' oleh generateSuratAmaranFrom.
+      tempoh = String(tempoh || 'semua').toLowerCase();
 
       let filtered = semuaKes;
       let tempohLabel = 'KESELURUHAN';
@@ -3512,13 +3549,37 @@
 
       await new Promise(r => setTimeout(r, 300));
 
+      // --- AUTO-FIT: paksa surat muat dalam 1 muka A4 (portrait) ---
+      // A4 = 210 x 297mm. Margin 4mm setiap sisi => ruang boleh guna 202 x 289mm.
+      // html2pdf tak boleh "zoom out" automatik, jadi kita kecilkan font secara
+      // berperingkat sehingga tinggi kandungan <= ruang satu muka, baru jana PDF.
+      const MM = 96 / 25.4;               // px per mm
+      const RUANG_TINGGI_PX = (297 - 8) * MM;
+      const gayaAsal = element.getAttribute('style') || '';
+
+      let percubaan = 0;
+      while (element.scrollHeight > RUANG_TINGGI_PX && percubaan < 22) {
+        percubaan++;
+        // kecilkan font-size & padding secara berperingkat (~0.22pt setiap kali)
+        const kurang = percubaan * 0.22;
+        element.style.fontSize = (9 - kurang) + 'pt';
+        element.style.lineHeight = String(Math.max(1.05, 1.32 - kurang * 0.04));
+        element.style.padding = Math.max(0, 6 - percubaan) + 'px';
+        // kecilkan jarak atas/bawah jadual
+        element.querySelectorAll('table').forEach(t => {
+          t.style.marginTop = '2px';
+          t.style.marginBottom = '2px';
+        });
+        await new Promise(r => setTimeout(r, 60));
+      }
+
       const opt = {
-        margin:       [3, 3, 3, 3],
+        margin:       [4, 4, 4, 4],
         filename:     `Surat_Amaran_${nama.replace(/[^a-zA-Z0-9]/g, '_')}_${tempoh}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 1.6, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 750 },
+        html2canvas: { scale: 2, useCORS: false, logging: false, scrollX: 0, scrollY: 0, windowWidth: 794 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css'] }
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img'] }
       };
 
       try {
@@ -3527,6 +3588,8 @@
         console.error("Ralat penjanaan PDF:", err);
         alert("Gagal menjana PDF. Sila cuba lagi.\n\nRalat: " + err.message);
       } finally {
+        // Pulihkan style asal surat & sembunyikan semula wrapper.
+        element.setAttribute('style', gayaAsal);
         wrapper.style.cssText = 'position: absolute; left: -9999px; top: -9999px; visibility: hidden; opacity: 0; z-index: -1;';
       }
     }
